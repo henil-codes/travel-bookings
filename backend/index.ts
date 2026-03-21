@@ -1,9 +1,28 @@
+import { buildApp } from './src/app';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './src/modules/booking-engine/db/schema/seats';
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'path';
 
-const connectionString = process.env.DB_USER;
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+const connectionString = process.env.DB_URL;
+
+const startServer = async () => {
+  const app = buildApp();
+
+  try {
+    const port = parseInt(process.env.PORT || '3000', 10);
+    await app.listen({ port });
+    console.log(`Server is running on port ${port}`);
+  } catch (error) {
+    app.log.error(error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 if (!connectionString) {
   throw new Error(
