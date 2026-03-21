@@ -1,13 +1,19 @@
 import { buildApp } from './src/app';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import * as schema from './src/modules/booking-engine/db/schema/seats';
+import * as schema from './src/modules/db/schema/seats';
 import dotenv from 'dotenv';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const connectionString = process.env.DB_URL;
+
+if (!connectionString) {
+  throw new Error(
+    `Database connection string is not defined in environment variables: ${connectionString}`
+  );
+}
 
 const startServer = async () => {
   const app = buildApp();
@@ -24,11 +30,7 @@ const startServer = async () => {
 
 startServer();
 
-if (!connectionString) {
-  throw new Error(
-    `Database connection string is not defined in environment variables: ${connectionString}`
-  );
-}
+
 
 const queryClient = postgres(connectionString, {
   max: 20, // Set the maximum number of connections in the pool

@@ -1,19 +1,29 @@
-version: '3.8'
-
 services:
   api:
-    build: ./backend
-    container_name: booking_api
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=${DB_URL}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_started
+    build: ./backend
+    container_name: booking_api
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=${DB_URL}
+    
+    develop:
+      watch:
+        - path: ./backend/package.json
+          action: rebuild
+        - path: ./backend/package-lock.json
+          action: rebuild
+        - path: ./backend
+          target: /app
+          action: sync
 
   postgres:
     image: postgres:17-alpine
@@ -27,7 +37,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d booking_engine"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5

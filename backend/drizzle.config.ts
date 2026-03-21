@@ -13,8 +13,8 @@ if (!connectionString) {
 }
 
 export default defineConfig({
-  schema: './src/modules/booking-engine/db/schema',
-  out: './src/modules/booking-engine/db/migrations',
+  schema: './src/modules/db/schema',
+  out: './src/modules/db/migrations',
   dialect: 'postgresql',
   dbCredentials: {
     url: connectionString,
