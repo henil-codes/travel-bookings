@@ -43,6 +43,7 @@ export const seats = pgTable('seats', {
   price: decimal('price', { precision: 10, scale: 2 }).notNull(),
   status: seatStatusEnum('status').default('available').notNull(),
   lockedUntil: timestamp('locked_until'),
+  version: integer('version').default(0).notNull(),
 });
 
 export const bookings = pgTable('bookings', {
