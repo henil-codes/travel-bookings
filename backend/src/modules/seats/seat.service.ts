@@ -13,14 +13,14 @@ export class SeatService {
                 .for('update')
 
             if (!seat) {
-                throw new AppError('Seat not found', 404, true);
+                throw new AppError('SEAT_NOT_FOUND', 404, true);
             }
 
             const now = new Date();
             const isLockExpired = seat.lockedUntil && new Date(seat.lockedUntil) < now;
 
             if (seat.status !== 'available' && !isLockExpired) {
-                throw new AppError('Seat not available', 409, true);
+                throw new AppError('SEAT_UNAVAILABLE', 409, true);
             }
 
             const lockDurationMinutes = 10;

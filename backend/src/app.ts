@@ -1,8 +1,8 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
-// import { eventRouts } from './modules/booking-engine/routes/events';
-// import { seatRouts } from './modules/booking-engine/routes/seats';
+import { globalErrorHandler } from './modules/core/errorHandler';
+import { seatRoutes } from './modules/seats/seat.routes';
 
 export const buildApp = (): FastifyInstance => {
 
@@ -27,11 +27,16 @@ export const buildApp = (): FastifyInstance => {
   });
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
-  
+
   app.setErrorHandler((error, request, reply) => {
     app.log.error(error);
     reply.status(500).send({ error: 'Internal Server Error' });
   });
+
+  app.setErrorHandler(globalErrorHandler);
+  
+  // Routes
+  app.register(seatRoutes, { prefix: '/api/v1/seats'})
 
   return app;
 };
