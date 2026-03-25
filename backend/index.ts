@@ -1,25 +1,10 @@
 import { buildApp } from './src/app';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import * as schema from './src/modules/db/schema/seats';
-import dotenv from 'dotenv';
-import path from 'path';
-
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
-
-const connectionString = process.env.DB_URL;
-
-if (!connectionString) {
-  throw new Error(
-    `Database connection string is not defined in environment variables: ${connectionString}`
-  );
-}
 
 const startServer = async () => {
   const app = buildApp();
 
   try {
-    const port = parseInt(process.env.PORT || '3000', 10);
+    const port = parseInt(process.env.PORT || '4000', 10);
     await app.listen({ port });
     console.log(`Server is running on port ${port}`);
   } catch (error) {
@@ -29,15 +14,3 @@ const startServer = async () => {
 };
 
 startServer();
-
-
-
-const queryClient = postgres(connectionString, {
-  max: 20, // Set the maximum number of connections in the pool
-  idle_timeout: 30000, // Set the idle timeout for connections (in milliseconds)
-  connect_timeout: 10000, // Set the connection timeout (in milliseconds)
-});
-
-export const db = drizzle(queryClient, { schema });
-
-console.log('Database connection established successfully');
