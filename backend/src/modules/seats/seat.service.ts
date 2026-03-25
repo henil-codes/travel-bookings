@@ -1,4 +1,4 @@
-import { db } from "../../..";
+import { db } from "../db";
 import { AppError } from "../core/errors";
 import { seats } from "../db/schema/seats";
 import { and, eq, sql } from "drizzle-orm";
@@ -29,7 +29,7 @@ export class SeatService {
                 .update(seats)
                 .set({
                     status: 'locked',
-                    lockedUntil: sql`NOW() + interval '${lockDurationMinutes} minutes'`,
+                    lockedUntil: sql`NOW() + (${lockDurationMinutes} * interval '1 minute')`,
                     version: seat.version + 1
                 })
                 .where(and(eq(seats.id, seatId), eq(seats.version, seat.version)))

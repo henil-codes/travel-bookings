@@ -27,12 +27,6 @@ export const buildApp = (): FastifyInstance => {
   });
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
-
-  app.setErrorHandler((error, request, reply) => {
-    app.log.error(error);
-    reply.status(500).send({ error: 'Internal Server Error' });
-  });
-
   app.setErrorHandler(globalErrorHandler);
   
   // Routes
