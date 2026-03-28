@@ -1,8 +1,9 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
-import { globalErrorHandler } from './modules/core/errorHandler';
-import { seatRoutes } from './modules/seats/seat.routes';
+import { globalErrorHandler } from './core/errorHandler';
+import { seatRoutes } from './seats/seat.routes';
+import { socketPlugin } from './core/socket';
 
 export const buildApp = (): FastifyInstance => {
 
@@ -25,12 +26,14 @@ export const buildApp = (): FastifyInstance => {
   app.register(cors, {
     origin: 'http://localhost:5173', // Adjust this to your frontend URL
   });
+
+  app.register(socketPlugin);
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   app.setErrorHandler(globalErrorHandler);
-  
+
   // Routes
-  app.register(seatRoutes, { prefix: '/api/v1/seats'})
+  app.register(seatRoutes, { prefix: '/api/v1/seats' })
 
   return app;
 };

@@ -23,7 +23,11 @@ export const seatRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =
             try {
                 const lockedSeat = await SeatService.lockSeat(seatId, userId);
 
-                // TODO: Emit event to notify other services about the seat lock
+                fastify.io.emit('seat:status_changed', {
+                    seatId: lockedSeat.id,
+                    status: 'locked',
+                    lockedUntil: lockedSeat.lockedUntil,
+                })
 
                 return reply.status(200).send({
                     success: true,
