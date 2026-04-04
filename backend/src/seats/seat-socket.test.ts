@@ -3,8 +3,6 @@ import { FastifyInstance } from 'fastify';
 import { io as Client, Socket } from 'socket.io-client'
 import { buildApp } from '../app';
 import crypto from 'crypto';
-// import { db } from '../db';
-// import { seats } from '../db/schema/seats';
 import { AppError } from '../core/errors';
 
 describe('Seat WebSocket Integration', () => {
