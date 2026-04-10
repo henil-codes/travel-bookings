@@ -17,6 +17,7 @@ describe('Seat Locking Race Condition', () => {
             departureTime: new Date(Date.now() + 86400000), // 1 day
             arrivalTime: new Date(Date.now() + 104400000), // 1 day + 5 hours 
             price: '45.00',
+            capacity: 40,
         }).returning();
         testTripId = trip.id;
 

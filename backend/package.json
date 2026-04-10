@@ -8,8 +8,10 @@
     "build": "tsup index.ts --format esm",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:test": "drizzle-kit migrate --config=drizzle-test.config.ts",
     "test": "vitest",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:studio:test": "drizzle-kit studio --config=drizzle-test.config.ts"
   },
   "author": "",
   "license": "ISC",
