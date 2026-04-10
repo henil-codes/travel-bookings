@@ -31,6 +31,7 @@ export const trips = pgTable('trips', {
   departureTime: timestamp('departure_time').notNull(),
   arrivalTime: timestamp('arrival_time').notNull(),
   price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+  capacity: integer('capacity').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

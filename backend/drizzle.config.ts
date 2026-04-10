@@ -13,8 +13,8 @@ if (!connectionString) {
 }
 
 export default defineConfig({
-  schema: './src/modules/db/schema',
-  out: './src/modules/db/migrations',
+  schema: './src/db/schema',
+  out: './src/db/migrations',
   dialect: 'postgresql',
   dbCredentials: {
     url: connectionString,
