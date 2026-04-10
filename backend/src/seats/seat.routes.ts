@@ -2,7 +2,6 @@ import { FastifyInstance, FastifyPluginAsync } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { lockSeatSchema } from "../core/validation";
 import { SeatService } from "./seat.service";
-import { success } from "zod";
 import { AppError } from "../core/errors";
 
 export const seatRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
@@ -57,4 +56,11 @@ export const seatRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =
             }
         }
     )
+
+    server.get('/', async (request, reply) => {
+        return reply.status(200).send({
+            success: true,
+            message: 'Seat routes are working',
+        })
+    })
 }
