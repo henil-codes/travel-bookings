@@ -62,13 +62,12 @@ describe('Seat WebSocket Integration', () => {
 
   afterAll(async () => {
     clientSocket.close();
-    await db.delete(seats).where(eq(seats.id, testSeatId));
-    await db.delete(trips).where(eq(trips.id, testTripId));
+    // await db.delete(seats).where(eq(seats.id, testSeatId));
+    // await db.delete(trips).where(eq(trips.id, testTripId));
     await app.close();
   });
 
   it('should emit seat:status_changed event when a seat is locked', async () => {
-    const testSeatId = 21;
     const testUserId = crypto.randomUUID();
 
     const socketEventPromise = new Promise((resolve, reject) => {
