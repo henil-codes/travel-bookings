@@ -5,70 +5,66 @@ on:
     branches: ["main"]
 
 jobs:
-  backend:
+  test-and-verify:
+    timeout-minutes: 15
+    name: Run Type Checks and Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
-        working-directory: backend
-    test-and-verify:
-      timeout-minutes: 15
-      name: Run Type Checks and Tests
-      runs-on: ubuntu-latest
-      permissions:
-        contents: read
-      defaults:
-        run:
-          working-directory: backend
+        working-directory: ./backend
 
-      services:
-        postgres:
-          image: postgres:17-alpine
-          env:
-            POSTGRES_USER: ${{ secrets.DB_USER }}
-            POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-            POSTGRES_DB: ${{ secrets.DB_NAME }}
-          ports:
-            - 5432:5432
-          options: >-
-            --health-cmd pg_isready
-            --health-interval 10s
-            --health-timeout 5s
-            --health-retries 5
-        redis:
-          image: redis:7.4-alpine
-          ports:
-            - 6379:6379
-          options: >-
-            --health-cmd "redis-cli ping"
-            --health-interval 10s
-            --health-timeout 5s
-            --health-retries 5
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: ./backend/package-lock.json
       
-      steps:
-        - name: Checkout Code
-          uses: actions/checkout@v4
+      - name: Install Dependencies
+        run: npm ci
 
-        - name: Setup Node.js
-          uses: actions/setup-node@v4
-          with:
-            node-version: 22
-            cache: 'npm'
-            cache-dependency-path: ./backend/package-lock.json
-        
-        - name: Install Dependencies
-          run: npm ci
+      - name: Run Type Check
+        run: npx tsc --noEmit
 
-        - name: Run Type Check
-          run: npx tsc --noEmit
+      - name: Run Database Migrations
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+        run: npm run db:migrate
 
-        - name: Run Database Migrations
-          env:
-            DB_URL: ${{ secrets.DB_URL }}
-          run: npm run db:migrate
-
-        - name: Run Integration Tests
-          env:
-            DB_URL: ${{ secrets.DB_URL }}
-          run: npm run test
+      - name: Run Integration Tests
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+        run: npm run test
 
   deploy-to-aws:
     timeout-minutes: 20
