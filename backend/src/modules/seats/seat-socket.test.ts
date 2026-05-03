@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { io as Client, Socket } from 'socket.io-client';
-import { buildApp } from '../app';
+import { buildApp } from '../../app';
 import crypto from 'crypto';
-import { AppError } from '../core/errors';
-import { seats, trips } from '../db/schema/seats';
-import { db } from '../db';
+import { AppError } from '../../core/errors';
+import { seats, trips } from '../../db/schema/seats';
+import { db } from '../../db';
 import { eq } from 'drizzle-orm';
 
 describe('Seat WebSocket Integration', () => {
@@ -52,8 +52,7 @@ describe('Seat WebSocket Integration', () => {
       .insert(seats)
       .values({
         tripId: testTripId,
-        seatNumber: 12,
-        price: '45.00',
+        seatNumber: 13,
         status: 'available',
       })
       .returning();
