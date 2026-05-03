@@ -2,7 +2,7 @@ import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { globalErrorHandler } from './core/errorHandler';
-import { seatRoutes } from './seats/seat.routes';
+import { seatRoutes } from './modules/seats/seat.routes';
 import { socketPlugin } from './core/socket';
 
 export const buildApp = (): FastifyInstance => {
