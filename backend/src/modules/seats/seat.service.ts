@@ -1,6 +1,6 @@
-import { db } from "../db";
-import { AppError } from "../core/errors";
-import { seats } from "../db/schema/seats";
+import { db } from "../../db";
+import { AppError } from "../../core/errors";
+import { seats } from "../../db/schema/seats";
 import { and, eq, sql } from "drizzle-orm";
 
 export class SeatService {

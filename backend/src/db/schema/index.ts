@@ -1,0 +1,6 @@
+export * from './bookings'
+export * from './passengers'
+export * from './seats'
+export * from './trips'
+export * from './users'
+export * from './vehicles'

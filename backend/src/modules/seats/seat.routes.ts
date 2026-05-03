@@ -1,8 +1,8 @@
 import { FastifyInstance, FastifyPluginAsync } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { lockSeatSchema } from "../core/validation";
+import { lockSeatSchema } from "../../core/validation";
 import { SeatService } from "./seat.service";
-import { AppError } from "../core/errors";
+import { AppError } from "../../core/errors";
 
 export const seatRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const server = fastify.withTypeProvider<ZodTypeProvider>();

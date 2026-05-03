@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { db } from '../db';
-import { trips, seats } from '../db/schema/seats';
+import { db } from '../../db';
+import { seats } from '@/db/schema/seats';
+import { trips } from '@/db/schema/trips';
 import { SeatService } from './seat.service';
 import { eq } from 'drizzle-orm';
 
@@ -16,7 +17,6 @@ describe('Seat Locking Race Condition', () => {
             endLocation: 'Montreal',
             departureTime: new Date(Date.now() + 86400000), // 1 day
             arrivalTime: new Date(Date.now() + 104400000), // 1 day + 5 hours 
-            price: '45.00',
             capacity: 40,
         }).returning();
         testTripId = trip.id;
