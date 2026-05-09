@@ -1,7 +1,8 @@
 import { db } from "../../db";
-import { AppError } from "../../core/errors";
+import { NotFoundError, ConflictError } from "../../core/errors";
 import { seats } from "../../db/schema/seats";
 import { and, eq, sql } from "drizzle-orm";
+import { appEmitter } from "@/core/emitter";
 
 export class SeatService {
     static async lockSeat(seatId: string, userId: string) {
@@ -13,14 +14,14 @@ export class SeatService {
                 .for('update')
 
             if (!seat) {
-                throw new AppError('SEAT_NOT_FOUND', 404, true);
+                throw new NotFoundError('Seat');
             }
 
             const now = new Date();
             const isLockExpired = seat.lockedUntil && new Date(seat.lockedUntil) < now;
 
             if (seat.status !== 'available' && !isLockExpired) {
-                throw new AppError('SEAT_UNAVAILABLE', 409, true);
+                throw new ConflictError('Seat is not available for locking');
             }
 
             const lockDurationMinutes = 10;
@@ -30,14 +31,21 @@ export class SeatService {
                 .set({
                     status: 'locked',
                     lockedUntil: sql`NOW() + (${lockDurationMinutes} * interval '1 minute')`,
+                    lockedByUserId: userId,
                     version: seat.version + 1
                 })
                 .where(and(eq(seats.id, seatId), eq(seats.version, seat.version)))
                 .returning();
 
             if (!updateSeat) {
-                throw new AppError('Failed to lock seat - concurrency issue', 500, false);
+                throw new ConflictError('Failed to lock seat - it may have been modified by another transaction. Please try again.');
             }
+
+            appEmitter.emit('seat:status_changed', {
+                seatId: updateSeat.id,
+                status: 'locked',
+                lockedUntil: updateSeat.lockedUntil,
+            })
 
             return updateSeat;
         })
