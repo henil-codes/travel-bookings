@@ -1,6 +1,5 @@
 import { FastifyError, FastifyRequest, FastifyReply } from "fastify";
 import { AppError } from "./errors";
-import { success } from "zod";
 
 export const globalErrorHandler = (
     error: FastifyError,
@@ -23,6 +22,14 @@ export const globalErrorHandler = (
             success: false,
             error: 'Invalid Request Data',
             details: error.validation,
+        })
+    }
+
+    // Postgres unique violation errors
+    if ((error as any).code === '23505') {
+        return reply.status(409).send({
+            success: false, 
+            error: 'Duplicate entry - Resource already exists'
         })
     }
 
