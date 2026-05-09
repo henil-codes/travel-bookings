@@ -2,6 +2,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import Redis from 'ioredis';
 import fp from 'fastify-plugin';
+import { appEmitter } from './emitter';
 
 export const socketPlugin = fp(async (fastify, options) => {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -48,7 +49,7 @@ export const socketPlugin = fp(async (fastify, options) => {
 
     const io = new SocketIOServer(fastify.server, {
         cors: {
-            origin: 'http://localhost:5173',
+            origin: process.env.CORS_ORIGIN ||'http://localhost:5173',
             methods: ['GET', 'POST']
         }
     })
@@ -56,6 +57,10 @@ export const socketPlugin = fp(async (fastify, options) => {
     io.adapter(createAdapter(pubClient, subClient));
 
     fastify.decorate('io', io);
+
+    appEmitter.on('seat:status_changed', (payload) => {
+        io.emit('seat:status_changed', payload);
+    });
 
     fastify.addHook('onClose', async (instance) => {
         instance.log.info('Closing Socket.IO server and Redis clients...');
