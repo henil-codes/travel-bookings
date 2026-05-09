@@ -11,6 +11,7 @@ import {
 import { InferSelectModel, relations } from 'drizzle-orm';
 import { trips } from './trips';
 import { bookings } from './bookings';
+import { users } from './users';
 
 export const seatStatusEnum = pgEnum('seat_status', [
   'available',
@@ -36,6 +37,9 @@ export const seats = pgTable(
     seatNumber: integer('seat_number').notNull(),
     price: decimal('price', { precision: 10, scale: 2 }).notNull(),
     status: seatStatusEnum('status').default('available').notNull(),
+    lockedByUserId: uuid('locked_by_user_id')
+      .references(() => users.id)
+      .notNull(),
     lockedUntil: timestamp('locked_until'),
     version: integer('version').default(0).notNull(),
   },
