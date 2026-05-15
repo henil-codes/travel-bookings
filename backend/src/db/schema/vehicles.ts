@@ -1,7 +1,6 @@
 import { InferSelectModel } from "drizzle-orm";
 import { pgTable, uuid, varchar, integer } from "drizzle-orm/pg-core";
 
-
 export const vehicles = pgTable('vehicles', {
     id: uuid('id').primaryKey().defaultRandom(),
     operatorName: varchar('operator_name', { length: 255 }).notNull(),

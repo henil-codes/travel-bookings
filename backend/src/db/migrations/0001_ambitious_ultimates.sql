@@ -1,1 +1,0 @@
-ALTER TABLE "seats" ADD COLUMN "version" integer DEFAULT 0 NOT NULL;
