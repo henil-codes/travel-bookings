@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { db } from '../../db';
-import { users } from '@/db/schema';
-import { vehicles } from '@/db/schema';
+import { db } from '@/db';
+import { users } from '@/db/schema/users';
+import { vehicles } from '@/db/schema/vehicles';
 import { seats } from '@/db/schema/seats';
 import { trips } from '@/db/schema/trips';
 import { SeatService } from './seat.service';
@@ -40,32 +40,47 @@ describe('Seat Locking Race Condition', () => {
             endLocation: 'Montreal',
             departureTime: new Date(Date.now() + 86400000), // 1 day
             arrivalTime: new Date(Date.now() + 104400000), // 1 day + 5 hours 
+            status: 'scheduled',
             capacity: 40,
         }).returning();
         testTripId = trip.id;
 
         const [seat] = await db.insert(seats).values({
             tripId: testTripId,
-            seatType: 'standard',
             seatNumber: 12,
             price: '45.00',
+            seatType: 'standard',
             status: 'available',
             lockedByUserId: testUserId,
         }).returning();
         testSeatId = seat.id;
-    })
+    }, 15000);
 
     // Clean up database after tests
     afterAll(async () => {
-        await db.delete(vehicles).where(eq(vehicles.id, testVehicleId));
-        await db.delete(users).where(eq(users.id, testUserId));
-        await db.delete(seats).where(eq(seats.id, testSeatId));
-        await db.delete(trips).where(eq(trips.id, testTripId));
+        await db.transaction(async (tx) => {
+            await tx.delete(users).where(eq(users.id, testUserId));
+            await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
+            await tx.delete(seats).where(eq(seats.id, testSeatId));
+            await tx.delete(trips).where(eq(trips.id, testTripId));
+        })
     })
 
-    it('should only allow one user to lock a seat concurrently', async () => {
+    const resetSeat = (overrides = {}) => 
+        db.update(seats).set({
+            status: 'available',
+            lockedUntil: null,
+            lockedByUserId: null,
+            version: 0,
+            ...overrides,
+        })
+        .where(eq(seats.id, testSeatId))
+
+    it('Should allow only one user out of 10 concurrent requests', async () => {
+        await resetSeat();
+
         const concurrentRequests = Array.from({ length: 10 }).map((_, index) => {
-            return SeatService.lockSeat(testSeatId, `user-${index}`);
+            return SeatService.lockSeat(testSeatId, `${testUserId}-concurrent-${index}`);
         })
 
         const results = await Promise.allSettled(concurrentRequests);
@@ -73,12 +88,13 @@ describe('Seat Locking Race Condition', () => {
         const successfulLocks = results.filter(r => r.status === 'fulfilled');
         const failedLocks = results.filter(r => r.status === 'rejected');
 
-        if(failedLocks.length > 0) {
-            console.log('Rejection Reasons:', (failedLocks[0] as PromiseRejectedResult).reason);
-        }
-
         expect(successfulLocks.length).toBe(1);
         expect(failedLocks.length).toBe(9);
+
+        // all failures must be known ConflictErrors, not crashes
+        for (const failure of failedLocks) {
+            expect((failure as PromiseRejectedResult).reason).toBeInstanceOf(ConflictError);
+        }
 
         const [lockedSeat] = await db.select().from(seats).where(eq(seats.id, testSeatId));
         expect(lockedSeat.status).toBe('locked');

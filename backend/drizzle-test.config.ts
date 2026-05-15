@@ -11,7 +11,7 @@ if (!connectionString) {
 }
 
 export default defineConfig({
-  schema: './src/db/schema',
+  schema: './src/db/schema/bookings.ts',
   out: './src/db/migrations',
   dialect: 'postgresql',
   dbCredentials: {
