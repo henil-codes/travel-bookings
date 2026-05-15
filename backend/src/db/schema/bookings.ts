@@ -11,7 +11,7 @@ import {
 import { trips } from './trips';
 import { seats } from './seats';
 import { users } from './users';
-import { InferSelectModel, relations, notInArray } from 'drizzle-orm';
+import { InferSelectModel, notInArray, sql } from 'drizzle-orm';
 
 export const paymentStatusEnum = pgEnum('payment_status', [
   'pending',
@@ -49,23 +49,12 @@ export const bookings = pgTable(
   (table) => ({
     uniqueActiveSeatBooking: uniqueIndex('unique_active_seat_booking')
       .on(table.tripId, table.seatId, table.userId)
-      .where(notInArray(table.status, ['failed', 'refunded'])),
+      .where(sql`${table.status} not in ('failed', 'refunded')`),
     bookingUserStatus: index('idx_booking_user_status').on(
       table.userId,
       table.status
     ),
   })
 );
-
-export const bookingRelations = relations(bookings, ({ one }) => ({
-  trip: one(trips, {
-    fields: [bookings.tripId],
-    references: [trips.id],
-  }),
-  seat: one(seats, {
-    fields: [bookings.seatId],
-    references: [seats.id],
-  }),
-}));
 
 export type Booking = InferSelectModel<typeof bookings>;
