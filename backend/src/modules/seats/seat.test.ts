@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { db } from '@/db';
-import { users } from '@/db/schema/users';
-import { vehicles } from '@/db/schema/vehicles';
 import { seats } from '@/db/schema/seats';
 import { trips } from '@/db/schema/trips';
+import { users } from '@/db/schema/users';
+import { vehicles } from '@/db/schema/vehicles';
 import { SeatService } from './seat.service';
 import { ConflictError, NotFoundError } from '@/core/errors';
 import { eq } from 'drizzle-orm';
 
-describe('Seat Locking Race Condition', () => {
+describe('SeatService - lockSeat()', () => {
     let testTripId: string;
     let testSeatId: string;
     let testUserId: string;
@@ -27,21 +27,21 @@ describe('Seat Locking Race Condition', () => {
 
         const [vehicle] = await db.insert(vehicles).values({
             operatorName: 'Test Operator',
-            vehicleType: 'bus',
             vehicleNumber: 'TEST-1234',
             capacity: 40,
+            vehicleType: 'bus',
         }).returning();
         testVehicleId = vehicle.id;
 
         const [trip] = await db.insert(trips).values({
             name: 'Toronto to Montreal Express',
-            vehicleId: testVehicleId,
             startLocation: 'Toronto',
             endLocation: 'Montreal',
             departureTime: new Date(Date.now() + 86400000), // 1 day
             arrivalTime: new Date(Date.now() + 104400000), // 1 day + 5 hours 
-            status: 'scheduled',
+            vehicleId: testVehicleId,
             capacity: 40,
+            status: 'scheduled',
         }).returning();
         testTripId = trip.id;
 
@@ -49,8 +49,8 @@ describe('Seat Locking Race Condition', () => {
             tripId: testTripId,
             seatNumber: 12,
             price: '45.00',
-            seatType: 'standard',
             status: 'available',
+            seatType: 'standard',
             lockedByUserId: testUserId,
         }).returning();
         testSeatId = seat.id;
@@ -59,14 +59,15 @@ describe('Seat Locking Race Condition', () => {
     // Clean up database after tests
     afterAll(async () => {
         await db.transaction(async (tx) => {
-            await tx.delete(users).where(eq(users.id, testUserId));
-            await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
             await tx.delete(seats).where(eq(seats.id, testSeatId));
             await tx.delete(trips).where(eq(trips.id, testTripId));
+            await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
+            await tx.delete(users).where(eq(users.id, testUserId));
         })
     })
 
-    const resetSeat = (overrides = {}) => 
+    // Helper to reset seat state between tests
+    const resetSeat = (overrides = {}) =>
         db.update(seats).set({
             status: 'available',
             lockedUntil: null,
@@ -74,16 +75,15 @@ describe('Seat Locking Race Condition', () => {
             version: 0,
             ...overrides,
         })
-        .where(eq(seats.id, testSeatId))
+            .where(eq(seats.id, testSeatId))
 
+    // --- Race condition test ---
     it('Should allow only one user out of 10 concurrent requests', async () => {
         await resetSeat();
 
-        const concurrentRequests = Array.from({ length: 10 }).map((_, index) => {
-            return SeatService.lockSeat(testSeatId, `${testUserId}-concurrent-${index}`);
-        })
-
-        const results = await Promise.allSettled(concurrentRequests);
+        const results = await Promise.allSettled(
+            Array.from({ length: 10 }).map((_, index) => SeatService.lockSeat(testSeatId, testUserId))
+        );
 
         const successfulLocks = results.filter(r => r.status === 'fulfilled');
         const failedLocks = results.filter(r => r.status === 'rejected');
