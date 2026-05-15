@@ -1,8 +1,6 @@
 import { InferSelectModel, relations } from 'drizzle-orm';
 import { pgTable, uuid, varchar, timestamp, decimal, integer, pgEnum } from 'drizzle-orm/pg-core';
-import { seats } from './seats';
 import { vehicles } from './vehicles';
-import { bookings } from './bookings';
 
 export const tripStatusEnum = pgEnum('trip_status', [
     'scheduled',
@@ -24,10 +22,5 @@ export const trips = pgTable('trips', {
   status: tripStatusEnum('status').default('scheduled').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
-
-export const tripRelations = relations(trips, ({many}) => ({
-    seats: many(seats),
-    bookings: many(bookings),
-}))
 
 export type Trip = InferSelectModel<typeof trips>;

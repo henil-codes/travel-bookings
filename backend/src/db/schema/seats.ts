@@ -10,7 +10,6 @@ import {
 } from 'drizzle-orm/pg-core';
 import { InferSelectModel, relations } from 'drizzle-orm';
 import { trips } from './trips';
-import { bookings } from './bookings';
 import { users } from './users';
 
 export const seatStatusEnum = pgEnum('seat_status', [
@@ -38,8 +37,7 @@ export const seats = pgTable(
     price: decimal('price', { precision: 10, scale: 2 }).notNull(),
     status: seatStatusEnum('status').default('available').notNull(),
     lockedByUserId: uuid('locked_by_user_id')
-      .references(() => users.id)
-      .notNull(),
+      .references(() => users.id),
     lockedUntil: timestamp('locked_until'),
     version: integer('version').default(0).notNull(),
   },
@@ -54,15 +52,6 @@ export const seats = pgTable(
     ),
   })
 );
-
-// --- RELATIONS ---
-export const seatRelations = relations(seats, ({ one, many }) => ({
-  trip: one(trips, {
-    fields: [seats.tripId],
-    references: [trips.id],
-  }),
-  bookings: many(bookings),
-}));
 
 // --- Export Types ---
 export type Seat = InferSelectModel<typeof seats>;
