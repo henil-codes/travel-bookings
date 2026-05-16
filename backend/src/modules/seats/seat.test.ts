@@ -12,6 +12,7 @@ describe('SeatService - lockSeat()', () => {
     let testTripId: string;
     let testSeatId: string;
     let testUserId: string;
+    let testUser2Id: string;
     let testVehicleId: string;
 
     // Seed database before tests
@@ -24,6 +25,15 @@ describe('SeatService - lockSeat()', () => {
             passwordHash: 'hashedpassword',
         }).returning();
         testUserId = user.id;
+
+        const [user2] = await db.insert(users).values({
+            name: 'Test User 2',
+            email: 'seattest2@example.com',
+            local_phone: '0987654321',
+            countryCode: 'IN',
+            passwordHash: 'hashedPassword',
+        }).returning();
+        testUser2Id = user2.id;
 
         const [vehicle] = await db.insert(vehicles).values({
             operatorName: 'Test Operator',
@@ -63,6 +73,7 @@ describe('SeatService - lockSeat()', () => {
             await tx.delete(trips).where(eq(trips.id, testTripId));
             await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
             await tx.delete(users).where(eq(users.id, testUserId));
+            await tx.delete(users).where(eq(users.id, testUser2Id));
         })
     })
 
@@ -100,6 +111,66 @@ describe('SeatService - lockSeat()', () => {
         expect(lockedSeat.status).toBe('locked');
         expect(lockedSeat.version).toBe(1);
         expect(lockedSeat.lockedUntil).not.toBeNull();
+    });
+
+    // --- Expired lock test ---
+    it('Should allow a new user to lock a seat whose lock has expired', async () => {
+        await resetSeat({
+            status: 'locked',
+            lockedByUserId: testUserId,
+            lockedUntil: new Date(Date.now() - 1000), // expired 1 minute ago
+            version: 1,
+        })
+
+        const result = await SeatService.lockSeat(testSeatId, testUser2Id);
+
+        expect(result.status).toBe('locked');
+        expect(result.lockedByUserId).toBe(testUser2Id);
+        expect(result.version).toBe(2);
     })
+
+    // --- Not found test ---
+    it('Should throw NotFoundError for a non-existent seat ID', async () => {
+        const nonExistentSeatId = '00000000-0000-0000-0000-000000000000';
+
+        const result = SeatService.lockSeat(nonExistentSeatId, testUserId);
+
+        await expect(result).rejects.toThrow(NotFoundError);
+    })
+
+    // --- Conflict test ---
+    it('Should throw ConflictError when seat is already locked and not expired', async () => {
+        await resetSeat({
+            status: 'locked',
+            lockedUntil: new Date(Date.now() + 10 * 60 * 1000), // expires in 10 minutes
+            lockedByUserId: testUserId,
+            version: 1,
+        });
+
+        const result = SeatService.lockSeat(testSeatId, testUser2Id);
+
+        await expect(result).rejects.toThrow(ConflictError);
+    })
+
+    it('Should throw ConflictError when seat is sold', async () => {
+        await resetSeat({
+            status: 'sold',
+        })
+
+        const result = SeatService.lockSeat(testSeatId, testUser2Id);
+
+        await expect(result).rejects.toThrow(ConflictError);
+    })
+
+    it('Should throw ConflictError when seat is reserved', async () => {
+        await resetSeat({
+            status: 'reserved'
+        })
+
+        const result = SeatService.lockSeat(testSeatId, testUser2Id);
+
+        await expect(result).rejects.toThrow(ConflictError);
+    })
+
 })
 
