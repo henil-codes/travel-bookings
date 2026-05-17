@@ -7,6 +7,7 @@ import { vehicles } from '@/db/schema/vehicles';
 import { SeatService } from './seat.service';
 import { ConflictError, NotFoundError } from '@/core/errors';
 import { eq } from 'drizzle-orm';
+import { TripService } from '@/modules/trips/trip.service';
 
 describe('SeatService - lockSeat()', () => {
     let testTripId: string;
@@ -43,16 +44,15 @@ describe('SeatService - lockSeat()', () => {
         }).returning();
         testVehicleId = vehicle.id;
 
-        const [trip] = await db.insert(trips).values({
+        const trip = await TripService.createTrip({
             name: 'Toronto to Montreal Express',
             startLocation: 'Toronto',
             endLocation: 'Montreal',
             departureTime: new Date(Date.now() + 86400000), // 1 day
-            arrivalTime: new Date(Date.now() + 104400000), // 1 day + 5 hours 
+            arrivalTime: new Date(Date.now() + 104400000), // 1 day + 5 hours
             vehicleId: testVehicleId,
             capacity: 40,
-            status: 'scheduled',
-        }).returning();
+        });
         testTripId = trip.id;
 
         const [seat] = await db.insert(seats).values({
