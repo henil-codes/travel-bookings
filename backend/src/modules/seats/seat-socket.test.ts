@@ -9,6 +9,7 @@ import { users } from '@/db/schema/users';
 import { vehicles } from '@/db/schema/vehicles';
 import { NotFoundError, ConflictError, AppError } from '@/core/errors';
 import { eq } from 'drizzle-orm';
+import { TripService } from '@/modules/trips/trip.service';
 
 describe('Seat WebSocket Integration', async () => {
     let app: FastifyInstance;
@@ -53,7 +54,7 @@ describe('Seat WebSocket Integration', async () => {
         }).returning();
         testVehicleId = vehicle.id;
 
-        const [trip] = await db.insert(trips).values({
+        const trip = await TripService.createTrip({
             name: 'WebSocket Test Trip',
             startLocation: 'Vancouver',
             endLocation: 'Toronto',
@@ -62,7 +63,7 @@ describe('Seat WebSocket Integration', async () => {
             vehicleId: testVehicleId,
             capacity: 40,
             status: 'scheduled',
-        }).returning();
+        })
         testTripId = trip.id;
 
         const [seat] = await db.insert(seats).values({
@@ -98,7 +99,7 @@ describe('Seat WebSocket Integration', async () => {
 
         const response = await fetch(`${serverUrl}/api/v1/seats/lock`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 seatId: testSeatId,
                 userId: testUserId,
@@ -115,13 +116,13 @@ describe('Seat WebSocket Integration', async () => {
         expect(socketData.lockedUntil).toBeDefined();
     })
 
-    it('Should not emit seat:status_changed when locking an already-locked seat', async() => {
+    it('Should not emit seat:status_changed when locking an already-locked seat', async () => {
         let eventFired = false;
         clientSocket.on('seat:status_changed', () => { eventFired = true; });
 
         const response = await fetch(`${serverUrl}/api/v1/seats/lock`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 seatId: testSeatId,
                 userId: testUserId,
