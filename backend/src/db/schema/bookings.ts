@@ -12,11 +12,13 @@ import { trips } from './trips';
 import { seats } from './seats';
 import { users } from './users';
 import { InferSelectModel, notInArray, sql } from 'drizzle-orm';
+import { passengers } from './passengers';
 
 export const paymentStatusEnum = pgEnum('payment_status', [
   'pending',
   'completed',
   'failed',
+  'cancelled',
   'refunded',
 ]);
 
@@ -30,16 +32,11 @@ export const bookings = pgTable(
     seatId: uuid('seat_id')
       .references(() => seats.id)
       .notNull(),
-    userId: uuid('user_id')
-      .references(() => users.id)
-      .notNull(),
+    passengerId: uuid('passenger_id')
+      .references(() => passengers.id).notNull(),
+    bookedBy: uuid('booked_by_user_id').references(() => users.id).notNull(),
     totalAmount: decimal('total_amount', { precision: 10, scale: 2 }).notNull(),
     currency: varchar('currency', { length: 3 }).default('INR').notNull(),
-    gatewayOrderId: varchar('gateway_order_id', { length: 255 }),
-    gatewayPaymentId: varchar('gateway_payment_id', { length: 255 }),
-    gatewayPaymentSignature: varchar('gateway_payment_signature', {
-      length: 512,
-    }),
     status: paymentStatusEnum('status').default('pending').notNull(),
     cancellationReason: varchar('cancellation_reason', { length: 255 }),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -48,10 +45,10 @@ export const bookings = pgTable(
   },
   (table) => ({
     uniqueActiveSeatBooking: uniqueIndex('unique_active_seat_booking')
-      .on(table.tripId, table.seatId, table.userId)
-      .where(sql`${table.status} not in ('failed', 'refunded')`),
+      .on(table.tripId, table.seatId)
+      .where(sql`${table.status} not in ('failed', 'refunded', 'cancelled')`),
     bookingUserStatus: index('idx_booking_user_status').on(
-      table.userId,
+      table.bookedBy,
       table.status
     ),
   })

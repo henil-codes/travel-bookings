@@ -1,14 +1,17 @@
-import {pgTable, varchar, integer,uuid } from 'drizzle-orm/pg-core';
+import { pgTable, pgEnum, varchar, integer, boolean, uuid } from 'drizzle-orm/pg-core';
 import { bookings } from './bookings';
 import { InferSelectModel } from 'drizzle-orm';
 
+export const genderEnum = pgEnum('gender', ['male', 'female', 'other']);
+export const idTypeEnum = pgEnum('id_type', ['aadhar', 'pan', 'passport', 'driving_license']);
+
 export const passengers = pgTable('passengers', {
     id: uuid('id').primaryKey().defaultRandom(),
-    bookingId: uuid('booking_id').references(() => bookings.id).notNull(),
     name: varchar('name', { length: 255 }).notNull(),
     age: integer('age').notNull(),
-    gender: varchar('gender', { length: 50 }).notNull(),
-    idType: varchar('id_type', { length: 100 }).notNull(),
+    gender: genderEnum('gender').notNull(),
+    isAccessibilityRequired: boolean('is_accessibility_required').default(false).notNull(),
+    idType: idTypeEnum('id_type').notNull(),
     idNumber: varchar('id_number', { length: 255 }).notNull(),
 })
 
