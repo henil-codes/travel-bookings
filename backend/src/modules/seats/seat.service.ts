@@ -1,4 +1,5 @@
 import { db } from "../../db";
+import { users } from '@/db/schema/users'
 import { NotFoundError, ConflictError } from "../../core/errors";
 import { seats } from "../../db/schema/seats";
 import { and, eq, sql } from "drizzle-orm";
@@ -7,6 +8,12 @@ import { appEmitter } from "@/core/emitter";
 export class SeatService {
     static async lockSeat(seatId: string, userId: string) {
         return await db.transaction(async (tx) => {
+            const [user] = await tx.select().from(users).where(eq(users.id, userId));
+
+            if (!user) {
+                throw new NotFoundError('User');
+            }
+
             const [seat] = await tx
                 .select()
                 .from(seats)
@@ -45,6 +52,42 @@ export class SeatService {
                 seatId: updateSeat.id,
                 status: 'locked',
                 lockedUntil: updateSeat.lockedUntil,
+            })
+
+            return updateSeat;
+        })
+    }
+
+    static async unlockSeat(seatId: string, userId: string) {
+        return await db.transaction(async (tx) => {
+            const [seat] = await tx.select().from(seats).where(eq(seats.id, seatId)).for('update');
+
+            if (!seat) {
+                throw new NotFoundError('Seat');
+            }
+
+            if (seat.status !== 'locked') {
+                throw new ConflictError('Seat is not currently locked');
+            }
+
+            if (seat.lockedByUserId !== userId) {
+                throw new ConflictError('You do not have permission to unlock this seat');
+            }
+
+            const [updateSeat] = await tx.update(seats).set({
+                status: 'available',
+                lockedUntil: null,
+                lockedByUserId: null,
+                version: seat.version + 1,
+            }
+            )
+                .where(and(eq(seats.id, seatId), eq(seats.version, seat.version)))
+                .returning();
+
+            appEmitter.emit('seat:status_changed', {
+                seatId: updateSeat.id,
+                status: 'available',
+                lockedUntil: null,
             })
 
             return updateSeat;
