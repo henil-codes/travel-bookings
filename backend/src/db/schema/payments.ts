@@ -25,8 +25,8 @@ export const payments = pgTable('payments', {
     
     // Razorpay identifiers
     gatewayOrderId: varchar('gateway_order_id', { length: 255 }).notNull(),
-    gatewayPaymentId: varchar('gateway_payment_id', { length: 255 }).notNull(),
-    gatewayPaymentSignature: varchar('gateway_payment_signature', { length: 512 }).notNull(),
+    gatewayPaymentId: varchar('gateway_payment_id', { length: 255 }),
+    gatewayPaymentSignature: varchar('gateway_payment_signature', { length: 512 }),
     gatewayRefundId: varchar('gateway_refund_id', { length: 255 }),
     
     // what actually happened in the payment flow
