@@ -72,6 +72,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  
+  ngok:
+    image: ngrok/ngrok:latest
+    container_name: booking_ngrok
+    depends_on: 
+      - api
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command:
+      - "http"
+      - "api:3000"
+      - "--log=stdout"
+    ports:
+      - "4040:4040"
 
 volumes:
   pgdata:
