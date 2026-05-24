@@ -156,6 +156,266 @@ describe('PaymentService', () => {
             expect(paymentRecord.gatewayPaymentId).toBeNull();
             expect(paymentRecord.amount).toBe('89.00');
         })
+
+        it('should throw NotFoundError if a non-existent booking', async () => {
+            await expect(PaymentService.createPaymentOrder('00000000-0000-0000-0000-000000000000')).rejects.toThrow(NotFoundError);
+        })
+
+        it('should throw ConflictError if booking is not pending', async () => {
+            await db.update(bookings).set({ status: 'completed' }).where(eq(bookings.id, testBookingId));
+
+            await expect(PaymentService.createPaymentOrder(testBookingId)).rejects.toThrow(ConflictError);
+        })
+    })
+
+    // --- Handle Payment Success ---
+    describe('handlePaymentSuccess', () => {
+        const gatewayOrderId = 'order_test_123';
+        const gatewayPaymentId = 'payment_test_789';
+
+        beforeEach(async () => {
+            await resetToPrePaymentState();
+
+            // seed an order_created row 
+            await db.insert(payments).values({
+                bookingId: testBookingId,
+                gatewayOrderId,
+                event: 'order_created',
+                amount: '89.00',
+                currency: 'INR',
+            })
+        })
+
+        it('should verify signature, mark booking completed, seat sold', async () => {
+            const signature = makeSignature(gatewayOrderId, gatewayPaymentId);
+
+            const updatedBooking = await PaymentService.handleSuccess({
+                bookingId: testBookingId,
+                gatewayOrderId,
+                gatewayPaymentId,
+                gatewayPaymentSignature: signature,
+                method: 'upi',
+            })
+
+            expect(updatedBooking.status).toBe('completed');
+
+            // seat must be sold
+            const [seat] = await db.select().from(seats).where(eq(seats.id, testSeatId));
+            expect(seat.status).toBe('sold');
+
+            // payment record must be created
+            const [paymentRecord] = await db.select().from(payments).where(and(eq(payments.bookingId, testBookingId), eq(payments.event, 'payment_captured')))
+            expect(paymentRecord).toBeDefined();
+            expect(paymentRecord.gatewayPaymentId).toBe(gatewayPaymentId);
+            expect(paymentRecord.amount).toBe('89.00');
+            expect(paymentRecord.method).toBe('upi');
+        })
+
+        it('should throw UnauthorizedError if an invalid signature', async () => {
+            await expect(PaymentService.handleSuccess({
+                bookingId: testBookingId,
+                gatewayOrderId,
+                gatewayPaymentId,
+                gatewayPaymentSignature: 'invalid_signature',
+            })).rejects.toThrow(UnauthorizedError);
+        })
+
+        it('should throw ConflictError if booking is already completed', async () => {
+            await db.update(bookings).set({ status: 'completed' }).where(eq(bookings.id, testBookingId));
+
+            const signature = makeSignature(gatewayOrderId, gatewayPaymentId);
+
+            await expect(PaymentService.handleSuccess({
+                bookingId: testBookingId,
+                gatewayOrderId,
+                gatewayPaymentId,
+                gatewayPaymentSignature: signature,
+            })).rejects.toThrow(ConflictError);
+        })
+    })
+
+    // --- Handle Payment Failure ---
+    describe('handlePaymentFailure', () => {
+        const gatewayOrderId = 'order_test_123';
+
+        beforeEach(async () => {
+            await resetToPrePaymentState();
+        })
+
+        it('should record payment_failed, mark booking failed, release seat', async () => {
+            await PaymentService.handleFailure({
+                bookingId: testBookingId,
+                gatewayOrderId,
+                gatewayResponse: JSON.stringify({ error: 'Insufficient_funds' }),
+            })
+
+            const [booking] = await db.select().from(bookings).where(eq(bookings.id, testBookingId));
+            expect(booking.status).toBe('failed');
+
+            const [seat] = await db.select().from(seats).where(eq(seats.id, testSeatId));
+            expect(seat.status).toBe('available');
+            expect(seat.lockedByUserId).toBeNull();
+            expect(seat.lockedUntil).toBeNull();
+
+            const [paymentRecord] = await db.select().from(payments).where(and(eq(payments.bookingId, testBookingId), eq(payments.event, 'payment_failed')));
+            expect(paymentRecord).toBeDefined();
+            expect(paymentRecord.gatewayOrderId).toBe(gatewayOrderId);
+            expect(paymentRecord.gatewayResponse).toBe(JSON.stringify({ error: 'Insufficient_funds' }))
+        })
+
+        it('should throw ConflictError if booking is not pending', async () => {
+            await db.update(bookings).set({ status: 'failed' }).where(eq(bookings.id, testBookingId));
+
+            await expect(PaymentService.handleFailure({ bookingId: testBookingId, gatewayOrderId, gatewayResponse: 'error' })).rejects.toThrow(ConflictError);
+        })
+
+        it('should throw NotFoundError for non-existent booking', async () => {
+            await expect(PaymentService.handleFailure({ bookingId: '00000000-0000-0000-0000-000000000000', gatewayOrderId, gatewayResponse: 'error' })).rejects.toThrow(NotFoundError);
+        })
+    })
+
+    // --- Initiate Refund ---
+    describe('initiateRefund', () => {
+        const gatewayOrderId = 'order_test_123';
+        const gatewayPaymentId = 'payment_test_789';
+
+        beforeEach(async () => {
+            await resetToPrePaymentState();
+
+            await db.update(bookings).set({ status: 'completed' }).where(eq(bookings.id, testBookingId));
+
+            await db.update(seats).set({ status: 'sold' }).where(eq(seats.id, testSeatId));
+
+            await db.insert(payments).values({
+                bookingId: testBookingId,
+                gatewayOrderId,
+                gatewayPaymentId,
+                event: 'payment_captured',
+                amount: '89.00',
+                currency: 'INR',
+            })
+        })
+
+        it('should initiate full refund and release seat', async () => {
+            await PaymentService.initiateRefund({
+                bookingId: testBookingId,
+                cancellationReason: 'Customer requested cancellation',
+            })
+
+            const [booking] = await db.select().from(bookings).where(eq(bookings.id, testBookingId));
+            expect(booking.status).toBe('refunded');
+            expect(booking.cancelledAt).not.toBeNull();
+            expect(booking.cancellationReason).toBe('Customer requested cancellation');
+
+            const [seat] = await db.select().from(seats).where(eq(seats.id, testSeatId));
+            expect(seat.status).toBe('available');
+            expect(seat.lockedByUserId).toBeNull();
+            expect(seat.lockedUntil).toBeNull()
+
+            const [paymentRecord] = await db.select().from(payments).where(and(eq(payments.bookingId, testBookingId), eq(payments.event, 'refund_initiated')));
+            expect(paymentRecord).toBeDefined();
+            expect(paymentRecord.gatewayRefundId).toBe('refund_test_456');
+            expect(paymentRecord.refundAmount).toBe('89.00');
+        })
+
+        it('should support partial refund amount', async () => {
+            await PaymentService.initiateRefund({
+                bookingId: testBookingId,
+                cancellationReason: 'Customer requested cancellation',
+                refundAmount: 44.50,
+            })
+
+            const [paymentRecord] = await db.select().from(payments).where(and(eq(payments.bookingId, testBookingId), eq(payments.event, 'refund_initiated')));
+            expect(paymentRecord).toBeDefined();
+            expect(paymentRecord.gatewayRefundId).toBe('refund_test_456');
+            expect(paymentRecord.refundAmount).toBe('44.50');
+        })
+
+        it('should throw ConflictError if booking is not completed', async () => {
+            await db.update(bookings).set({ status: 'pending' }).where(eq(bookings.id, testBookingId));
+
+            await expect(PaymentService.initiateRefund({
+                bookingId: testBookingId,
+                cancellationReason: 'Customer requested cancellation',
+            })).rejects.toThrow(ConflictError);
+        })
+
+        it('should throw NotFoundError if no captured payment row exists', async () => {
+            await db.delete(payments).where(and(eq(payments.bookingId, testBookingId), eq(payments.event, 'payment_captured')));
+
+            await expect(PaymentService.initiateRefund({
+                bookingId: testBookingId, 
+                cancellationReason: 'Customer requested cancellation',
+            })).rejects.toThrow(NotFoundError);
+        })
+    })
+
+    // --- Webhook Handler ---
+    describe('handleWebhook', () => {
+        const gatewayOrderId = 'order_test_123';
+        const gatewayPaymentId = 'payment_test_789';
+        const gatewayRefundId = 'refund_test_456';
+
+        beforeEach(async () => {
+            await resetToPrePaymentState();
+
+            await db.insert(payments).values({
+                bookingId: testBookingId,
+                gatewayOrderId,
+                gatewayPaymentId, 
+                gatewayRefundId,
+                event: 'refund_initiated',
+                amount: '89.00',
+                refundAmount: '89.00',
+                currency: 'INR'
+            })
+        })
+
+        it('should record refund_completed when webhook is valid', async () => {
+            const rawBody = JSON.stringify({
+                event: 'refund.processed',
+                payload: {
+                    refund: {
+                        entity: {
+                            id: gatewayRefundId,
+                            payment_id: gatewayPaymentId,
+                        }
+                    }
+                }
+            })
+
+            const signature = makeWebhookSignature(rawBody);
+
+            await PaymentService.handleWebhook({ rawBody, signature });
+
+            const [paymentRecord] = await db.select().from(payments).where(and(eq(payments.bookingId, testBookingId), eq(payments.event, 'refund_completed')));
+            expect(paymentRecord).toBeDefined();
+            expect(paymentRecord.gatewayRefundId).toBe(gatewayRefundId);
+        })
+
+        it('should throw UnauthorizedError if signature verification fails', async ()=> {
+            const rawBody = JSON.stringify({ event: 'refund.processed' });
+
+            await expect(PaymentService.handleWebhook({ rawBody, signature: 'bad_signature'})).rejects.toThrow(UnauthorizedError);
+        })
+
+        it('should silently skip unknown refund IDs without throwing error', async () => {
+            const rawBody = JSON.stringify({
+                event: 'refund.processed',
+                payload: {
+                    refund: {
+                        entity: {
+                            id: 'refund_unknown_999',
+                            payment_id: gatewayPaymentId,
+                        }
+                    }
+                }
+            })
+
+            const signature = makeWebhookSignature(rawBody);
+
+            await expect(PaymentService.handleWebhook({ rawBody, signature })).resolves.toBeUndefined();
+        })
     })
 
 })

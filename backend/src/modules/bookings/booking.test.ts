@@ -8,6 +8,8 @@ import { vehicles } from '@/db/schema/vehicles'
 import { passengers } from '@/db/schema/passengers'
 import { eq } from 'drizzle-orm'
 import { TripService } from '@/modules/trips/trip.service'
+import { ConflictError } from '@/core/errors';
+import { BookingService } from './booking.service'
 
 
 describe('Bookings Schema & Integrity', () => {
@@ -126,15 +128,16 @@ describe('Bookings Schema & Integrity', () => {
     })
 
     it('Should prevent duplicate active bookings for the same seat', async () => {
-        await expect(db.insert(bookings).values({
+        const [passenger] = await db.select().from(passengers).where(eq(passengers.id, passengerId));
+        await expect(BookingService.createBooking({
             tripId: testTripId,
             seatId: testSeatId,
-            passengerId: passengerId,
+            passenger: passenger,
             bookedBy: testUserId,
             status: 'pending',
             totalAmount: '80.00',
             currency: 'INR'
-        })).rejects.toThrow();
+        })).rejects.toThrow(ConflictError);
 
     })
 })
