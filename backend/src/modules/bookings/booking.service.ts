@@ -1,5 +1,5 @@
 import { db } from '@/db'
-import { bookings } from '@/db/schema/bookings'
+import { bookings, paymentStatusEnum } from '@/db/schema/bookings'
 import { seats } from '@/db/schema/seats'
 import { users } from '@/db/schema/users'
 import { passengers } from '@/db/schema/passengers'
@@ -17,10 +17,14 @@ interface PassengerInput {
 }
 
 interface CreateBookingInput {
-    seatId: string;
     tripId: string;
-    bookedBy: string;
+    seatId: string;
     passenger: PassengerInput;
+    bookedBy: string;
+    status: typeof paymentStatusEnum.enumValues[number];
+    totalAmount: string;
+    currency: string;
+
 }
 
 export class BookingService {
