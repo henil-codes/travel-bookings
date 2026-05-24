@@ -11,7 +11,7 @@ import { NotFoundError, ConflictError, AppError } from '@/core/errors';
 import { eq } from 'drizzle-orm';
 import { TripService } from '@/modules/trips/trip.service';
 
-describe('Seat WebSocket Integration', async () => {
+describe('Seat WebSocket Integration', () => {
     let app: FastifyInstance;
     let clientSocket: Socket;
     let serverUrl: string;
@@ -77,14 +77,20 @@ describe('Seat WebSocket Integration', async () => {
     }, 15000);
 
     afterAll(async () => {
-        clientSocket.close();
-        await db.transaction(async (tx) => {
-            await tx.delete(seats).where(eq(seats.id, testSeatId));
-            await tx.delete(trips).where(eq(trips.id, testTripId));
-            await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
-            await tx.delete(users).where(eq(users.id, testUserId));
-        })
-        await app.close();
+        clientSocket?.close();
+
+        if (testSeatId) {
+            await db.transaction(async (tx) => {
+                await tx.delete(seats).where(eq(seats.id, testSeatId));
+                await tx.delete(trips).where(eq(trips.id, testTripId));
+                await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
+                await tx.delete(users).where(eq(users.id, testUserId));
+            })
+        }
+
+        if (app) {
+            await app.close();
+        }
     })
 
     it('Should emit seat:status_changed when a seat is locked', async () => {
