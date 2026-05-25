@@ -36,7 +36,7 @@ export class AuthService {
         }
 
         if (user.authProvider !== 'local' || !user.passwordHash) {
-            throw new UnauthorizedError(`Please login using your ${input.authProvider} account`);
+            throw new UnauthorizedError(`Please login using your ${user.authProvider} account`);
         }
 
         const passwordValid = await bcrypt.compare(input.password, user.passwordHash);

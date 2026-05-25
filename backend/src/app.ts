@@ -2,9 +2,10 @@ import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { globalErrorHandler } from './core/errorHandler';
-import { seatRoutes } from './modules/seats/seat.routes';
 import { socketPlugin } from './core/socket';
 import { authPlugin } from './core/auth';
+import { seatRoutes } from './modules/seats/seat.routes';
+import { authRoutes } from './modules/auth/auth.routes';
 
 export const buildApp = (): FastifyInstance => {
 
@@ -35,6 +36,7 @@ export const buildApp = (): FastifyInstance => {
   app.setErrorHandler(globalErrorHandler);
 
   // Routes
+  app.register(authRoutes, { prefix: '/api/v1/auth' })
   app.register(seatRoutes, { prefix: '/api/v1/seats' })
 
   return app;
