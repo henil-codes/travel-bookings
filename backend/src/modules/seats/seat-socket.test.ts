@@ -43,6 +43,7 @@ describe('Seat WebSocket Integration', () => {
             local_phone: '1234567890',
             countryCode: 'IN',
             passwordHash: 'hashedpassword',
+            authProvider: 'local',
         }).returning();
         testUserId = user.id;
 
