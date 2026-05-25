@@ -71,6 +71,7 @@ describe('PaymentService', () => {
             email: 'paymenttest@example.com',
             local_phone: '1234567890',
             passwordHash: 'hashedpassword',
+            authProvider: 'local',
             countryCode: 'IN'
         }).returning();
         testUserId = user.id;
