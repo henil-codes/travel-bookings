@@ -24,6 +24,7 @@ describe('SeatService - lockSeat()', () => {
             local_phone: '1234567890',
             countryCode: 'IN',
             passwordHash: 'hashedpassword',
+            authProvider: 'local',
         }).returning();
         testUserId = user.id;
 
@@ -33,6 +34,7 @@ describe('SeatService - lockSeat()', () => {
             local_phone: '0987654321',
             countryCode: 'IN',
             passwordHash: 'hashedPassword',
+            authProvider: 'local',
         }).returning();
         testUser2Id = user2.id;
 

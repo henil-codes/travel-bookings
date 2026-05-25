@@ -27,6 +27,7 @@ describe('Bookings Schema & Integrity', () => {
             local_phone: '1234567890',
             countryCode: 'IN',
             passwordHash: 'hashedPassword',
+            authProvider: 'local',
         }).returning();
         testUserId = user.id;
 
@@ -101,7 +102,7 @@ describe('Bookings Schema & Integrity', () => {
     })
 
     // TODO: Add test to verify that cancelling a booking does not automatically mark it as refunded, and that refunding can be done independently with its own timestamp. This is important for accurate financial reporting and to handle cases where a booking is cancelled but not refunded immediately (e.g., due to refund processing times or policies).
-    
+
     // it('Should store a refunded status independently of cancellation', async () => {
     //     const [updated] = await db.update(bookings).set({
     //         status: 'refunded',
