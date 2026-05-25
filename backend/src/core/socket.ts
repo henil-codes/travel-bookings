@@ -5,48 +5,6 @@ import fp from 'fastify-plugin';
 import { appEmitter } from './emitter';
 
 export const socketPlugin = fp(async (fastify, options) => {
-    // const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    // const pubClient = new Redis(redisUrl, {
-    //     maxRetriesPerRequest: null,
-    //     enableReadyCheck: true,
-    //     lazyConnect: true,
-    // });
-    // const subClient = pubClient.duplicate();
-
-    // const handleRedisError = (error: Error) => {
-    //     fastify.log.error(error, 'Redis client error');
-    // }
-
-    // pubClient.on('error', handleRedisError);
-    // subClient.on('error', handleRedisError);
-
-    // const safeConnect = async (client: Redis, name: 'Pub' | 'Sub') => {
-    //     const status = client.status;
-
-    //     if (status === 'ready') {
-    //         fastify.log.info(`Redis ${name} already connected/ready`)
-    //         return;
-    //     }
-
-    //     if (status === 'connecting') {
-    //         fastify.log.info(`Redis ${name} is already connecting, waiting for it to be ready...`);
-    //         return;
-    //     }
-
-    //     try {
-    //         await client.connect();
-    //         fastify.log.info(`Redis ${name} connected successfully!`);
-    //     } catch (error) {
-    //         fastify.log.error({ error }, `Failed to connect Redis ${name}`);
-    //         throw error;
-    //     }
-    // }
-
-    // await Promise.all([
-    //     safeConnect(pubClient, 'Pub'),
-    //     safeConnect(subClient, 'Sub'),
-    // ])
-
 
     const io = new SocketIOServer(fastify.server, {
         cors: {
@@ -54,8 +12,6 @@ export const socketPlugin = fp(async (fastify, options) => {
             methods: ['GET', 'POST']
         }
     })
-
-    // io.adapter(createAdapter(pubClient, subClient));
 
     fastify.decorate('io', io);
 
@@ -75,9 +31,9 @@ export const socketPlugin = fp(async (fastify, options) => {
     let pubClient: Redis | undefined;
     let subClient: Redis | undefined;
 
-    if(!isTestEnv) {
+    if (!isTestEnv) {
         const redisUrl = process.env.REDIS_URL;
-        if(!redisUrl) {
+        if (!redisUrl) {
             fastify.log.error('REDIS_URL is not defined in environment variables');
             throw new Error('REDIS_URL is required for socket.io Redis adapter');
         }
@@ -109,8 +65,8 @@ export const socketPlugin = fp(async (fastify, options) => {
 
         try {
             await io.close();
-            if(pubClient) pubClient.disconnect();
-            if(subClient) subClient.disconnect();
+            if (pubClient) pubClient.disconnect();
+            if (subClient) subClient.disconnect();
         } catch (error) {
             instance.log.error({ error }, 'Error during Socket.IO server or Redis clients shutdown');
         }

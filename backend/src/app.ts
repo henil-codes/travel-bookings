@@ -4,6 +4,7 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import { globalErrorHandler } from './core/errorHandler';
 import { seatRoutes } from './modules/seats/seat.routes';
 import { socketPlugin } from './core/socket';
+import { authPlugin } from './core/auth';
 
 export const buildApp = (): FastifyInstance => {
 
@@ -28,6 +29,7 @@ export const buildApp = (): FastifyInstance => {
   });
 
   app.register(socketPlugin);
+  app.register(authPlugin);
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   app.setErrorHandler(globalErrorHandler);
