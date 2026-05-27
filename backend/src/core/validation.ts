@@ -3,7 +3,6 @@ import { genderEnum, idTypeEnum } from '@/db/schema/passengers'
 
 export const lockSeatSchema = z.object({
     seatId: z.string().uuid({ message: 'Invalid seat ID format' }),
-    userId: z.string().min(1, { message: 'User ID is required' }),
 })
 
 // For Razorpay payment verification after client completes payment
@@ -17,7 +16,6 @@ export const verifyPaymentSchema = z.object({
 // For creating a booking order
 export const createBookingSchema = z.object({
     seatId: z.string().uuid(),
-    bookedBy: z.string().min(1),
     tripId: z.string().uuid(),
     passenger: z.object({
         name: z.string().min(1),
