@@ -35,7 +35,7 @@ export const bookings = pgTable(
     passengerId: uuid('passenger_id')
       .references(() => passengers.id).notNull(),
     bookedBy: uuid('booked_by_user_id').references(() => users.id).notNull(),
-    totalAmount: decimal('total_amount', { precision: 10, scale: 2 }).notNull(),
+    totalAmount: decimal('total_amount', { precision: 10, scale: 2 }).default('0.00').notNull(),
     currency: varchar('currency', { length: 3 }).default('INR').notNull(),
     status: paymentStatusEnum('status').default('pending').notNull(),
     cancellationReason: varchar('cancellation_reason', { length: 255 }),
