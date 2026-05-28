@@ -12,6 +12,7 @@ export const seatRoutes: FastifyPluginAsync = async (
   server.post(
     '/lock',
     {
+      preHandler: [fastify.authenticate],
       schema: {
         body: lockSeatSchema,
         description:
@@ -20,7 +21,8 @@ export const seatRoutes: FastifyPluginAsync = async (
       },
     },
     async (request, reply) => {
-      const { seatId, userId } = request.body;
+      const { seatId } = request.body;
+      const userId = request.user.id;
 
       const lockedSeat = await SeatService.lockSeat(seatId, userId);
 
