@@ -139,6 +139,7 @@ describe('Bookings Schema & Integrity', () => {
             totalAmount: '80.00',
             currency: 'INR'
         })).rejects.toThrow(ConflictError);
-
     })
+
+    
 })
