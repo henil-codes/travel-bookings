@@ -10,9 +10,11 @@ import { vehicles } from '@/db/schema/vehicles';
 import { NotFoundError, ConflictError, AppError } from '@/core/errors';
 import { eq } from 'drizzle-orm';
 import { TripService } from '@/modules/trips/trip.service';
+import { email } from 'zod';
 
 describe('Seat WebSocket Integration', () => {
     let app: FastifyInstance;
+    let testAuthToken: string;
     let clientSocket: Socket;
     let serverUrl: string;
     let testTripId: string;
@@ -37,15 +39,14 @@ describe('Seat WebSocket Integration', () => {
         })
 
         // Seed database in Order: Users -> Vehicles -> Trips -> Seats
-        const [user] = await db.insert(users).values({
+/*         const [user] = await db.insert(users).values({
             name: 'WebSocket Test User',
             email: 'websocket@test.com',
             local_phone: '1234567890',
             countryCode: 'IN',
-            passwordHash: 'hashedpassword',
             authProvider: 'local',
         }).returning();
-        testUserId = user.id;
+        testUserId = user.id; */
 
         const [vehicle] = await db.insert(vehicles).values({
             operatorName: 'WebSocket Test Operator',
@@ -75,6 +76,32 @@ describe('Seat WebSocket Integration', () => {
             seatType: 'standard',
         }).returning();
         testSeatId = seat.id;
+
+        const registerResponse = await fetch(`${serverUrl}/api/v1/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name: 'WebSocket Test User',
+                email: 'websocket@test.com',
+                password: 'websocket',
+                countryCode: '+91',
+                localPhone: '1234567890',
+                authProvider: 'local',
+            })
+        })
+
+        // Simulate login to get auth token
+        const loginResponse = await fetch(`${serverUrl}/api/v1/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: 'websocket@test.com',
+                password: 'websocket'
+            })
+        })
+        const loginData = await loginResponse.json();
+        testAuthToken = loginData.data.token;
+        testUserId = loginData.data.user.id;
     }, 15000);
 
     afterAll(async () => {
@@ -86,6 +113,7 @@ describe('Seat WebSocket Integration', () => {
                 await tx.delete(trips).where(eq(trips.id, testTripId));
                 await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
                 await tx.delete(users).where(eq(users.id, testUserId));
+
             })
         }
 
@@ -106,10 +134,9 @@ describe('Seat WebSocket Integration', () => {
 
         const response = await fetch(`${serverUrl}/api/v1/seats/lock`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${testAuthToken}` },
             body: JSON.stringify({
                 seatId: testSeatId,
-                userId: testUserId,
             })
         })
 
@@ -129,10 +156,9 @@ describe('Seat WebSocket Integration', () => {
 
         const response = await fetch(`${serverUrl}/api/v1/seats/lock`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${testAuthToken}` },
             body: JSON.stringify({
                 seatId: testSeatId,
-                userId: testUserId,
             })
         })
 
