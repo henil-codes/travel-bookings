@@ -91,4 +91,14 @@ export class BookingService {
 
         })
     }
+
+    static async getBookingById(bookingId: string) {
+        const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId));
+
+        if (!booking) {
+            throw new NotFoundError('Booking');
+        }
+
+        return booking;
+    }
 }
