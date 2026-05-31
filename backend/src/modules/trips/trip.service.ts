@@ -12,13 +12,18 @@ import { ConflictError, NotFoundError, UnauthorizedError } from '@/core/errors';
 import { eq, and, gte, lt, ilike, sql } from 'drizzle-orm';
 
 export class TripService {
-  static async createTrip(input: CreateTripPayload, createdBy: string) {
+  static async createTrip(input: CreateTripPayload, createdBy: { id: string; role: string }) {
+    if (createdBy.role !== 'operator' && createdBy.role !== 'admin') {
+      throw new UnauthorizedError('You do not have permission to create a trip.')
+    }
+
     const [vehicle] = await db
       .select()
       .from(vehicles)
       .where(eq(vehicles.id, input.vehicleId));
+
     if (!vehicle) {
-      throw new ConflictError('Vehicle');
+      throw new NotFoundError('Vehicle');
     }
 
     const [trip] = await db
@@ -245,28 +250,28 @@ export class TripService {
       .where(eq(trips.id, tripId))
       .returning();
 
-      return updatedTrip;
+    return updatedTrip;
   }
 
   // deleteTrip - admin only
   static async deleteTrip(tripId: string, requestingUser: { id: string; role: string }) {
     if (requestingUser.role !== 'admin' && requestingUser.role !== 'operator') {
-        throw new UnauthorizedError('You do not have permission to delete this trip');
+      throw new UnauthorizedError('You do not have permission to delete this trip');
     }
 
     const trip = await TripService.getTripById(tripId);
 
     // prevent deletion if trip has already started
     if (['departed', 'completed'].includes(trip.status)) {
-        throw new ConflictError('Cannot delete trip that has already been ' + trip.status);
+      throw new ConflictError('Cannot delete trip that has already been ' + trip.status);
     }
 
     await db.transaction(async (tx) => {
-        // delete associated seats
-        await tx.delete(seats).where(eq(seats.tripId, tripId));
+      // delete associated seats
+      await tx.delete(seats).where(eq(seats.tripId, tripId));
 
-        // delete the trip
-        await tx.delete(trips).where(eq(trips.id, tripId));
+      // delete the trip
+      await tx.delete(trips).where(eq(trips.id, tripId));
     })
   }
 }
