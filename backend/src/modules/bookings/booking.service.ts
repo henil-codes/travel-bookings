@@ -1,6 +1,7 @@
 import { db } from '@/db'
 import { bookings, paymentStatusEnum } from '@/db/schema/bookings'
 import { seats } from '@/db/schema/seats'
+import { trips } from '@/db/schema/trips'
 import { users } from '@/db/schema/users'
 import { passengers } from '@/db/schema/passengers'
 import { genderEnum, idTypeEnum } from '@/db/schema/passengers'
@@ -101,4 +102,23 @@ export class BookingService {
 
         return booking;
     }
+
+    static async getTripByBookingId(bookingId: string) {
+        const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId));
+
+        if (!booking) {
+            throw new NotFoundError('Booking');
+        }
+
+        const [trip] = await db.select().from(trips).where(eq(trips.id, booking.tripId));
+
+        if (!trip) {
+            throw new NotFoundError('Trip');
+        }
+
+        return trip;
+    }
+
+    // TODO: add more methods for listing bookings, updating booking status, cancelling bookings, etc.
+
 }
