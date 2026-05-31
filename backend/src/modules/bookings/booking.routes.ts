@@ -59,7 +59,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
 
             const filterUserId = requestingUser.role === 'admin' ? userId : requestingUser.id;
 
-            // TODO: Implement service method to fetch bookings with pagination and filtering
+            const result = await BookingService
         }
     )
 }
