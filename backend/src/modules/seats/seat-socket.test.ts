@@ -38,48 +38,10 @@ describe('Seat WebSocket Integration', () => {
             clientSocket.on('connect_error', reject);
         })
 
-        // Seed database in Order: Users -> Vehicles -> Trips -> Seats
-/*         const [user] = await db.insert(users).values({
-            name: 'WebSocket Test User',
-            email: 'websocket@test.com',
-            local_phone: '1234567890',
-            countryCode: 'IN',
-            authProvider: 'local',
-        }).returning();
-        testUserId = user.id; */
 
-        const [vehicle] = await db.insert(vehicles).values({
-            operatorName: 'WebSocket Test Operator',
-            vehicleNumber: 'WS-TEST-1234',
-            capacity: 40,
-            vehicleType: 'bus',
-        }).returning();
-        testVehicleId = vehicle.id;
-
-        const trip = await TripService.createTrip({
-            name: 'WebSocket Test Trip',
-            startLocation: 'Vancouver',
-            endLocation: 'Toronto',
-            departureTime: new Date(Date.now() + 86400000), // 1 day
-            arrivalTime: new Date(Date.now() + 104400000), // 1 day + 5 hours
-            vehicleId: testVehicleId,
-            capacity: 40,
-            status: 'scheduled',
-        })
-        testTripId = trip.id;
-
-        const [seat] = await db.insert(seats).values({
-            tripId: testTripId,
-            seatNumber: 34,
-            price: '60.00',
-            status: 'available',
-            seatType: 'standard',
-        }).returning();
-        testSeatId = seat.id;
-
-        const registerResponse = await fetch(`${serverUrl}/api/v1/auth/register`, {
+        await fetch(`${serverUrl}/api/v1/auth/register`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: 'WebSocket Test User',
                 email: 'websocket@test.com',
@@ -102,6 +64,36 @@ describe('Seat WebSocket Integration', () => {
         const loginData = await loginResponse.json();
         testAuthToken = loginData.data.token;
         testUserId = loginData.data.user.id;
+
+        const [vehicle] = await db.insert(vehicles).values({
+            operatorName: 'WebSocket Test Operator',
+            vehicleNumber: 'WS-TEST-1234',
+            capacity: 40,
+            vehicleType: 'bus',
+        }).returning();
+        testVehicleId = vehicle.id;
+
+        const trip = await TripService.createTrip({
+            name: 'WebSocket Test Trip',
+            startLocation: 'Vancouver',
+            endLocation: 'Toronto',
+            departureTime: new Date(Date.now() + 86400000).toISOString(), // 1 day
+            arrivalTime: new Date(Date.now() + 104400000).toISOString(), // 1 day + 5 hours
+            vehicleId: testVehicleId,
+            capacity: 40,
+            status: 'scheduled',
+        }, { id: testUserId, role: 'operator' })
+        testTripId = trip.id;
+
+        const [seat] = await db.insert(seats).values({
+            tripId: testTripId,
+            seatNumber: 34,
+            price: '60.00',
+            status: 'available',
+            seatType: 'standard',
+        }).returning();
+        testSeatId = seat.id;
+
     }, 15000);
 
     afterAll(async () => {

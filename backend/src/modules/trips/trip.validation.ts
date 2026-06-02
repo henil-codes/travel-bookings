@@ -6,12 +6,10 @@ export const createTripSchema = z
     name: z.string().min(1).max(255),
     startLocation: z.string().min(1).max(255),
     endLocation: z.string().min(1).max(255),
-    departureTime: z
-      .string()
-      .datetime({ message: 'Invalid ISO date time format' }),
+    departureTime: z.iso.datetime({ message: 'Invalid ISO date time format' }),
+    status: z.enum(tripStatusEnum.enumValues).default('scheduled'),
     arrivalTime: z
-      .string()
-      .datetime({ message: 'Invalid ISO date time format' }),
+      .iso.datetime({ message: 'Invalid ISO date time format' }),
     vehicleId: z.string().uuid(),
     capacity: z.number().int().positive(),
   })

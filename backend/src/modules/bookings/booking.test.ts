@@ -52,12 +52,14 @@ describe('Bookings Schema & Integrity', () => {
             name: 'Booking Test Trip',
             startLocation: 'Vancouver',
             endLocation: 'Toronto',
-            departureTime: new Date(Date.now() + 86400000), // 1 day
-            arrivalTime: new Date(Date.now() + 172800000), // 2 days
+            departureTime: new Date(Date.now() + 86400000).toISOString(), // 1 day
+            arrivalTime: new Date(Date.now() + 172800000).toISOString(), // 2 days
             vehicleId: testVehicleId,
             capacity: 40,
             status: 'scheduled',
-        })
+        },
+            { id: testUserId, role: 'operator' }
+        )
         testTripId = trip.id;
 
         const [seat] = await db.insert(seats).values({
@@ -141,5 +143,5 @@ describe('Bookings Schema & Integrity', () => {
         })).rejects.toThrow(ConflictError);
     })
 
-    
+
 })

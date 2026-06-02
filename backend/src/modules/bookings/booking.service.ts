@@ -7,6 +7,7 @@ import { passengers } from '@/db/schema/passengers'
 import { genderEnum, idTypeEnum } from '@/db/schema/passengers'
 import { NotFoundError, ConflictError, UnauthorizedError } from '@/core/errors'
 import { eq, and, not, inArray } from 'drizzle-orm'
+import { BookingFilter, CreateBookingPayload, LockSeatPayload, CancelBookingPayload, createBookingSchema, BookingParams } from './booking.validation'
 
 interface PassengerInput {
     name: string;
@@ -17,7 +18,7 @@ interface PassengerInput {
     idNumber: string;
 }
 
-interface CreateBookingInput {
+/* interface CreateBookingInput {
     tripId: string;
     seatId: string;
     passenger: PassengerInput;
@@ -27,9 +28,10 @@ interface CreateBookingInput {
     currency: string;
 
 }
+ */
 
 export class BookingService {
-    static async createBooking(input: CreateBookingInput) {
+    static async createBooking(input: CreateBookingPayload) {
         return await db.transaction(async (tx) => {
 
             const [user] = await tx.select().from(users).where(eq(users.id, input.bookedBy));
@@ -93,7 +95,7 @@ export class BookingService {
         })
     }
 
-    static async getBookingById(bookingId: string) {
+    static async getBookingById(bookingId: BookingParams['id']) {
         const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId));
 
         if (!booking) {
@@ -103,7 +105,7 @@ export class BookingService {
         return booking;
     }
 
-    static async getTripByBookingId(bookingId: string) {
+    static async getTripByBookingId(bookingId: BookingParams['id']) {
         const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId));
 
         if (!booking) {
@@ -119,6 +121,49 @@ export class BookingService {
         return trip;
     }
 
-    // TODO: add more methods for listing bookings, updating booking status, cancelling bookings, etc.
+    static async listBookings(input: BookingFilter) {
+        const conditions = [];
+
+        if (input.userId) {
+            conditions.push(eq(bookings.bookedBy, input.userId));
+        }
+
+        if (input.status) {
+            conditions.push(eq(bookings.status, input.status));
+        }
+
+        const offset = (input.page - 1) * input.limit;
+
+        const result = await db.select().from(bookings).where(conditions.length > 0 ? and(...conditions) : undefined).limit(input.limit).offset(offset).orderBy(bookings.createdAt);
+
+        return result;
+    }
+
+    static async cancelBooking(input: CancelBookingPayload) {
+        const [booking] = await db.select().from(bookings).where(eq(bookings.id, input.bookingId))
+
+        if (!booking) {
+            throw new NotFoundError('Booking');
+        }
+
+        if (booking.status !== 'pending' && booking.status !== 'completed') {
+            throw new ConflictError(`Cannot cancel a booking with status: ${booking.status}`)
+        }
+
+        const [updatedBooking] = await db.update(bookings).set({
+            status: 'cancelled',
+            cancellationReason: input.cancellationReason,
+            cancelledAt: new Date(),    
+            updatedAt: new Date(),
+        }).where(eq(bookings.id, input.bookingId)).returning();
+
+        await db.update(seats).set({ status: 'available', lockedUntil: null, lockedByUserId: null }).where(eq(seats.id, booking.seatId));
+
+        return updatedBooking;
+    }
+
+    
+
+
 
 }

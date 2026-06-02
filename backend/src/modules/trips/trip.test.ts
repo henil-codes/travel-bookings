@@ -6,12 +6,24 @@ import { seats } from '@/db/schema/seats'
 import { eq } from 'drizzle-orm'
 import { ConflictError } from '@/core/errors'
 import { TripService } from '@/modules/trips/trip.service'
+import { users } from '@/db/schema/users';
 
 describe('Trips Schema & Integrity', () => {
     let testVehicleId: string;
     let testTripId: string;
+    let testUserId: string;
 
     beforeAll(async () => {
+        const [user] = await db.insert(users).values({
+            name: 'Trip Test User',
+            email: 'trip.test@example.com',
+            passwordHash: 'hashedPassword',
+            countryCode: '+91',
+            authProvider: 'local',
+            local_phone: '9876543210',
+        }).returning();
+        testUserId = user.id;
+
         const [vehicle] = await db.insert(vehicles).values({
             operatorName: 'Test Operator',
             vehicleNumber: 'TEST-5678',
@@ -60,12 +72,15 @@ describe('Trips Schema & Integrity', () => {
             name: 'Bad Trip',
             startLocation: 'City A',
             endLocation: 'City B',
-            departureTime: new Date(Date.now() + 10000),
-            arrivalTime: new Date(Date.now() + 5000),
+            departureTime: new Date(Date.now() + 10000).toISOString(),
+            arrivalTime: new Date(Date.now() + 5000).toISOString(),
+            status: 'scheduled',
             capacity: 30,
             vehicleId: testVehicleId,
-        })
+        }, { id: testUserId, role: 'operator' })
 
         await expect(badTripData).rejects.toBeInstanceOf(ConflictError);
     })
 })
+
+
