@@ -50,11 +50,12 @@ describe('SeatService - lockSeat()', () => {
             name: 'Toronto to Montreal Express',
             startLocation: 'Toronto',
             endLocation: 'Montreal',
-            departureTime: new Date(Date.now() + 86400000), // 1 day
-            arrivalTime: new Date(Date.now() + 104400000), // 1 day + 5 hours
+            departureTime: new Date(Date.now() + 86400000).toISOString(), // 1 day
+            arrivalTime: new Date(Date.now() + 104400000).toISOString(), // 1 day + 5 hours
             vehicleId: testVehicleId,
             capacity: 40,
-        });
+            status: 'scheduled',
+        }, { id: testUserId, role: 'operator' });
         testTripId = trip.id;
 
         const [seat] = await db.insert(seats).values({

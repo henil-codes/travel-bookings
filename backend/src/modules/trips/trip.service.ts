@@ -26,6 +26,10 @@ export class TripService {
       throw new NotFoundError('Vehicle');
     }
 
+    if (input.arrivalTime <= input.departureTime) {
+      throw new ConflictError("Arrival time must be after departure time");
+    }
+
     const [trip] = await db
       .insert(trips)
       .values({
