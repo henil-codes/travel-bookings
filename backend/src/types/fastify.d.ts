@@ -20,4 +20,8 @@ declare module 'fastify' {
         // Authentication middleware
         authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
     }
+
+    interface FastifyRequest {
+        rawBody?: string;
+    }
 }

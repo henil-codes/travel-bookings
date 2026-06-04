@@ -16,7 +16,7 @@ export const verifyPaymentSchema = z.object({
 export const paymentFailureSchema = z.object({
     bookingId: z.string().uuid({ message: 'Invalid booking ID format' }),
     gatewayOrderId: z.string().min(1, { message: 'Gateway order ID is required' }),
-    gatewayResponse: z.string().max(2048).optional(), // raw error payload of debugging purposes
+    gatewayResponse: z.string().max(2048), // raw error payload of debugging purposes
 })
 
 // Initiate refund - admin only
