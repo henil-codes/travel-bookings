@@ -24,9 +24,6 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
             const { booking, passenger } = await BookingService.createBooking({
                 ...request.body,
                 bookedBy,
-                status: 'pending',
-                totalAmount: '0.00',
-                currency: 'INR',
             })
 
             return reply.status(201).send({
