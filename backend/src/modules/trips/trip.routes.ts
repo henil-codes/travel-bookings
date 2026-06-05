@@ -21,7 +21,6 @@ export const tripRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =
             querystring: tripFilterSchema,
         }
     },
-
         async (request, reply) => {
             const trips = await TripService.listTrips(request.query);
 

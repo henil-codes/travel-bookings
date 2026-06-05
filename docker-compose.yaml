@@ -20,12 +20,9 @@ services:
           action: rebuild
         - path: ./backend/package-lock.json
           action: rebuild
-        - path: ./backend/src
-          target: /app/src
-          action: sync+restart
         - path: ./backend
           target: /app
-          action: sync
+          action: sync+restart
           ignore:
             - node_modules/
             - dist/
