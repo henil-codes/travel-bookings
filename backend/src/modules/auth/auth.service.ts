@@ -6,32 +6,38 @@ import { ConflictError, UnauthorizedError } from '@/core/errors'
 
 export class AuthService {
     static async register(input: any) {
-        const [existingUser] = await db.select().from(users).where(eq(users.email, input.email));
-        
-        if (existingUser) {
-            throw new ConflictError('Email is already registered')
+        try {
+            const [existingUser] = await db.select().from(users).where(eq(users.email, input.email));
+
+            if (existingUser) {
+                throw new ConflictError('Email is already registered')
+            }
+
+            const saltRounds = 10;
+            const passwordHash = await bcrypt.hash(input.password, saltRounds);
+
+            const [newUser] = await db.insert(users).values({
+                name: input.name,
+                email: input.email,
+                countryCode: input.countryCode,
+                local_phone: input.localPhone,
+                passwordHash,
+                authProvider: 'local',
+            }).returning();
+
+            const { passwordHash: _, ...safeUser } = newUser;
+            return safeUser;
+        } catch (error: any) {
+            console.error("Hidden Posgres error");
+            console.error(error.cause);
+            throw error;
         }
-
-        const saltRounds = 10;
-        const passwordHash = await bcrypt.hash(input.password, saltRounds);
-
-        const [newUser] = await db.insert(users).values({
-            name: input.name,
-            email: input.email,
-            countryCode: input.countryCode,
-            local_phone: input.localPhone,
-            passwordHash,
-            authProvider: 'local',
-        }).returning();
-
-        const { passwordHash: _, ...safeUser } = newUser;
-        return safeUser;
     }
 
     static async login(input: any) {
         const [user] = await db.select().from(users).where(eq(users.email, input.email));
 
-        if(!user) {
+        if (!user) {
             throw new UnauthorizedError('Invalid email or password');
         }
 
