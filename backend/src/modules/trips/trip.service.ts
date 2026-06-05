@@ -75,14 +75,14 @@ export class TripService {
 
     const offset = (filters.page - 1) * filters.limit;
 
-    const [result] = await db
+    const results = await db
       .select()
       .from(trips)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .offset(offset)
       .orderBy(trips.departureTime);
 
-    return result;
+    return results;
   }
 
   static async getTripById(tripId: string) {

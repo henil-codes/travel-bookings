@@ -40,19 +40,21 @@ describe('Trips Schema & Integrity', () => {
                 await tx.delete(trips).where(eq(trips.id, testTripId));
             }
             await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
+            await tx.delete(users).where(eq(users.id, testUserId));
         })
     })
 
     it('Should insert a valid trip', async () => {
-        const [trip] = await db.insert(trips).values({
+        const trip = await TripService.createTrip({
             name: 'Vancouver to Calgary Express',
             startLocation: 'Vancouver',
             endLocation: 'Calgary',
-            departureTime: new Date(Date.now() + 86400000), // 1 day
-            arrivalTime: new Date(Date.now() + 936000000), // 1 day + 2 hours
+            departureTime: new Date(Date.now() + 86400000).toISOString(), // 1 day
+            arrivalTime: new Date(Date.now() + 936000000).toISOString(), // 1 day + 2 hours
             vehicleId: testVehicleId,
             capacity: 50,
-        }).returning();
+            status: 'scheduled',
+        }, { id: testUserId, role: 'operator'})
         testTripId = trip.id;
 
         expect(trip).toBeDefined();
