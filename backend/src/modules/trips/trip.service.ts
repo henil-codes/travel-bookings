@@ -259,7 +259,7 @@ export class TripService {
 
   // deleteTrip - admin only
   static async deleteTrip(tripId: string, requestingUser: { id: string; role: string }) {
-    if (requestingUser.role !== 'admin' && requestingUser.role !== 'operator') {
+    if (requestingUser.role !== 'admin') {
       throw new UnauthorizedError('You do not have permission to delete this trip');
     }
 
