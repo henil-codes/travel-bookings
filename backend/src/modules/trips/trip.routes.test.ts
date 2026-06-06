@@ -7,6 +7,7 @@ import { vehicles } from '@/db/schema/vehicles'
 import { seats } from '@/db/schema/seats'
 import { users } from '@/db/schema/users'
 import { eq } from 'drizzle-orm'
+import { TripService } from './trip.service'
 
 describe('Trip Routes Integration', () => {
     let app: FastifyInstance;
@@ -133,9 +134,192 @@ describe('Trip Routes Integration', () => {
             expect(body.success).toBe(true);
             expect(Array.isArray(body.data)).toBe(true);
         })
+
+        it('should filter by startLocation', async () => {
+            const res = await get('/trips?startLocation=Toronto');
+            const body = await res.json();
+            expect(res.status).toBe(200);
+            body.data.forEach((t: any) => {
+                expect(t.startLocation.toLowerCase()).toBe('toronto');
+            })
+        })
+
+        it('should filter by endLocation', async () => {
+            const res = await get('/trips?endLocation=Ottawa');
+            const body = await res.json();
+            expect(res.status).toBe(200);
+            body.data.forEach((t: any) => {
+                expect(t.endLocation.toLowerCase()).toBe('ottawa');
+            })
+        })
+
+        it('should return empty array for no matching results', async () => {
+            const res = await get('/trips?startLocation=Vancouver');
+            const body = await res.json();
+            expect(res.status).toBe(200);
+            expect(body.data).toHaveLength(0);
+        })
+
+        it('should respect pagination', async () => {
+            const res = await get('/trips?page=1&limit=1');
+            const body = await res.json();
+            expect(res.status).toBe(200);
+            expect(body.data.length).toBeLessThanOrEqual(1);
+        })
     })
 
+    // GET /:id - public
+    describe('GET /trips/:id', () => {
+        it('should return a trip by ID without auth', async () => {
+            const res = await get(`/trips/${testTripId}`);
+            const body = await res.json();
+            expect(res.status).toBe(200);
+            expect(body.success).toBe(true);
+            expect(body.data.id).toBe(testTripId);
+        })
 
+        it('should return 404 for non-existent trip', async () => {
+            const res = await get('/trips/00000000-0000-0000-0000-000000000000');
+            expect(res.status).toBe(404);
+        })
 
+        it('should return 400 for invalid UUID', async () => {
+            const res = await get('/trips/not-a-uuid');
+            expect(res.status).toBe(400);
+        })
+    })
 
+    // GET /:id/seats - public
+    describe('GET /trips/:id/seats', () => {
+        it('should return seat map grouped by status', async () => {
+            const res = await get(`/trips/${testTripId}/seats`);
+            const body = await res.json();
+            expect(res.status).toBe(200);
+            expect(body.success).toBe(true);
+            expect(body.data).toHaveProperty('available');
+            expect(body.data).toHaveProperty('locked');
+            expect(body.data).toHaveProperty('sold');
+            expect(body.data).toHaveProperty('reserved');
+            expect(body.data).toHaveProperty('summary');
+        })
+
+        it('should return correct summary counts', async () => {
+            const res = await get(`/trips/${testTripId}/seats`);
+            const body = await res.json();
+            expect(body.data.summary.total).toBe(4);
+            expect(body.data.summary.available).toBe(1);
+            expect(body.data.summary.locked).toBe(1);
+            expect(body.data.summary.sold).toBe(1);
+            expect(body.data.summary.reserved).toBe(1);
+        })
+    })
+
+    // POST / - admin + operator
+    describe('POST /trips', () => {
+        let createdTripId: string;
+
+        afterAll(async () => {
+            if (createdTripId) {
+                await db.delete(trips).where(eq(trips.id, createdTripId));
+            }
+        })
+
+        const validTrip = () => ({
+            name: 'Ottawa to Montreal',
+            startLocation: 'Ottawa',
+            endLocation: 'Montreal',
+            departureTime: new Date(Date.now() + 86400000).toISOString(),
+            arrivalTime: new Date(Date.now() + 97200000).toISOString(),
+            vehicleId: testVehicleId,
+            capacity: 40,
+        })
+
+        it('should return 401 with no token', async () => {
+            const res = await post('/trips', validTrip());
+            expect(res.status).toBe(401);
+        })
+
+        it('should return 401 when customer tries to create trip', async () => {
+            const res = await post('/trips', validTrip(), customerToken);
+            expect(res.status).toBe(401);
+        })
+
+        it('should create a trip as operator', async () => {
+            const res = await post('/trips', validTrip(), operatorToken);
+            const body = await res.json();
+            expect(res.status).toBe(201);
+            createdTripId = body.data.id;
+        })
+
+        it('should return 400 when arrivalTime is before departureTime', async () => {
+            const res = await post('/trips', {
+                ...validTrip(),
+                departureTime: new Date(Date.now() + 10000).toISOString(),
+                arrivalTime: new Date(Date.now() + 5000).toISOString(),
+            }, adminToken);
+            expect(res.status).toBe(400);
+        })
+
+    })
+
+    // PATCH /:id/status - admin + operator
+    describe('PATCH /trips/:id/status', () => {
+        it('should update trip status as admin', async () => {
+            const res = await patch(`/trips/${testTripId}/status`, { status: 'boarding' }, adminToken);
+            const body = await res.json();
+            expect(res.status).toBe(200);
+            expect(body.data.status).toBe('boarding');
+        })
+
+        it('should reject invalid status transation', async () => {
+            const res = await patch(`/trips/${testTripId}/status`, { status: 'scheduled' }, adminToken);
+            expect(res.status).toBe(409);
+        })
+
+        it('should return 401 when customer tries to update status', async () => {
+            const res = await patch(`/trips/${testTripId}/status`, { status: 'departed' }, customerToken);
+            expect(res.status).toBe(401);
+        })
+    })
+
+    // DELETE /:id - admin only
+    describe('DELETE /trips/:id', () => {
+        let deletableTripId: string;
+
+        beforeAll(async () => {
+            const [trip] = await db.insert(trips).values({
+                name: 'Deletable Trip',
+                startLocation: 'City A',
+                endLocation: 'City B',
+                departureTime: new Date(Date.now() + 86400000),
+                arrivalTime: new Date(Date.now() + 97200000),
+                vehicleId: testVehicleId,
+                capacity: 10,
+                status: 'scheduled',
+            }).returning();
+            deletableTripId = trip.id;
+        })
+
+        afterAll(async () => {
+            if (deletableTripId) {
+                await db.delete(trips).where(eq(trips.id, deletableTripId));
+            }
+        })
+
+        it('should return 401 when operator tries to delete', async () => {
+            const res = await del(`/trips/${deletableTripId}`, operatorToken);
+            expect(res.status).toBe(401);
+        })
+
+        it('should delete a scheduled trip as admin', async () => {
+            const res = await del(`/trips/${deletableTripId}`, adminToken);
+            const body = await res.json();
+            expect(res.status).toBe(200);
+        })
+
+        it('should return 404 after deletion', async () => {
+            const res = await get(`/trips/${deletableTripId}`);
+            expect(res.status).toBe(404);
+        })
+    })
 })
