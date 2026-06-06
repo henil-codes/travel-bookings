@@ -8,13 +8,12 @@ export const createTripSchema = z
     endLocation: z.string().min(1).max(255),
     departureTime: z.iso.datetime({ message: 'Invalid ISO date time format' }),
     status: z.enum(tripStatusEnum.enumValues).default('scheduled'),
-    arrivalTime: z
-      .iso.datetime({ message: 'Invalid ISO date time format' }),
+    arrivalTime: z.iso.datetime({ message: 'Invalid ISO date time format' }),
     vehicleId: z.string().uuid(),
     capacity: z.number().int().positive(),
   })
   .superRefine((data, ctx) => {
-    if (new Date(data.departureTime) <= new Date(data.arrivalTime)) {
+    if (new Date(data.departureTime) >= new Date(data.arrivalTime)) {
       ctx.addIssue({
         code: 'custom',
         message: 'Arrival time must be after departure time',
@@ -22,7 +21,7 @@ export const createTripSchema = z
       });
     }
 
-    if (new Date(data.departureTime) >= new Date()) {
+    if (new Date(data.departureTime) <= new Date()) {
       ctx.addIssue({
         code: 'custom',
         message: 'Departure time must be in the future',
@@ -43,7 +42,7 @@ export const updateTripSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.departureTime && data.arrivalTime) {
-      if (new Date(data.departureTime) <= new Date(data.arrivalTime)) {
+      if (new Date(data.departureTime) >= new Date(data.arrivalTime)) {
         ctx.addIssue({
           code: 'custom',
           message: 'Arrival time must be after departure time',
