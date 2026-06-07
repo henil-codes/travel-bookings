@@ -31,10 +31,10 @@ interface PassengerInput {
  */
 
 export class BookingService {
-    static async createBooking(input: CreateBookingPayload) {
+    static async createBooking(input: CreateBookingPayload, bookedBy: string) {
         return await db.transaction(async (tx) => {
 
-            const [user] = await tx.select().from(users).where(eq(users.id, input.bookedBy));
+            const [user] = await tx.select().from(users).where(eq(users.id, bookedBy));
 
             if (!user) {
                 throw new NotFoundError('User');
@@ -46,7 +46,7 @@ export class BookingService {
                 throw new NotFoundError('Seat');
             }
 
-            if (seat.status !== 'locked' || seat.lockedByUserId !== input.bookedBy) {
+            if (seat.status !== 'locked' || seat.lockedByUserId !== bookedBy) {
                 throw new ConflictError('Seat is not locked by this user. Please lock the seat before booking.');
             }
 
@@ -78,7 +78,7 @@ export class BookingService {
             const [booking] = await tx.insert(bookings).values({
                 tripId: input.tripId,
                 seatId: input.seatId,
-                bookedBy: input.bookedBy,
+                bookedBy: bookedBy,
                 passengerId: passenger.id,
                 status: 'pending',
                 totalAmount,
@@ -139,8 +139,8 @@ export class BookingService {
         return result;
     }
 
-    static async cancelBooking(input: CancelBookingPayload) {
-        const [booking] = await db.select().from(bookings).where(eq(bookings.id, input.bookingId))
+    static async cancelBooking(input: CancelBookingPayload, bookingId: string) {
+        const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId))
 
         if (!booking) {
             throw new NotFoundError('Booking');
@@ -155,7 +155,7 @@ export class BookingService {
             cancellationReason: input.cancellationReason,
             cancelledAt: new Date(),    
             updatedAt: new Date(),
-        }).where(eq(bookings.id, input.bookingId)).returning();
+        }).where(eq(bookings.id, bookingId)).returning();
 
         await db.update(seats).set({ status: 'available', lockedUntil: null, lockedByUserId: null }).where(eq(seats.id, booking.seatId));
 
