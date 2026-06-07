@@ -136,11 +136,9 @@ describe('Bookings Schema & Integrity', () => {
             tripId: testTripId,
             seatId: testSeatId,
             passenger: passenger,
-            bookedBy: testUserId,
             status: 'pending',
-            totalAmount: '80.00',
             currency: 'INR'
-        })).rejects.toThrow(ConflictError);
+        }, testUserId)).rejects.toThrow(ConflictError);
     })
 
 

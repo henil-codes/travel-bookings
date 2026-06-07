@@ -23,8 +23,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
 
             const { booking, passenger } = await BookingService.createBooking({
                 ...request.body,
-                bookedBy,
-            })
+            }, bookedBy)
 
             return reply.status(201).send({
                 success: true,
@@ -136,9 +135,8 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
         }
 
         const result = await BookingService.cancelBooking({
-            bookingId: request.params.id,
             cancellationReason: request.body.cancellationReason,
-        })
+        }, booking.id)
 
         return reply.status(200).send({
             success: true,

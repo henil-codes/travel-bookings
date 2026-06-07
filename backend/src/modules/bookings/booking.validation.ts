@@ -11,9 +11,7 @@ export const lockSeatSchema = z.object({
 export const createBookingSchema = z.object({
     seatId: z.string().uuid(),
     tripId: z.string().uuid(),
-    bookedBy: z.string().uuid(),
     status: z.enum(paymentStatusEnum.enumValues),
-    totalAmount: z.string().regex(/^\d+(\.\d{2})?$/, { message: 'Total amount must be a valid decimal with 2 decimal places' }),
     currency: z.string().length(3, { message: 'Currency must be a 3-letter code' }),
     passenger: z.object({
         name: z.string().min(1),
@@ -63,7 +61,6 @@ export const createBookingSchema = z.object({
 
 // Cancel booking schema
 export const cancelBookingSchema = z.object({
-    bookingId: z.string().uuid({ message: 'Invalid booking ID format' }),
     cancellationReason: z.string().min(1, { message: 'Cancellation reason is required' }).max(255, { message: 'Cancellation reason cannot exceed 255 characters' }),
 })
 
