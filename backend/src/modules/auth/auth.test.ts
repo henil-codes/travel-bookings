@@ -13,7 +13,10 @@ const baseUser = {
     email: 'authtest@example.com',
     password: 'securePassword123!',
     countryCode: '+1',
-    localPhone: '5551234567'
+    localPhone: '5551234567',
+    accountStatus: 'active',
+    role: 'customer',
+    authProvider: 'local',
 };
 
 // --- Unit tests for AuthService ---
@@ -61,6 +64,7 @@ describe('AuthService', () => {
                 local_phone: '9999999999',
                 passwordHash,
                 authProvider: 'local',
+                accountStatus: 'active',
             }).returning();
             localUserId = localUser.id;
 
@@ -71,6 +75,7 @@ describe('AuthService', () => {
                 local_phone: '8888888888',
                 passwordHash: null,
                 authProvider: 'google',
+                accountStatus: 'active',
             }).returning();
             googleUserId = googleUser.id;
         }, 15000);
@@ -132,6 +137,9 @@ describe('AuthService', () => {
             password: 'RoutePass456!',
             countryCode: '+1',
             localPhone: '7777777777',
+            accountStatus: 'active',
+            role: 'customer',
+            authProvider: 'local',
         }
 
         beforeAll(async () => {
@@ -204,7 +212,7 @@ describe('AuthService', () => {
             expect((body.data.user as any).passwordHash).toBeUndefined();
         })
 
-        it ('POST /login should return 401 for wrong password', async () => {
+        it('POST /login should return 401 for wrong password', async () => {
             const response = await fetch(`${serverUrl}/api/v1/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -239,7 +247,7 @@ describe('AuthService', () => {
             const token = data.token;
 
             const meResponse = await fetch(`${serverUrl}/api/v1/auth/me`, {
-                headers: { Authorization: `Bearer ${token}`},
+                headers: { Authorization: `Bearer ${token}` },
             })
 
             expect(meResponse.status).toBe(200);

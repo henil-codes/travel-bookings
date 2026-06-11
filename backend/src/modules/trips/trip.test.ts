@@ -21,6 +21,7 @@ describe('Trips Schema & Integrity', () => {
             countryCode: '+91',
             authProvider: 'local',
             local_phone: '9876543210',
+            accountStatus: 'active',
         }).returning();
         testUserId = user.id;
 

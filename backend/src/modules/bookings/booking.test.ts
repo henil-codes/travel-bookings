@@ -28,6 +28,7 @@ describe('Bookings Schema & Integrity', () => {
             countryCode: 'IN',
             passwordHash: 'hashedPassword',
             authProvider: 'local',
+            accountStatus: 'active',
         }).returning();
         testUserId = user.id;
 
@@ -65,7 +66,7 @@ describe('Bookings Schema & Integrity', () => {
         const [seat] = await db.insert(seats).values({
             tripId: testTripId,
             seatNumber: 5,
-            price: '80.00',
+            price: 8000,
             status: 'locked',
             seatType: 'standard',
             lockedByUserId: testUserId,
@@ -92,14 +93,14 @@ describe('Bookings Schema & Integrity', () => {
             passengerId: passengerId,
             bookedBy: testUserId,
             status: 'pending',
-            totalAmount: '80.00',
+            totalAmount: 8000,
             currency: 'INR',
         }).returning();
         testBookingId = booking.id;
 
         expect(booking).toBeDefined();
         expect(booking.status).toBe('pending');
-        expect(booking.totalAmount).toBe('80.00');
+        expect(booking.totalAmount).toBe(8000);
         expect(booking.currency).toBe('INR');
     })
 

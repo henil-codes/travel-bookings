@@ -1,5 +1,6 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
+import rawBody from 'fastify-raw-body';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { globalErrorHandler } from './core/errorHandler';
 import { socketPlugin } from './core/socket';
@@ -37,6 +38,12 @@ export const buildApp = (): FastifyInstance => {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   app.setErrorHandler(globalErrorHandler);
+  app.register(rawBody, {
+    field: 'rawBody',
+    global: false,
+    encoding: 'utf-8',
+    runFirst: true,
+  })
 
   // Routes
   app.register(authRoutes, { prefix: '/api/v1/auth' })

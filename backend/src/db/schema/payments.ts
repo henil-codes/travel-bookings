@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, timestamp, decimal, pgEnum, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, integer, pgEnum, index } from 'drizzle-orm/pg-core';
 import { bookings } from './bookings';
 import { InferSelectModel } from 'drizzle-orm';
 
@@ -34,8 +34,8 @@ export const payments = pgTable('payments', {
     method: paymentMethodEnum('method'),
 
     // amounts - kept separate so refund can be partial
-    amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
-    refundAmount: decimal('refund_amount', { precision: 10, scale: 2 }),
+    amount: integer('amount').notNull(),
+    refundAmount: integer('refund_amount'),
     currency: varchar('currency', { length: 3 }).default('INR').notNull(),
     
     // raw webhook/callback payload for debugging and audit trail
