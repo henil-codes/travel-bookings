@@ -38,21 +38,21 @@ describe('Booking Routes Integration', () => {
         const [customer] = await db.insert(users).values({
             name: 'Booking Customer', email: 'booking.customer@test.com',
             countryCode: '+91', local_phone: '0000000001',
-            authProvider: 'local', role: 'customer',
+            authProvider: 'local', role: 'customer', accountStatus: 'active',
         }).returning();
         testCustomerId = customer.id;
 
         const [other] = await db.insert(users).values({
             name: 'Other Customer', email: 'booking.other@test.com',
             countryCode: '+91', local_phone: '0000000002',
-            authProvider: 'local', role: 'customer',
+            authProvider: 'local', role: 'customer', accountStatus: 'active',
         }).returning();
         otherCustomerId = other.id;
 
         const [admin] = await db.insert(users).values({
             name: 'Booking Admin', email: 'booking.admin@test.com',
             countryCode: '+91', local_phone: '0000000003',
-            authProvider: 'local', role: 'admin',
+            authProvider: 'local', role: 'admin', accountStatus: 'active',
         }).returning();
         adminId = admin.id;
 
@@ -81,7 +81,7 @@ describe('Booking Routes Integration', () => {
         const [seat] = await db.insert(seats).values({
             tripId: testTripId,
             seatNumber: 1,
-            price: '75.00',
+            price: 7500,
             status: 'locked',
             seatType: 'standard',
             lockedByUserId: testCustomerId,
@@ -151,7 +151,7 @@ describe('Booking Routes Integration', () => {
             expect(res.status).toBe(201);
             expect(body.success).toBe(true);
             expect(body.data.booking.status).toBe('pending');
-            expect(body.data.booking.totalAmount).toBe('75.00');
+            expect(body.data.booking.totalAmount).toBe(7500);
             expect((body.data.booking as any).bookedBy).toBe(testCustomerId);
             expect(body.data.passenger.name).toBe('Test Passenger');
 
@@ -278,9 +278,9 @@ describe('Booking Routes Integration', () => {
 
     // GET /admin/all - admin only
     describe('GET /bookings/admin/all', () => {
-        it('should return 401 for customer', async () => {
+        it('should return 403 for customer', async () => {
             const res = await get('/bookings/admin/all', customerToken);
-            expect(res.status).toBe(401);
+            expect(res.status).toBe(403);
         })
 
         it('admin can access all bookings', async () => {
