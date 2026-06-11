@@ -23,6 +23,7 @@ export class AuthService {
                 local_phone: input.localPhone,
                 passwordHash,
                 authProvider: 'local',
+                accountStatus: input.accountStatus,
             }).returning();
 
             const { passwordHash: _, ...safeUser } = newUser;
@@ -43,6 +44,10 @@ export class AuthService {
 
         if (user.authProvider !== 'local' || !user.passwordHash) {
             throw new UnauthorizedError(`Please login using your ${user.authProvider} account`);
+        }
+
+        if (user.accountStatus !== 'active') {
+            throw new UnauthorizedError('Account is not active. Please contact support.');
         }
 
         const passwordValid = await bcrypt.compare(input.password, user.passwordHash);

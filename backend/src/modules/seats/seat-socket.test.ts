@@ -49,6 +49,8 @@ describe('Seat WebSocket Integration', () => {
                 countryCode: '+91',
                 localPhone: '1234567890',
                 authProvider: 'local',
+                accountStatus: 'active',
+                role: 'operator',
             })
         })
 
@@ -88,7 +90,7 @@ describe('Seat WebSocket Integration', () => {
         const [seat] = await db.insert(seats).values({
             tripId: testTripId,
             seatNumber: 34,
-            price: '60.00',
+            price: 6000,
             status: 'available',
             seatType: 'standard',
         }).returning();

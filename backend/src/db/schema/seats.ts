@@ -34,7 +34,7 @@ export const seats = pgTable(
       .notNull(),
     seatType: seatTypeEnum('seat_type').default('standard').notNull(),
     seatNumber: integer('seat_number').notNull(),
-    price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+    price: integer('price').notNull(),
     status: seatStatusEnum('status').default('available').notNull(),
     lockedByUserId: uuid('locked_by_user_id')
       .references(() => users.id),

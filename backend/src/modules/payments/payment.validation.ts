@@ -16,13 +16,13 @@ export const verifyPaymentSchema = z.object({
 export const paymentFailureSchema = z.object({
     bookingId: z.string().uuid({ message: 'Invalid booking ID format' }),
     gatewayOrderId: z.string().min(1, { message: 'Gateway order ID is required' }),
-    gatewayResponse: z.string().max(2048), // raw error payload of debugging purposes
+    gatewayResponse: z.string().max(2048).optional(), // raw error payload of debugging purposes
 })
 
 // Initiate refund - admin only
 export const initiateRefundSchema = z.object({
     cancellationReason: z.string().min(1, { message: 'Cancellation reason is required' }).max(255),
-    refundAmount: z.number().positive({ message: 'Refund amount must be a positive number' }),
+    refundAmount: z.number().int().positive({ message: 'Refund amount must be in paise' }),
 })
 
 export const refundParamsSchema = z.object({
@@ -31,5 +31,5 @@ export const refundParamsSchema = z.object({
 
 // Webhook - Razorpay server-to-server event
 export const webhookHeaderSchema = z.object({
-    'x-razorpay-event': z.string().min(1, { message: 'Missing Razorpay webhook signature' }),
+    'x-razorpay-signature': z.string().min(1, { message: 'Missing Razorpay webhook signature' }),
 })

@@ -25,6 +25,7 @@ describe('SeatService - lockSeat()', () => {
             countryCode: 'IN',
             passwordHash: 'hashedpassword',
             authProvider: 'local',
+            accountStatus: 'active',
         }).returning();
         testUserId = user.id;
 
@@ -35,6 +36,7 @@ describe('SeatService - lockSeat()', () => {
             countryCode: 'IN',
             passwordHash: 'hashedPassword',
             authProvider: 'local',
+            accountStatus: 'active',
         }).returning();
         testUser2Id = user2.id;
 
@@ -61,7 +63,7 @@ describe('SeatService - lockSeat()', () => {
         const [seat] = await db.insert(seats).values({
             tripId: testTripId,
             seatNumber: 12,
-            price: '45.00',
+            price: 4500,
             status: 'available',
             seatType: 'standard',
             lockedByUserId: testUserId,
