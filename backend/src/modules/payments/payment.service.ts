@@ -26,7 +26,7 @@ export class PaymentService {
             throw new ConflictError('Cannot create payment order with status ' + booking.status)
         }
 
-        const amountInPaise = Math.round(parseFloat(booking.totalAmount) * 100);
+        const amountInPaise = booking.totalAmount;
 
         const order = await razorpay.orders.create({
             amount: amountInPaise,
@@ -119,7 +119,7 @@ export class PaymentService {
     static async handleFailure(input: {
         bookingId: string,
         gatewayOrderId: string,
-        gatewayResponse: string,
+        gatewayResponse?: string,
     }) {
         return await db.transaction(async (tx) => {
             const [booking] = await tx.select().from(bookings).where(eq(bookings.id, input.bookingId)).for('update');
@@ -179,7 +179,7 @@ export class PaymentService {
                 throw new NotFoundError('captured payment record')
             }
 
-            const fullAmount = parseFloat(booking.totalAmount);
+            const fullAmount = booking.totalAmount;
             const refundAmount = input.refundAmount ?? fullAmount;
             const amountInPaise = Math.round(refundAmount * 100);
 
@@ -198,7 +198,7 @@ export class PaymentService {
                 gatewayRefundId: refund.id,
                 event: 'refund_initiated',
                 amount: booking.totalAmount,
-                refundAmount: refundAmount.toFixed(2),
+                refundAmount: refundAmount,
                 currency: booking.currency,
                 gatewayResponse: JSON.stringify(refund),
             })

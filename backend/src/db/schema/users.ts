@@ -3,6 +3,7 @@ import { pgTable, uuid, varchar, pgEnum, text, timestamp } from "drizzle-orm/pg-
 
 export const roleEnum = pgEnum('user_role', ['customer', 'operator', 'admin']);
 export const authProviderEnum = pgEnum('auth_provider', ['local', 'google']);
+export const accountStatusEnum = pgEnum('account_status', ['active', 'suspended', 'deactivated']);
 
 export const users = pgTable('users', {
     id: uuid('id').primaryKey().defaultRandom(),
@@ -15,9 +16,11 @@ export const users = pgTable('users', {
     passwordHash: text('password_hash'),
     authProvider: authProviderEnum('auth_provider').default('local').notNull(),
     role: roleEnum('role').default('customer').notNull(),
+    accountStatus: accountStatusEnum('account_status').notNull(),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    suspendedUntil: timestamp('suspended_until'),
 })
 
 export type User = InferSelectModel<typeof users>;

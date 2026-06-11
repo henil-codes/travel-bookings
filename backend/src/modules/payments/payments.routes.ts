@@ -116,7 +116,8 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
         schema: {
             description: 'Razorpay webhook endpoint. Verified by signature.',
             tags: ['Payments'],
-            headers: webhookHeaderSchema
+            headers: webhookHeaderSchema,
+            body: z.object({}),
         }
     }, async (request, reply) => {
         const signature = request.headers['x-razorpay-signature'] as string;
@@ -127,6 +128,8 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
                 error: 'Missing Razorpay webhook signature',
             })
         }
+
+        console.log('Raw Body: ', request.rawBody);
 
         await PaymentService.handleWebhook({
             rawBody: request.rawBody as string,

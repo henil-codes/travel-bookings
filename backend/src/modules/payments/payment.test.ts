@@ -72,7 +72,8 @@ describe('PaymentService', () => {
             local_phone: '1234567890',
             passwordHash: 'hashedpassword',
             authProvider: 'local',
-            countryCode: 'IN'
+            countryCode: '+91',
+            accountStatus: 'active',
         }).returning();
         testUserId = user.id;
 
@@ -99,7 +100,7 @@ describe('PaymentService', () => {
         const [seat] = await db.insert(seats).values({
             tripId: testTripId,
             seatNumber: 4,
-            price: '89.00',
+            price: 8900,
             status: 'reserved',
             seatType: 'standard'
         }).returning();
@@ -121,7 +122,7 @@ describe('PaymentService', () => {
             bookedBy: testUserId,
             passengerId: testPassengerId,
             status: 'pending',
-            totalAmount: '89.00',
+            totalAmount: 8900,
             currency: 'INR'
         }).returning();
         testBookingId = booking.id;
@@ -155,7 +156,7 @@ describe('PaymentService', () => {
             expect(paymentRecord.event).toBe('order_created');
             expect(paymentRecord.gatewayOrderId).toBe('order_test_123');
             expect(paymentRecord.gatewayPaymentId).toBeNull();
-            expect(paymentRecord.amount).toBe('89.00');
+            expect(paymentRecord.amount).toBe(8900);
         })
 
         it('should throw NotFoundError if a non-existent booking', async () => {
@@ -182,7 +183,7 @@ describe('PaymentService', () => {
                 bookingId: testBookingId,
                 gatewayOrderId,
                 event: 'order_created',
-                amount: '89.00',
+                amount: 8900,
                 currency: 'INR',
             })
         })
@@ -208,7 +209,7 @@ describe('PaymentService', () => {
             const [paymentRecord] = await db.select().from(payments).where(and(eq(payments.bookingId, testBookingId), eq(payments.event, 'payment_captured')))
             expect(paymentRecord).toBeDefined();
             expect(paymentRecord.gatewayPaymentId).toBe(gatewayPaymentId);
-            expect(paymentRecord.amount).toBe('89.00');
+            expect(paymentRecord.amount).toBe(8900);
             expect(paymentRecord.method).toBe('upi');
         })
 
@@ -292,7 +293,7 @@ describe('PaymentService', () => {
                 gatewayOrderId,
                 gatewayPaymentId,
                 event: 'payment_captured',
-                amount: '89.00',
+                amount: 8900,
                 currency: 'INR',
             })
         })
@@ -316,20 +317,20 @@ describe('PaymentService', () => {
             const [paymentRecord] = await db.select().from(payments).where(and(eq(payments.bookingId, testBookingId), eq(payments.event, 'refund_initiated')));
             expect(paymentRecord).toBeDefined();
             expect(paymentRecord.gatewayRefundId).toBe('refund_test_456');
-            expect(paymentRecord.refundAmount).toBe('89.00');
+            expect(paymentRecord.refundAmount).toBe(8900);
         })
 
         it('should support partial refund amount', async () => {
             await PaymentService.initiateRefund({
                 bookingId: testBookingId,
                 cancellationReason: 'Customer requested cancellation',
-                refundAmount: 44.50,
+                refundAmount: 4450,
             })
 
             const [paymentRecord] = await db.select().from(payments).where(and(eq(payments.bookingId, testBookingId), eq(payments.event, 'refund_initiated')));
             expect(paymentRecord).toBeDefined();
             expect(paymentRecord.gatewayRefundId).toBe('refund_test_456');
-            expect(paymentRecord.refundAmount).toBe('44.50');
+            expect(paymentRecord.refundAmount).toBe(4450);
         })
 
         it('should throw ConflictError if booking is not completed', async () => {
@@ -366,8 +367,8 @@ describe('PaymentService', () => {
                 gatewayPaymentId, 
                 gatewayRefundId,
                 event: 'refund_initiated',
-                amount: '89.00',
-                refundAmount: '89.00',
+                amount: 8900,
+                refundAmount: 8900,
                 currency: 'INR'
             })
         })

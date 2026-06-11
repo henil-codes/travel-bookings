@@ -31,19 +31,19 @@ describe('Trip Routes Integration', () => {
         const [admin] = await db.insert(users).values({
             name: 'Admin User', email: 'triproute.admin@test.com',
             countryCode: '+91', local_phone: '0000000001',
-            authProvider: 'local', role: 'admin',
+            authProvider: 'local', role: 'admin', accountStatus: 'active'
         }).returning();
 
         const [operator] = await db.insert(users).values({
             name: 'Operator User', email: 'triproute.operator@test.com',
             countryCode: '+91', local_phone: '0000000002',
-            authProvider: 'local', role: 'operator',
+            authProvider: 'local', role: 'operator', accountStatus: 'active',
         }).returning();
 
         const [customer] = await db.insert(users).values({
             name: 'Customer User', email: 'triproute.customer@test.com',
             countryCode: '+91', local_phone: '0000000003',
-            authProvider: 'local', role: 'customer',
+            authProvider: 'local', role: 'customer', accountStatus: 'active',
         }).returning();
         testUserId = customer.id;
 
@@ -72,10 +72,10 @@ describe('Trip Routes Integration', () => {
 
         // seed some seats for the seat map test
         await db.insert(seats).values([
-            { tripId: testTripId, seatNumber: 1, price: '45.00', status: 'available', seatType: 'standard' },
-            { tripId: testTripId, seatNumber: 2, price: '45.00', status: 'locked', seatType: 'standard' },
-            { tripId: testTripId, seatNumber: 3, price: '55.00', status: 'sold', seatType: 'accessible' },
-            { tripId: testTripId, seatNumber: 4, price: '45.00', status: 'reserved', seatType: 'women_only' },
+            { tripId: testTripId, seatNumber: 1, price: 4500, status: 'available', seatType: 'standard' },
+            { tripId: testTripId, seatNumber: 2, price: 4500, status: 'locked', seatType: 'standard' },
+            { tripId: testTripId, seatNumber: 3, price: 5500, status: 'sold', seatType: 'accessible' },
+            { tripId: testTripId, seatNumber: 4, price: 4500, status: 'reserved', seatType: 'women_only' },
         ])
     }, 20000);
 
@@ -239,9 +239,9 @@ describe('Trip Routes Integration', () => {
             expect(res.status).toBe(401);
         })
 
-        it('should return 401 when customer tries to create trip', async () => {
+        it('should return 403 when customer tries to create trip', async () => {
             const res = await post('/trips', validTrip(), customerToken);
-            expect(res.status).toBe(401);
+            expect(res.status).toBe(403);
         })
 
         it('should create a trip as operator', async () => {
@@ -276,9 +276,9 @@ describe('Trip Routes Integration', () => {
             expect(res.status).toBe(409);
         })
 
-        it('should return 401 when customer tries to update status', async () => {
+        it('should return 403 when customer tries to update status', async () => {
             const res = await patch(`/trips/${testTripId}/status`, { status: 'departed' }, customerToken);
-            expect(res.status).toBe(401);
+            expect(res.status).toBe(403);
         })
     })
 
@@ -306,9 +306,9 @@ describe('Trip Routes Integration', () => {
             }
         })
 
-        it('should return 401 when operator tries to delete', async () => {
+        it('should return 403 when operator tries to delete', async () => {
             const res = await del(`/trips/${deletableTripId}`, operatorToken);
-            expect(res.status).toBe(401);
+            expect(res.status).toBe(403);
         })
 
         it('should delete a scheduled trip as admin', async () => {
