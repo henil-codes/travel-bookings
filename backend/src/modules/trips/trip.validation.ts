@@ -7,9 +7,8 @@ export const createTripSchema = z
     startLocation: z.string().min(1).max(255),
     endLocation: z.string().min(1).max(255),
     departureTime: z.iso.datetime({ message: 'Invalid ISO date time format' }),
-    status: z.enum(tripStatusEnum.enumValues).default('scheduled'),
     arrivalTime: z.iso.datetime({ message: 'Invalid ISO date time format' }),
-    vehicleId: z.string().uuid(),
+    vehicleId: z.uuid(),
     capacity: z.number().int().positive(),
   })
   .superRefine((data, ctx) => {
@@ -32,7 +31,7 @@ export const createTripSchema = z
 
 export const updateTripSchema = z
   .object({
-    vehicleId: z.string().uuid().optional(),
+    vehicleId: z.uuid().optional(),
     name: z.string().min(1).max(255).optional(),
     startLocation: z.string().min(1).max(255).optional(),
     endLocation: z.string().min(1).max(255).optional(),
@@ -59,7 +58,7 @@ export const updateTripStatusSchema = z.object({
 export const tripFilterSchema = z.object({
     startLocation: z.string().min(1).optional(),
     endLocation: z.string().min(1).optional(),
-    date: z.string().date({ message: 'Use YYYY-MM-DD format'}).optional(),
+    date: z.iso.date({ message: 'Use YYYY-MM-DD format'}).optional(),
     status: z.enum(tripStatusEnum.enumValues).optional().default('scheduled'),
     page: z.coerce.number().int().positive().default(1),
     limit: z.coerce.number().int().positive().max(100).default(20),

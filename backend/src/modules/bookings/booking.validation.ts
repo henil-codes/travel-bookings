@@ -9,10 +9,8 @@ export const lockSeatSchema = z.object({
 
 // Create booking schema
 export const createBookingSchema = z.object({
-    seatId: z.string().uuid(),
-    tripId: z.string().uuid(),
-    status: z.enum(paymentStatusEnum.enumValues),
-    currency: z.string().length(3, { message: 'Currency must be a 3-letter code' }),
+    seatId: z.uuid(),
+    tripId: z.uuid(),
     passenger: z.object({
         name: z.string().min(1),
         age: z.number().int().positive(),
