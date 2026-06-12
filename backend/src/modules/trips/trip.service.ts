@@ -162,61 +162,41 @@ export class TripService {
       );
     }
 
-    // if both time and vehicle are being updated, check for conflicts first
-    if (input.departureTime && input.vehicleId) {
-      // check if new departure time is in the future
-      const newDepartureTime = input.departureTime
-        ? new Date(input.departureTime)
-        : trip.departureTime;
-      const newArrivalTime = input.arrivalTime
-        ? new Date(input.arrivalTime)
-        : trip.arrivalTime;
+    const newDepartureTime = input.departureTime ? new Date(input.departureTime) : trip.departureTime;
+    const newArrivalTime = input.arrivalTime ? new Date(input.arrivalTime) : trip.arrivalTime;
 
+    if (input.departureTime || input.arrivalTime) {
       if (newArrivalTime <= newDepartureTime) {
         throw new ConflictError('Arrival time must be after departure time');
       }
+    }
 
-      // check if new vehicle is available at the new departure time
-      const [vehicle] = await db
-        .select()
-        .from(vehicles)
-        .where(eq(vehicles.id, input.vehicleId));
+    if (input.vehicleId && input.vehicleId !== trip.vehicleId) {
+      const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, input.vehicleId));
+
       if (!vehicle) {
         throw new NotFoundError('Vehicle');
       }
 
-      if (trip.vehicleId !== input.vehicleId) {
-        const isAvailable = await TripService.checkVehicleAvailability(
-          input.vehicleId,
-          newDepartureTime,
-          tripId
-        );
-        if (!isAvailable) {
-          throw new ConflictError(
-            'Vehicle is already assigned to another trip during the specified time'
-          );
-        }
+      const isConflict = await TripService.checkVehicleAvailability(input.vehicleId, newDepartureTime, tripId);
 
-        const [updatedTrip] = await db
-          .update(trips)
-          .set({
-            name: input.name,
-            startLocation: input.startLocation,
-            endLocation: input.endLocation,
-            departureTime: newDepartureTime,
-            arrivalTime: newArrivalTime,
-            vehicleId: input.vehicleId,
-          })
-          .where(eq(trips.id, tripId))
-          .returning();
-
-        return updatedTrip;
-      } else {
-        throw new ConflictError(
-          'New vehicle must be different from the current vehicle'
-        );
+      if (isConflict) {
+        throw new ConflictError('Vehicle is already assigned to another trip during the specified time');
       }
     }
+
+    const updateData = {
+      ...(input.name && { name: input.name }),
+      ...(input.startLocation && { startLocation: input.startLocation }),
+      ...(input.endLocation && { endLocation: input.endLocation }),
+      ...(input.departureTime && { departureTime: newDepartureTime }),
+      ...(input.arrivalTime && { arrivalTime: newArrivalTime }),
+      ...(input.vehicleId && { vehicleId: input.vehicleId }),
+    };
+
+    const [updatedTrip] = await db.update(trips).set(updateData).where(eq(trips.id, tripId)).returning();
+
+    return updatedTrip;
   }
 
   // updateTripStatus - admin or operator can update trip status with valid transitions
