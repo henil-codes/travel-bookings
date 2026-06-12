@@ -23,7 +23,7 @@ export class AuthService {
                 local_phone: input.localPhone,
                 passwordHash,
                 authProvider: 'local',
-                accountStatus: input.accountStatus,
+                accountStatus: 'active',
             }).returning();
 
             const { passwordHash: _, ...safeUser } = newUser;
