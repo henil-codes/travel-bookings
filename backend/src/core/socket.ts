@@ -18,14 +18,32 @@ export const socketPlugin = fp(async (fastify, options) => {
     // Array to hold cleanup functions
     const subscriptions: Array<() => void> = [];
 
+    io.on('connection', (socket) => {
+        fastify.log.info(`New client connected: ${socket.id}`);
+
+        socket.on('join:trip', (tripId: string) => {
+            socket.join(`trip:${tripId}`);
+            fastify.log.info(`Client ${socket.id} joined room: trip:${tripId}`);
+        })
+
+        socket.on('leave:trip', (tripId: string) => {
+            socket.leave(`trip:${tripId}`);
+            fastify.log.info(`Client ${socket.id} left room: trip:${tripId}`);
+        })
+
+        socket.on('disconnect', () => {
+            fastify.log.info(`Client disconnected: ${socket.id}`);
+        })
+    })
+
     const subscribeToGlobalEvents = (eventName: string, handler: (payload: any) => void) => {
         appEmitter.on(eventName, handler);
         subscriptions.push(() => appEmitter.off(eventName, handler));
     }
 
     subscribeToGlobalEvents('seat:status_changed', (payload) => {
-        io.emit('seat:status_changed', payload);
-    })
+        io.to(`trip:${payload.tripId}`).emit('seat:status_changed', payload);
+    });
 
     const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
     let pubClient: Redis | undefined;

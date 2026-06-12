@@ -8,7 +8,7 @@ import { authPlugin } from './core/auth';
 import { seatRoutes } from './modules/seats/seat.routes';
 import { authRoutes } from './modules/auth/auth.routes';
 import { bookingRoutes } from './modules/bookings/booking.routes';
-import { paymentRoutes } from './modules/payments/payments.routes';
+import { paymentRoutes } from './modules/payments/payment.routes';
 import { tripRoutes } from './modules/trips/trip.routes';
 
 export const buildApp = (): FastifyInstance => {
@@ -30,7 +30,7 @@ export const buildApp = (): FastifyInstance => {
 
   // Plugins & Compilers
   app.register(cors, {
-    origin: 'http://localhost:5173', // Adjust this to your frontend URL
+    origin: process.env.CORS_ORIGIN,
   });
 
   app.register(socketPlugin);
