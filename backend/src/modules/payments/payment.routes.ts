@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyPluginAsync } from "fastify";
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { PaymentService } from "./payment.service";
+import { BookingService } from "../bookings/booking.service";
 import { verifyPaymentSchema, createOrderParamsSchema, paymentFailureSchema, refundParamsSchema, initiateRefundSchema, webhookHeaderSchema } from "./payment.validation";
 import { requireRole } from "@/core/guards";
 import { UnauthorizedError } from "@/core/errors";
@@ -18,7 +19,7 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
             params: createOrderParamsSchema,
         }
     }, async (request, reply) => {
-        const booking = await PaymentService.getBookingForPayment(request.params.bookingId);
+        const booking = await BookingService.getBookingById(request.params.bookingId);
 
         if (booking.bookedBy !== request.user.id) {
             throw new UnauthorizedError("You can only pay for your own bookings");;
@@ -44,7 +45,7 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
     }, async (request, reply) => {
         const { bookingId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = request.body;
 
-        const booking = await PaymentService.getBookingForPayment(bookingId);
+        const booking = await BookingService.getBookingById(bookingId);
 
         if (booking.bookedBy !== request.user.id) {
             throw new UnauthorizedError('You can only verify your own payments');
@@ -73,7 +74,7 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
             body: paymentFailureSchema,
         }
     }, async (request, reply) => {
-        const booking = await PaymentService.getBookingForPayment(request.body.bookingId);
+        const booking = await BookingService.getBookingById(request.body.bookingId);
 
         if (booking.bookedBy !== request.user.id) {
             throw new UnauthorizedError('You can only report failure for your own payments');

@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { seats } from './seats';
 import { bookings } from './bookings';
+import { passengers } from './passengers';
 import { trips } from './trips';
 
 // --- TRIP RELATIONS ---
@@ -29,3 +30,11 @@ export const seatRelations = relations(seats, ({ one, many }) => ({
   }),
   bookings: many(bookings),
 }));
+
+// --- PASSENGER RELATIONS ---
+export const passengerRelations = relations(passengers, ({ one }) => ({
+  booking: one(bookings, {
+    fields: [passengers.id],
+    references: [bookings.passengerId],
+  })
+}))
