@@ -30,8 +30,6 @@ export class AuthService {
             const { passwordHash: _, ...safeUser } = newUser;
             return safeUser;
         } catch (error: any) {
-            console.error("Hidden Posgres error");
-            console.error(error.cause);
             throw error;
         }
     }

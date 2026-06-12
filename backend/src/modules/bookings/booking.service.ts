@@ -72,7 +72,8 @@ export class BookingService {
                 gender: input.passenger.gender,
                 idNumber: input.passenger.idNumber,
                 idType: input.passenger.idType,
-                isAccessibilityRequired: input.passenger.isAccessibilityRequired
+                isAccessibilityRequired: input.passenger.isAccessibilityRequired,
+                createdAt: new Date(),
             }).returning();
 
             const [booking] = await tx.insert(bookings).values({
