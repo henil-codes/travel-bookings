@@ -79,6 +79,7 @@ export class TripService {
       .select()
       .from(trips)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .limit(filters.limit)
       .offset(offset)
       .orderBy(trips.departureTime);
 
