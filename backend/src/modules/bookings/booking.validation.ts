@@ -68,8 +68,8 @@ export const cancelBookingSchema = z.object({
 export const bookingFilterSchema = z.object({
     userId: z.string().uuid({ message: 'Invalid user ID format' }).optional(),
     status: z.enum(paymentStatusEnum.enumValues).optional(),
-    from: z.string().date({ message: 'Use YYYY-MM-DD format'}).optional(),
-    to: z.string().date({ message: 'Use YYYY-MM-DD format'}).optional(),
+    from: z.iso.date({ message: 'Use YYYY-MM-DD format'}).optional(),
+    to: z.iso.date({ message: 'Use YYYY-MM-DD format'}).optional(),
     page: z.coerce.number().int().positive().default(1),
     limit: z.coerce.number().int().positive().max(100).default(20),
 }).superRefine((data, ctx) => {
