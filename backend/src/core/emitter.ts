@@ -6,6 +6,7 @@ export const appEmitter = new EventEmitter();
 export interface AppEvents {
     'seat:status_changed' : {
         seatId: string,
+        tripId: string,
         status: string,
         lockedUntil: Date | null;
     };
