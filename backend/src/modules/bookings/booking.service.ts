@@ -6,7 +6,7 @@ import { users } from '@/db/schema/users'
 import { passengers } from '@/db/schema/passengers'
 import { genderEnum, idTypeEnum } from '@/db/schema/passengers'
 import { NotFoundError, ConflictError, UnauthorizedError } from '@/core/errors'
-import { eq, and, not, inArray } from 'drizzle-orm'
+import { eq, and, not, gte, lte, inArray } from 'drizzle-orm'
 import { BookingFilter, CreateBookingPayload, LockSeatPayload, CancelBookingPayload, createBookingSchema, BookingParams } from './booking.validation'
 
 interface PassengerInput {
@@ -130,6 +130,16 @@ export class BookingService {
 
         if (input.status) {
             conditions.push(eq(bookings.status, input.status));
+        }
+
+        if (input.from) {
+            conditions.push(gte(bookings.createdAt, new Date(input.from)));
+        }
+
+        if (input.to) {
+            const toDate = new Date(input.to);
+            toDate.setDate(toDate.getDate() + 1); // make 'to' inclusive
+            conditions.push(lte(bookings.createdAt, toDate));
         }
 
         const offset = (input.page - 1) * input.limit;
