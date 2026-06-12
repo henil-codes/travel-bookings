@@ -3,9 +3,10 @@ import { users } from '@/db/schema/users'
 import { eq } from 'drizzle-orm'
 import bcrypt from 'bcrypt'
 import { ConflictError, UnauthorizedError } from '@/core/errors'
+import { RegisterInput, LoginInput } from './auth.validation'
 
 export class AuthService {
-    static async register(input: any) {
+    static async register(input: RegisterInput) {
         try {
             const [existingUser] = await db.select().from(users).where(eq(users.email, input.email));
 
@@ -35,7 +36,7 @@ export class AuthService {
         }
     }
 
-    static async login(input: any) {
+    static async login(input: LoginInput) {
         const [user] = await db.select().from(users).where(eq(users.email, input.email));
 
         if (!user) {
