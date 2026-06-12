@@ -146,7 +146,7 @@ export class BookingService {
             throw new NotFoundError('Booking');
         }
 
-        if (booking.status !== 'pending' && booking.status !== 'completed') {
+        if (booking.status !== 'pending') {
             throw new ConflictError(`Cannot cancel a booking with status: ${booking.status}`)
         }
 

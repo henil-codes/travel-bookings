@@ -181,14 +181,13 @@ export class PaymentService {
 
             const fullAmount = booking.totalAmount;
             const refundAmount = input.refundAmount ?? fullAmount;
-            const amountInPaise = Math.round(refundAmount * 100);
 
             if (refundAmount > fullAmount) {
                 throw new ConflictError('Refund amount cannot be greater than the original amount');
             }
 
             // Initiate refund via Razorpay
-            const refund = await razorpay.payments.refund(capturedPayment.gatewayPaymentId, { amount: amountInPaise });
+            const refund = await razorpay.payments.refund(capturedPayment.gatewayPaymentId, { amount: refundAmount });
 
             // Record the refund in the database
             await tx.insert(payments).values({
