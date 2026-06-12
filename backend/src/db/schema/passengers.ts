@@ -1,4 +1,4 @@
-import { pgTable, pgEnum, varchar, integer, boolean, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, pgEnum, varchar, integer, boolean, uuid, timestamp } from 'drizzle-orm/pg-core';
 import { bookings } from './bookings';
 import { InferSelectModel } from 'drizzle-orm';
 
@@ -13,6 +13,9 @@ export const passengers = pgTable('passengers', {
     isAccessibilityRequired: boolean('is_accessibility_required').default(false).notNull(),
     idType: idTypeEnum('id_type').notNull(),
     idNumber: varchar('id_number', { length: 255 }).notNull(),
+    
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
 export type Passenger = InferSelectModel<typeof passengers>;
