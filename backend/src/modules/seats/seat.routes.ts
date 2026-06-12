@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { lockSeatSchema } from '../../core/validation';
+import { lockSeatSchema } from '../bookings/booking.validation';
 import { SeatService } from './seat.service';
 import { AppError } from '../../core/errors';
 
@@ -33,6 +33,25 @@ export const seatRoutes: FastifyPluginAsync = async (
       });
     }
   );
+
+  server.delete('/lock', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      body: lockSeatSchema,
+      description: 'Unlocks a previously locked seat.',
+      tags: ['Seats'],
+    }
+  }, async (request, reply) => {
+    const { seatId } = request.body;
+    const userId = request.user.id;
+
+    await SeatService.unlockSeat(seatId, userId);
+
+    return reply.status(200).send({
+      success: true,
+      message: 'Seat unlocked successfully',
+    })
+  })
 
   server.get('/', async (request, reply) => {
     return reply.status(200).send({
