@@ -15,8 +15,10 @@ describe('Trip Routes Integration', () => {
     let testVehicleId: string;
     let testTripId: string;
     let testUserId: string;
+    let testManagerId: string;
+    let testDriverId: string;
     let adminToken: string;
-    let operatorToken: string;
+    let managerToken: string;
     let customerToken: string;
 
     beforeAll(async () => {
@@ -30,30 +32,44 @@ describe('Trip Routes Integration', () => {
 
         const [admin] = await db.insert(users).values({
             name: 'Admin User', email: 'triproute.admin@test.com',
-            countryCode: '+91', local_phone: '0000000001',
+            countryCode: '+91', localPhone: '0000000001',
             authProvider: 'local', role: 'admin', accountStatus: 'active'
         }).returning();
 
-        const [operator] = await db.insert(users).values({
-            name: 'Operator User', email: 'triproute.operator@test.com',
-            countryCode: '+91', local_phone: '0000000002',
-            authProvider: 'local', role: 'operator', accountStatus: 'active',
+        const [manager] = await db.insert(users).values({
+            name: 'Manager User',
+            email: 'triproute.manager@test.com',
+            passwordHash: 'hashedPassword',
+            countryCode: '+91', localPhone: '0000000002',
+            accountStatus: 'active',
+            authProvider: 'local', role: 'manager'
         }).returning();
+        testManagerId = manager.id;
+
+        const [driver] = await db.insert(users).values({
+            name: 'Driver User',
+            email: 'triproute.driver@test.com',
+            passwordHash: 'hashedPassword',
+            countryCode: '+91', localPhone: '0000000004',
+            accountStatus: 'active',
+            authProvider: 'local', role: 'driver'
+        }).returning();
+        testDriverId = driver.id;
 
         const [customer] = await db.insert(users).values({
             name: 'Customer User', email: 'triproute.customer@test.com',
-            countryCode: '+91', local_phone: '0000000003',
+            countryCode: '+91', localPhone: '0000000003',
             authProvider: 'local', role: 'customer', accountStatus: 'active',
         }).returning();
         testUserId = customer.id;
 
         // sign tokens directly via app.jwt
         adminToken = app.jwt.sign({ id: admin.id, role: 'admin' });
-        operatorToken = app.jwt.sign({ id: operator.id, role: 'operator' });
+        managerToken = app.jwt.sign({ id: manager.id, role: 'manager' });
         customerToken = app.jwt.sign({ id: customer.id, role: 'customer' });
 
         const [vehicle] = await db.insert(vehicles).values({
-            operatorName: 'Test Operator', vehicleNumber: 'RT-001',
+           vehicleNumber: 'RT-001',
             capacity: 40, vehicleType: 'bus',
         }).returning();
         testVehicleId = vehicle.id;
@@ -66,7 +82,7 @@ describe('Trip Routes Integration', () => {
             arrivalTime: new Date(Date.now() + 936000000),
             vehicleId: testVehicleId,
             capacity: 40,
-            status: 'scheduled',
+            driverId: testDriverId,
         }).returning();
         testTripId = trip.id;
 
@@ -84,9 +100,10 @@ describe('Trip Routes Integration', () => {
             await tx.delete(seats).where(eq(seats.tripId, testTripId));
             await tx.delete(trips).where(eq(trips.id, testTripId));
             await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
-            await tx.delete(users).where(eq(users.email, 'triproute.admin@test.com'));
-            await tx.delete(users).where(eq(users.email, 'triproute.operator@test.com'));
-            await tx.delete(users).where(eq(users.email, 'triproute.customer@test.com'));
+            await tx.delete(users).where(eq(users.id, testUserId));
+            await tx.delete(users).where(eq(users.id, testManagerId));
+            await tx.delete(users).where(eq(users.id, testDriverId));
+            await tx.delete(users).where(eq(users.email, 'triproute.admin@test.com'))
         })
         await app.close();
     })
@@ -154,7 +171,7 @@ describe('Trip Routes Integration', () => {
         })
 
         it('should return empty array for no matching results', async () => {
-            const res = await get('/trips?startLocation=Vancouver');
+            const res = await get('/trips?startLocation=Atlantis-Nowhere-City-999');
             const body = await res.json();
             expect(res.status).toBe(200);
             expect(body.data).toHaveLength(0);
@@ -214,7 +231,7 @@ describe('Trip Routes Integration', () => {
         })
     })
 
-    // POST / - admin + operator
+    // POST / - admin + manager
     describe('POST /trips', () => {
         let createdTripId: string;
 
@@ -231,6 +248,7 @@ describe('Trip Routes Integration', () => {
             departureTime: new Date(Date.now() + 86400000).toISOString(),
             arrivalTime: new Date(Date.now() + 97200000).toISOString(),
             vehicleId: testVehicleId,
+            driverId: testDriverId,
             capacity: 40,
         })
 
@@ -245,7 +263,7 @@ describe('Trip Routes Integration', () => {
         })
 
         it('should create a trip as operator', async () => {
-            const res = await post('/trips', validTrip(), operatorToken);
+            const res = await post('/trips', validTrip(), managerToken);
             const body = await res.json();
             expect(res.status).toBe(201);
             createdTripId = body.data.id;
@@ -262,7 +280,7 @@ describe('Trip Routes Integration', () => {
 
     })
 
-    // PATCH /:id/status - admin + operator
+    // PATCH /:id/status - admin + manager
     describe('PATCH /trips/:id/status', () => {
         it('should update trip status as admin', async () => {
             const res = await patch(`/trips/${testTripId}/status`, { status: 'boarding' }, adminToken);
@@ -295,7 +313,7 @@ describe('Trip Routes Integration', () => {
                 arrivalTime: new Date(Date.now() + 97200000),
                 vehicleId: testVehicleId,
                 capacity: 10,
-                status: 'scheduled',
+                driverId: testUserId,
             }).returning();
             deletableTripId = trip.id;
         })
@@ -306,8 +324,8 @@ describe('Trip Routes Integration', () => {
             }
         })
 
-        it('should return 403 when operator tries to delete', async () => {
-            const res = await del(`/trips/${deletableTripId}`, operatorToken);
+        it('should return 403 when manager tries to delete', async () => {
+            const res = await del(`/trips/${deletableTripId}`, managerToken);
             expect(res.status).toBe(403);
         })
 

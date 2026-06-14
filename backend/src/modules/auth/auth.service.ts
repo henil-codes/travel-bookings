@@ -21,7 +21,7 @@ export class AuthService {
                 name: input.name,
                 email: input.email,
                 countryCode: input.countryCode,
-                local_phone: input.localPhone,
+                localPhone: input.localPhone,
                 passwordHash,
                 authProvider: 'local',
                 accountStatus: 'active',

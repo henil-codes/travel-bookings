@@ -1,19 +1,34 @@
 import { InferSelectModel, relations } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, decimal, integer, pgEnum } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  decimal,
+  integer,
+  pgEnum,
+} from 'drizzle-orm/pg-core';
 import { vehicles } from './vehicles';
+import { users } from './users';
 
 export const tripStatusEnum = pgEnum('trip_status', [
-    'scheduled',
-    'cancelled',
-    'completed',
-    'boarding',
-    'departed',
-])
+  'scheduled',
+  'cancelled',
+  'completed',
+  'boarding',
+  'departed',
+]);
 
 export const trips = pgTable('trips', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 255 }).notNull(),
-  vehicleId: uuid('vehicle_id').references(() => vehicles.id).notNull(),
+  vehicleId: uuid('vehicle_id')
+    .references(() => vehicles.id)
+    .notNull(),
+  driverId: uuid('driver_id')
+    .references(() => users.id)
+    .notNull(),
+
   startLocation: varchar('start_location', { length: 255 }).notNull(),
   endLocation: varchar('end_location', { length: 255 }).notNull(),
   departureTime: timestamp('departure_time').notNull(),

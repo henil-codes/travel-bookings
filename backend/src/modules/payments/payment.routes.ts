@@ -90,7 +90,7 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
 
     // POST /refund/:bookingId - Initiate refund (Admin only)
     server.post('/refund/:bookingId', {
-        preHandler: [fastify.authenticate, requireRole('admin')],
+        preHandler: [fastify.authenticate, requireRole('admin', 'manager')],
         schema: {
             description: 'Admin only. Initiates a Razorpay reufnd for a completed booking.',
             tags: ['Payments', 'Admin'],

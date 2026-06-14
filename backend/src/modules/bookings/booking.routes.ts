@@ -35,13 +35,13 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
 
     // GET / - list bookings
     // Customer: sees only their bookings
-    // Operator: sees all bookings for their trips
+    // Manager: sees all bookings for their trips
     // Admin: sees all bookings
 
     server.get('/', {
         preHandler: [fastify.authenticate],
         schema: {
-            description: 'Returns bookings. Customers see their own; admins see all; operators see bookings for their trips.',
+            description: 'Returns bookings. Customers see their own; admins see all; managers see bookings for their trips.',
             tags: ['Bookings'],
             querystring: bookingFilterSchema, 
         }
@@ -50,7 +50,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
             const { userId, status, page, limit } = request.query;
             const requestingUser = request.user;
 
-            const filterUserId = requestingUser.role === 'admin' ? userId : requestingUser.id;
+            const filterUserId = (requestingUser.role === 'admin' || requestingUser.role === 'manager') ? userId : requestingUser.id;
 
             const result = await BookingService.listBookings({
                 userId: filterUserId,
@@ -76,7 +76,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
     }, async (request, reply) => {
         const booking = await BookingService.getBookingById(request.params.id);
 
-        if (request.user.role !== 'admin' && booking.bookedBy !== request.user.id) {
+        if (request.user.role !== 'admin' && request.user.role !== 'manager' && booking.bookedBy !== request.user.id) {
             throw new UnauthorizedError('You do not have permission to this booking.')
         }
         
@@ -88,7 +88,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
 
     // GET /admin/all - admin-only: all bookings unfiltered
     server.get('/admin/all', {
-        preHandler: [fastify.authenticate, requireRole('admin')],
+        preHandler: [fastify.authenticate, requireRole('admin', 'manager')],
         schema: {
             description: 'Admin only. Returns all bookings without filters.',
             tags: ['Bookings', 'Admin'],
@@ -120,7 +120,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
     }, async (request, reply) => {
         const booking = await BookingService.getBookingById(request.params.id);
 
-        if (request.user.role !== 'admin') {
+        if (request.user.role !== 'admin' && request.user.role !== 'manager') {
             if (booking.bookedBy !== request.user.id) {
                 throw new UnauthorizedError('You do not have permission to cancel this booking.')
             }
