@@ -56,6 +56,8 @@ describe('PaymentService', () => {
     let testSeatId: string;
     let testPassengerId: string;
     let testBookingId: string;
+    let testDriverId: string;
+    let testManagerId: string;
     // helper - resets bookings to pending + seats to reserved before each test
     const resetToPrePaymentState = async () => {
         await db.update(bookings).set({ status: 'pending', cancelledAt: null, cancellationReason: null, updatedAt: new Date() }).where(eq(bookings.id, testBookingId));
@@ -69,7 +71,7 @@ describe('PaymentService', () => {
         const [user] = await db.insert(users).values({
             name: 'Payment Test User',
             email: 'paymenttest@example.com',
-            local_phone: '1234567890',
+            localPhone: '1234567890',
             passwordHash: 'hashedpassword',
             authProvider: 'local',
             countryCode: '+91',
@@ -77,8 +79,31 @@ describe('PaymentService', () => {
         }).returning();
         testUserId = user.id;
 
+        const [manager] = await db.insert(users).values({
+            name: 'Payment Test Manager',
+            email: 'payment.manager@example.com',
+            passwordHash: 'hashedPassword',
+            countryCode: '+91',
+            authProvider: 'local',
+            localPhone: '9876543210',
+            accountStatus: 'active',
+            role: 'manager',
+        }).returning();
+        testManagerId = manager.id;
+
+        const [driver] = await db.insert(users).values({
+            name: 'Payment Test Driver',
+            email: 'payment.driver@example.com',
+            passwordHash: 'hashedPassword',
+            countryCode: '+91',
+            authProvider: 'local',
+            localPhone: '9876543210',
+            accountStatus: 'active',
+            role: 'driver',
+        }).returning();
+        testDriverId = driver.id;
+
         const [vehicle] = await db.insert(vehicles).values({
-            operatorName: 'Test Operator',
             vehicleNumber: 'TEST123',
             capacity: 40,
             vehicleType: 'bus'
@@ -93,7 +118,7 @@ describe('PaymentService', () => {
             arrivalTime: new Date(Date.now() + 97200000), // 1 day + 8 hours from now
             vehicleId: testVehicleId,
             capacity: 40,
-            status: 'scheduled'
+            driverId: testDriverId
         }).returning();
         testTripId = trip.id;
 
@@ -137,6 +162,8 @@ describe('PaymentService', () => {
             await tx.delete(trips).where(eq(trips.id, testTripId));
             await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
             await tx.delete(users).where(eq(users.id, testUserId));
+            await tx.delete(users).where(eq(users.id, testDriverId));
+            await tx.delete(users).where(eq(users.id, testManagerId));
         })
     })
 

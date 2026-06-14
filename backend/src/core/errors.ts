@@ -5,6 +5,7 @@ export class AppError extends Error {
 
     constructor(code: string, message: string, statusCode: number, isOperational = true) {
         super(message);
+        Object.setPrototypeOf(this, new.target.prototype)
         this.code = code;
         this.statusCode = statusCode;
         this.isOperational = isOperational;

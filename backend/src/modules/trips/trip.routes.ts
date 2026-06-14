@@ -67,12 +67,12 @@ export const tripRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =
         }
     )
 
-    // POST / - admin + operator
+    // POST / - admin + manager
     server.post('/', {
-        preHandler: [fastify.authenticate, requireRole('admin', 'operator')],
+        preHandler: [fastify.authenticate, requireRole('admin', 'manager')],
         schema: {
             body: createTripSchema,
-            description: 'Creates a new trip. Admin or operator only.',
+            description: 'Creates a new trip. Admin or manager only.',
             tags: ['trips'],
         }
     }, async (request, reply) => {
@@ -85,13 +85,13 @@ export const tripRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =
         })
     })
 
-    // PATCH /:id - admin + operator
+    // PATCH /:id - admin + manager
     server.patch('/:id', {
-        preHandler: [fastify.authenticate, requireRole('admin', 'operator')],
+        preHandler: [fastify.authenticate, requireRole('admin', 'manager')],
         schema: {
             body: updateTripSchema,
             params: z.object({ id: z.string().uuid() }),
-            description: 'Updates trip details. Admin or operator only.',
+            description: 'Updates trip details. Admin or manager only.',
             tags: ['trips'],
         }
     }, async (request, reply) => {
@@ -104,13 +104,13 @@ export const tripRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =
         })
     })
 
-    // PATCH /:id/status - admin + operator
+    // PATCH /:id/status - admin + manager
     server.patch('/:id/status', {
-        preHandler: [fastify.authenticate, requireRole('admin', 'operator')],
+        preHandler: [fastify.authenticate, requireRole('admin', 'manager', 'driver')],
         schema: {
             body: updateTripStatusSchema,
             params: z.object({ id: z.string().uuid() }),
-            description: 'Updates trip status. Admin or operator only.',
+            description: 'Updates trip status. Admin or manager only.',
             tags: ['trips'],
         }
     }, async (request, reply) => {

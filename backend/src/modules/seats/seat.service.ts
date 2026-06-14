@@ -49,6 +49,7 @@ export class SeatService {
             }
 
             appEmitter.emit('seat:status_changed', {
+                tripId: updateSeat.tripId,
                 seatId: updateSeat.id,
                 status: 'locked',
                 lockedUntil: updateSeat.lockedUntil,
@@ -85,6 +86,7 @@ export class SeatService {
                 .returning();
 
             appEmitter.emit('seat:status_changed', {
+                tripId: updateSeat.tripId,
                 seatId: updateSeat.id,
                 status: 'available',
                 lockedUntil: null,

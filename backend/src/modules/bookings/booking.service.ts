@@ -9,27 +9,6 @@ import { NotFoundError, ConflictError, UnauthorizedError } from '@/core/errors'
 import { eq, and, not, gte, lte, inArray } from 'drizzle-orm'
 import { BookingFilter, CreateBookingPayload, LockSeatPayload, CancelBookingPayload, createBookingSchema, BookingParams } from './booking.validation'
 
-interface PassengerInput {
-    name: string;
-    age: number;
-    gender: typeof genderEnum.enumValues[number];
-    isAccessibilityRequired?: boolean;
-    idType: typeof idTypeEnum.enumValues[number];
-    idNumber: string;
-}
-
-/* interface CreateBookingInput {
-    tripId: string;
-    seatId: string;
-    passenger: PassengerInput;
-    bookedBy: string;
-    status: typeof paymentStatusEnum.enumValues[number];
-    totalAmount: string;
-    currency: string;
-
-}
- */
-
 export class BookingService {
     static async createBooking(input: CreateBookingPayload, bookedBy: string) {
         return await db.transaction(async (tx) => {
@@ -172,9 +151,4 @@ export class BookingService {
 
         return updatedBooking;
     }
-
-    
-
-
-
 }

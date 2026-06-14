@@ -35,6 +35,8 @@ describe('Payment Routes Integration', () => {
     let serverUrl: string;
     let testCustomerId: string;
     let otherCustomerId: string;
+    let testDriverId: string;
+    let testManagerId: string;
     let adminId: string;
     let customerToken: string;
     let otherCustomerToken: string;
@@ -65,21 +67,38 @@ describe('Payment Routes Integration', () => {
 
         const [customer] = await db.insert(users).values({
             name: 'Pay Customer', email: 'pay.customer@test.com',
-            countryCode: '+91', local_phone: '0000000001',
+            countryCode: '+91', localPhone: '0000000001',
             authProvider: 'local', role: 'customer', accountStatus: 'active',
+
         }).returning();
         testCustomerId = customer.id;
 
         const [other] = await db.insert(users).values({
             name: 'Other Pay Customer', email: 'pay.other@test.com',
-            countryCode: '+91', local_phone: '0000000002',
+            countryCode: '+91', localPhone: '0000000002',
             authProvider: 'local', role: 'customer', accountStatus: 'active',
         }).returning();
         otherCustomerId = other.id;
 
+        const [manager] = await db.insert(users).values({
+            name: 'Pay Manager',
+            email: 'pay.manager@test.com',
+            countryCode: '+91', localPhone: '0000000004',
+            authProvider: 'local', role: 'manager', accountStatus: 'active',
+        }).returning();
+        testManagerId = manager.id;
+
+        const [driver] = await db.insert(users).values({
+            name: 'Pay Driver', 
+            email: 'pay.driver@test.com',
+            countryCode: '+91', localPhone: '0000000005',
+            authProvider: 'local', role: 'driver', accountStatus: 'active',
+        }).returning();
+        testDriverId = driver.id;
+
         const [admin] = await db.insert(users).values({
             name: 'Pay Admin', email: 'pay.admin@test.com',
-            countryCode: '+91', local_phone: '0000000003',
+            countryCode: '+91', localPhone: '0000000003',
             authProvider: 'local', role: 'admin', accountStatus: 'active',
         }).returning();
         adminId = admin.id;
@@ -89,7 +108,7 @@ describe('Payment Routes Integration', () => {
         adminToken = app.jwt.sign({ id: adminId, role: 'admin' });
 
         const [vehicle] = await db.insert(vehicles).values({
-            operatorName: 'Test Operator', vehicleNumber: 'PAY-001',
+            vehicleNumber: 'PAY-001',
             capacity: 40, vehicleType: 'bus',
         }).returning();
         testVehicleId = vehicle.id;
@@ -102,7 +121,7 @@ describe('Payment Routes Integration', () => {
             arrivalTime: new Date(Date.now() + 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000),
             vehicleId: testVehicleId,
             capacity: 40,
-            status: 'scheduled',
+            driverId: testDriverId,
         }).returning();
         testTripId = trip.id;
 
@@ -138,6 +157,8 @@ describe('Payment Routes Integration', () => {
             await tx.delete(trips).where(eq(trips.id, testTripId));
             await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
             await tx.delete(users).where(eq(users.email, 'pay.customer@test.com'));
+            await tx.delete(users).where(eq(users.email, 'pay.driver@test.com'));
+            await tx.delete(users).where(eq(users.email, 'pay.manager@test.com'));
             await tx.delete(users).where(eq(users.email, 'pay.other@test.com'));
             await tx.delete(users).where(eq(users.email, 'pay.admin@test.com'));
         })
