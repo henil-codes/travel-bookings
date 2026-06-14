@@ -11,22 +11,35 @@ import { users } from '@/db/schema/users';
 describe('Trips Schema & Integrity', () => {
     let testVehicleId: string;
     let testTripId: string;
-    let testUserId: string;
+    let testManagerId: string;
+    let testDriverId: string;
 
     beforeAll(async () => {
-        const [user] = await db.insert(users).values({
+        const [manager] = await db.insert(users).values({
             name: 'Trip Test User',
             email: 'trip.test@example.com',
             passwordHash: 'hashedPassword',
             countryCode: '+91',
             authProvider: 'local',
-            local_phone: '9876543210',
+            localPhone: '9876543210',
             accountStatus: 'active',
+            role: 'manager',
         }).returning();
-        testUserId = user.id;
+        testManagerId = manager.id;
+
+        const [driver] = await db.insert(users).values({
+            name: 'Trip Test Driver',
+            email: 'trip.driver@example.com',
+            passwordHash: 'hashedPassword',
+            countryCode: '+91',
+            authProvider: 'local',
+            localPhone: '9876543210',
+            accountStatus: 'active',
+            role: 'driver',
+        }).returning();
+        testDriverId = driver.id;
 
         const [vehicle] = await db.insert(vehicles).values({
-            operatorName: 'Test Operator',
             vehicleNumber: 'TEST-5678',
             capacity: 50,
             vehicleType: 'bus',
@@ -41,7 +54,8 @@ describe('Trips Schema & Integrity', () => {
                 await tx.delete(trips).where(eq(trips.id, testTripId));
             }
             await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
-            await tx.delete(users).where(eq(users.id, testUserId));
+            await tx.delete(users).where(eq(users.id, testManagerId));
+            await tx.delete(users).where(eq(users.id, testDriverId));
         })
     })
 
@@ -54,8 +68,8 @@ describe('Trips Schema & Integrity', () => {
             arrivalTime: new Date(Date.now() + 936000000).toISOString(), // 1 day + 2 hours
             vehicleId: testVehicleId,
             capacity: 50,
-            status: 'scheduled',
-        }, { id: testUserId, role: 'operator'})
+            driverId: testDriverId,
+        }, { id: testManagerId, role: 'manager'})
         testTripId = trip.id;
 
         expect(trip).toBeDefined();
@@ -77,10 +91,10 @@ describe('Trips Schema & Integrity', () => {
             endLocation: 'City B',
             departureTime: new Date(Date.now() + 10000).toISOString(),
             arrivalTime: new Date(Date.now() + 5000).toISOString(),
-            status: 'scheduled',
             capacity: 30,
             vehicleId: testVehicleId,
-        }, { id: testUserId, role: 'operator' })
+            driverId: testDriverId,
+        }, { id: testManagerId, role: 'manager' })
 
         await expect(badTripData).rejects.toBeInstanceOf(ConflictError);
     })

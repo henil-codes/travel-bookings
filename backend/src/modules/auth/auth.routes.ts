@@ -6,7 +6,7 @@ import { loginSchema, registerSchema } from './auth.validation';
 export const authRoutes: FastifyPluginAsync = async (fastify) => {
     const server = fastify.withTypeProvider<ZodTypeProvider>();
 
-    server.post('/register', {
+    server.post('/register', {  
         schema: {
             body: registerSchema,
         }

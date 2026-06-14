@@ -1,7 +1,7 @@
 import { InferSelectModel } from "drizzle-orm";
 import { pgTable, uuid, varchar, pgEnum, text, timestamp } from "drizzle-orm/pg-core";
 
-export const roleEnum = pgEnum('user_role', ['customer', 'operator', 'admin']);
+export const roleEnum = pgEnum('user_role', ['customer', 'manager', 'driver','admin']);
 export const authProviderEnum = pgEnum('auth_provider', ['local', 'google']);
 export const accountStatusEnum = pgEnum('account_status', ['active', 'suspended', 'deactivated']);
 
@@ -10,7 +10,7 @@ export const users = pgTable('users', {
     name: varchar('name', { length: 255 }).notNull(),
     email: varchar('email', { length: 255 }).notNull().unique(),
     countryCode: varchar('country_code', { length: 5 }).notNull(),
-    local_phone: varchar('local_phone', { length: 15 }).notNull(),
+    localPhone: varchar('local_phone', { length: 15 }).notNull(),
 
     // AUTHENTICATION FIELDS
     passwordHash: text('password_hash'),
