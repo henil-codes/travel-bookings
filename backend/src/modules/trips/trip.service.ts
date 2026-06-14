@@ -13,7 +13,7 @@ import { eq, and, gte, lt, ilike, sql } from 'drizzle-orm';
 
 export class TripService {
   static async createTrip(input: CreateTripPayload, createdBy: { id: string; role: string }) {
-    if (createdBy.role !== 'operator' && createdBy.role !== 'admin') {
+    if (createdBy.role !== 'manager' && createdBy.role !== 'admin') {
       throw new UnauthorizedError('You do not have permission to create a trip.')
     }
 
@@ -39,6 +39,7 @@ export class TripService {
         departureTime: new Date(input.departureTime),
         arrivalTime: new Date(input.arrivalTime),
         vehicleId: input.vehicleId,
+        driverId: input.driverId,
         capacity: input.capacity,
         status: 'scheduled',
       })
@@ -142,13 +143,13 @@ export class TripService {
     return conflictingTrip.length > 0;
   }
 
-  // updateTrip - admin or operator can update trip details if trip is not started yet
+  // updateTrip - admin or manager can update trip details if trip is not started yet
   static async updateTrip(
     tripId: string,
     input: UpdateTripPayload,
     requestingUser: { id: string; role: string }
   ) {
-    if (requestingUser.role !== 'operator' && requestingUser.role !== 'admin') {
+    if (requestingUser.role !== 'manager' && requestingUser.role !== 'admin') {
       throw new UnauthorizedError(
         'You do not have permission to update this trip'
       );
@@ -200,19 +201,23 @@ export class TripService {
     return updatedTrip;
   }
 
-  // updateTripStatus - admin or operator can update trip status with valid transitions
+  // updateTripStatus - admin or manager can update trip status with valid transitions
   static async updateTripStatus(
     tripId: string,
     input: UpdateTripStatusInput,
     requestingUser: { id: string; role: string }
   ) {
-    if (requestingUser.role !== 'operator' && requestingUser.role !== 'admin') {
+    if (requestingUser.role !== 'manager' && requestingUser.role !== 'admin' && requestingUser.role !== 'driver') {
       throw new UnauthorizedError(
         'You do not have permission to update this trip'
       );
     }
 
     const trip = await TripService.getTripById(tripId);
+
+    if (requestingUser.role === 'driver' && trip.driverId !== requestingUser.id) {
+      throw new UnauthorizedError('You can only update status of trips assigned to you');
+    }
 
     // validate status transition
     const validTransitions: Record<string, string[]> = {

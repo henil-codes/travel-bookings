@@ -9,6 +9,7 @@ export const createTripSchema = z
     departureTime: z.iso.datetime({ message: 'Invalid ISO date time format' }),
     arrivalTime: z.iso.datetime({ message: 'Invalid ISO date time format' }),
     vehicleId: z.uuid(),
+    driverId: z.uuid(),
     capacity: z.number().int().positive(),
   })
   .superRefine((data, ctx) => {

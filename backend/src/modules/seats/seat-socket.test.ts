@@ -50,7 +50,6 @@ describe('Seat WebSocket Integration', () => {
                 localPhone: '1234567890',
                 authProvider: 'local',
                 accountStatus: 'active',
-                role: 'operator',
             })
         })
 
@@ -68,7 +67,6 @@ describe('Seat WebSocket Integration', () => {
         testUserId = loginData.data.user.id;
 
         const [vehicle] = await db.insert(vehicles).values({
-            operatorName: 'WebSocket Test Operator',
             vehicleNumber: 'WS-TEST-1234',
             capacity: 40,
             vehicleType: 'bus',
@@ -83,8 +81,8 @@ describe('Seat WebSocket Integration', () => {
             arrivalTime: new Date(Date.now() + 104400000).toISOString(), // 1 day + 5 hours
             vehicleId: testVehicleId,
             capacity: 40,
-            status: 'scheduled',
-        }, { id: testUserId, role: 'operator' })
+            driverId: testUserId,
+        }, { id: testUserId, role: 'manager' })
         testTripId = trip.id;
 
         const [seat] = await db.insert(seats).values({
@@ -117,6 +115,11 @@ describe('Seat WebSocket Integration', () => {
     })
 
     it('Should emit seat:status_changed when a seat is locked', async () => {
+
+        clientSocket.emit('join:trip', testTripId);
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         const socketEventPromise = new Promise<any>((resolve, reject) => {
             const timer = setTimeout(() => reject(new Error('WebSocket event timeout after 3s')), 3000);
 
