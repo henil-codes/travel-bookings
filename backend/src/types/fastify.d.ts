@@ -19,6 +19,10 @@ declare module 'fastify' {
 
         // Authentication middleware
         authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+
+        googleOAuth2: {
+            getAccessTokenFromAuthorizationCodeFlow(request: unknown) : Promise<{ token: { access_token: string }; }>
+        }
     }
 
     interface FastifyRequest {
