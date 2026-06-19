@@ -9,11 +9,12 @@ export const users = pgTable('users', {
     id: uuid('id').primaryKey().defaultRandom(),
     name: varchar('name', { length: 255 }).notNull(),
     email: varchar('email', { length: 255 }).notNull().unique(),
-    countryCode: varchar('country_code', { length: 5 }).notNull(),
-    localPhone: varchar('local_phone', { length: 15 }).notNull(),
+    countryCode: varchar('country_code', { length: 5 }),
+    localPhone: varchar('local_phone', { length: 15 }),
 
     // AUTHENTICATION FIELDS
     passwordHash: text('password_hash'),
+    googleId: text('google_id').unique(),
     authProvider: authProviderEnum('auth_provider').default('local').notNull(),
     role: roleEnum('role').default('customer').notNull(),
     accountStatus: accountStatusEnum('account_status').notNull(),
