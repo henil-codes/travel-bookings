@@ -145,3 +145,49 @@ All routes are prefixed with `/api/v1/`:
 ### Path Aliases
 
 `@/` maps to `backend/src/` (configured in `vitest.config.ts` and `tsconfig.json`).
+
+## Working Agreement
+
+Henil writes all backend/frontend code by hand to build familiarity with the
+codebase — this is intentional, not a workflow gap. Claude Code should:
+- Explain, review, and point out issues/bugs in detail
+- Update CLAUDE.md and other planning/doc files when asked
+- NOT write or edit application code (backend/, frontend/) unless explicitly
+  told "write this for me" in that specific message
+
+## Current Status & Roadmap
+
+> Keep this section current. Update it at the end of every session, before
+> the worktree is cancelled — this file is the persistent memory across
+> sessions, not the conversation.
+
+### Done
+- Local auth + Google OAuth (register, login, /me, OAuth callback)
+- Single-operator pivot complete: roleEnum is customer/manager/driver/admin,
+  trips/vehicles have no operatorId, trips.driverId references users
+- Trip, seat, booking, payment modules with integration tests
+- Seat locking (SELECT FOR UPDATE + version column), pricing derived server-side,
+  payments append-only audit log
+
+### Known issues (fix before deploy)
+- [ ] core/auth.ts: remove hardcoded JWT fallback secret ('default-secret')
+- [ ] .env.example missing — needs creating
+- [ ] .gitignore ignores `migrations/` — migration SQL files are NOT committed.
+      Remove this line and commit backend/src/db/migrations/, or db:migrate
+      will have nothing to run on a fresh deploy checkout.
+
+### In progress
+- `feature/googleOAuth` branch: OAuth implementation committed; two small
+  improvements uncommitted (cookie options in app.ts, better error logging
+  in auth.routes.ts). Debug `console.log` statements in auth.routes.ts:60,64,73
+  need removal before PR merge.
+
+### Next up (in order)
+1. Clean up `feature/googleOAuth`: remove console.logs, commit pending changes, open PR
+2. Forgot-password flow (request + reset endpoints), email via Resend
+3. Minimal AWS deploy: ECS Fargate or single EC2 + RDS + Redis, GitHub Actions
+   CI/CD (deploy.yml exists as a skeleton — commented out, ECR push only,
+   no actual deploy step yet, no Terraform written)
+4. Frontend (not started — default Vite+React scaffold only): booking flow
+   for customers + minimal admin view for the client
+5. Booking-confirmation/cancellation emails (minimal, via Resend)
