@@ -79,7 +79,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         data: { user, token: jwtToken },
       });
     } catch (error: any) {
-      request.log.error('Google OAuth callback error:', error);
+      request.log.error({ err: error, cause: error.cause }, 'Google OAuth callback error:');
       return reply.code(400).send({
         success: false, 
         message: `Invalid or missing authorization code: ${error.message}`,
