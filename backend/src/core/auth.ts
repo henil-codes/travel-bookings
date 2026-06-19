@@ -6,11 +6,12 @@ export const authPlugin = fp(async (fastify, opts) => {
     const secret = process.env.JWT_SECRET;
     if (!secret) {
         fastify.log.error('JWT_SECRET is not defined in environment variables');
+        throw new Error('JWT_SECRET is required for authentication');
     }
 
     // Register the JWT plugin
     fastify.register(fastifyJwt, {
-        secret: secret || 'default-secret',
+        secret: secret,
         sign: {
             expiresIn: '7d',
         }
