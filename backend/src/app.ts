@@ -61,6 +61,12 @@ export const buildApp = (): FastifyInstance => {
     },
     startRedirectPath: '/api/v1/auth/google',
     callbackUri: googleCallbackUrl,
+
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    }
   });
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
