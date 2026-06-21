@@ -168,26 +168,21 @@ codebase — this is intentional, not a workflow gap. Claude Code should:
 - Trip, seat, booking, payment modules with integration tests
 - Seat locking (SELECT FOR UPDATE + version column), pricing derived server-side,
   payments append-only audit log
+- Pre-deploy housekeeping: JWT fallback secret removed, .env.example added,
+  migrations/ removed from .gitignore
+- Forgot-password flow: password_reset_tokens table, core/email.ts (Resend),
+  forgotPassword + resetPassword service methods, routes, integration tests
 
 ### Known issues (fix before deploy)
-- [ ] core/auth.ts: remove hardcoded JWT fallback secret ('default-secret')
-- [ ] .env.example missing — needs creating
-- [ ] .gitignore ignores `migrations/` — migration SQL files are NOT committed.
-      Remove this line and commit backend/src/db/migrations/, or db:migrate
-      will have nothing to run on a fresh deploy checkout.
+  — none outstanding —
 
 ### In progress
-- `feature/googleOAuth` branch: OAuth implementation committed; two small
-  improvements uncommitted (cookie options in app.ts, better error logging
-  in auth.routes.ts). Debug `console.log` statements in auth.routes.ts:60,64,73
-  need removal before PR merge.
+  — nothing —
 
 ### Next up (in order)
-1. Clean up `feature/googleOAuth`: remove console.logs, commit pending changes, open PR
-2. Forgot-password flow (request + reset endpoints), email via Resend
-3. Minimal AWS deploy: ECS Fargate or single EC2 + RDS + Redis, GitHub Actions
+1. Minimal AWS deploy: ECS Fargate or single EC2 + RDS + Redis, GitHub Actions
    CI/CD (deploy.yml exists as a skeleton — commented out, ECR push only,
    no actual deploy step yet, no Terraform written)
-4. Frontend (not started — default Vite+React scaffold only): booking flow
+2. Frontend (not started — default Vite+React scaffold only): booking flow
    for customers + minimal admin view for the client
-5. Booking-confirmation/cancellation emails (minimal, via Resend)
+3. Booking-confirmation/cancellation emails (minimal, via Resend)
