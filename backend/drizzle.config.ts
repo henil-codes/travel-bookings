@@ -4,7 +4,7 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-const connectionString = process.env.DB_URL;
+const connectionString = process.env.LOCAL_DB_URL;
 
 if (!connectionString) {
   throw new Error(
