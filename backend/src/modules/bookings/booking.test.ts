@@ -326,7 +326,7 @@ describe('BookingService - getBookingById()', () => {
   afterAll(async () => {
     await db.transaction(async (tx) => {
       await tx.delete(bookings).where(eq(bookings.id, testBookingId));
-      await tx.delete(passengers).where(eq(passengers.id, testPassengerId));
+      await tx.delete(passengers).where(eq(passengers.idNumber, 'GBI123456'));
       await tx.delete(seats).where(eq(seats.id, testSeatId));
       await tx.delete(trips).where(eq(trips.id, testTripId));
       await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));

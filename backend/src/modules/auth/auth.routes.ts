@@ -2,7 +2,12 @@ import axios from 'axios';
 import { FastifyPluginAsync } from 'fastify';
 import { AuthService } from './auth.service';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { loginSchema, registerSchema } from './auth.validation';
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+} from './auth.validation';
 
 export const authRoutes: FastifyPluginAsync = async (fastify) => {
   const server = fastify.withTypeProvider<ZodTypeProvider>();
@@ -57,20 +62,17 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         await fastify.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(
           request
         );
-        console.log('Google OAuth token response:', token);
 
       const { data: profile } = await axios.get(
         'https://www.googleapis.com/oauth2/v2/userinfo',
         { headers: { Authorization: `Bearer ${token.access_token}` } }
       );
-      console.log('Google user profile:', profile);
 
       const user = await AuthService.googleOAuth({
         googleId: profile.id,
         email: profile.email,
         name: profile.name,
       });
-      console.log('User after Google OAuth processing:', user);
 
       const jwtToken = fastify.jwt.sign({ id: user.id, role: user.role });
 
@@ -79,13 +81,50 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         data: { user, token: jwtToken },
       });
     } catch (error: any) {
-      request.log.error({ err: error, cause: error.cause }, 'Google OAuth callback error:');
+      request.log.error(
+        { err: error, cause: error.cause },
+        'Google OAuth callback error:'
+      );
       return reply.code(400).send({
-        success: false, 
+        success: false,
         message: `Invalid or missing authorization code: ${error.message}`,
-      })
+      });
     }
   });
+
+  server.post(
+    '/forgot-password',
+    {
+      schema: {
+        body: forgotPasswordSchema,
+      },
+    },
+    async (request, reply) => {
+      await AuthService.forgotPassword(request.body.email);
+      return reply.send({
+        success: true,
+        message:
+          'If that email is registered, you will receive a password reset link shortly.',
+      });
+    }
+  );
+
+  server.post(
+    '/reset-password',
+    {
+      schema: {
+        body: resetPasswordSchema,
+      },
+    },
+    async (request, reply) => {
+      await AuthService.resetPassword(
+        request.body.token,
+        request.body.newPassword
+      );
+
+      return reply.send({ success: true });
+    }
+  );
 
   // --- Helper route to verify JWT functionality, can be removed later ---
   server.get(

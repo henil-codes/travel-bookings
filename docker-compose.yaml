@@ -47,10 +47,12 @@ services:
   postgres_test:
     image: postgres:17-alpine
     container_name: booking_db_test
-    env_file:
-      - .env.test
     ports:
       - "5433:5432"
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test567
+      - POSTGRES_DB=booking_engine_test
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
