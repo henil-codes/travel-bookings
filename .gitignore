@@ -2,3 +2,6 @@
 .env.test
 node_modules
 .claude
+
+infra/terraform/terraform.tfvars*
+infra/terraform/.terraform/

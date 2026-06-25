@@ -1,0 +1,52 @@
+services:
+  api:
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: booking_api
+    restart: unless-stopped
+    ports:
+      - "80:3000"
+    env_file:
+      - .env
+  
+  postgres:
+    image: postgres:17-alpine
+    container_name: booking_db
+    restart: unless-stopped
+    environment: 
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  
+  redis: 
+    image: redis:7.4-alpine
+    container_name: booking_cache
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+volumes:
+  pgdata:
+  redisdata:
