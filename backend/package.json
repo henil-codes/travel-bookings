@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch index.ts",
-    "build": "tsup index.ts --format esm",
+    "build": "tsup index.ts --format cjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
     "db:migrate:test": "drizzle-kit migrate --config=drizzle-test.config.ts",
