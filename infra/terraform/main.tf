@@ -92,7 +92,7 @@ resource "aws_instance" "app" {
 }
 
 # Without this, the instance's public IP changes every time it stops/starts,
-# which would bread DNS, Github secrets, and client's bookmark.
+# which would bread DNS, Github secrets, and client's bookmark
 resource "aws_eip" "app" {
     instance = aws_instance.app.id
     domain = "vpc"
