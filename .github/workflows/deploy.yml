@@ -1,105 +1,39 @@
-# name: Production Deployment Pipeline
+name: Deploy
 
-# on:
-#   push: 
-#     branches: ["main"]
+on: 
+  push:
+    branches: [main]
 
-# jobs:
-#   test-and-verify:
-#     timeout-minutes: 15
-#     name: Run Type Checks and Tests
-#     runs-on: ubuntu-latest
-#     permissions:
-#       contents: read
-#     defaults:
-#       run:
-#         working-directory: ./backend
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 
+        uses: actions/checkout@v4
 
-#     services:
-#       postgres:
-#         image: postgres:17-alpine
-#         env:
-#           POSTGRES_USER: ${{ secrets.DB_USER }}
-#           POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-#           POSTGRES_DB: ${{ secrets.DB_NAME }}
-#         ports:
-#           - 5432:5432
-#         options: >-
-#           --health-cmd pg_isready
-#           --health-interval 10s
-#           --health-timeout 5s
-#           --health-retries 5
-#       redis:
-#         image: redis:7.4-alpine
-#         ports:
-#           - 6379:6379
-#         options: >-
-#           --health-cmd "redis-cli ping"
-#           --health-interval 10s
-#           --health-timeout 5s
-#           --health-retries 5
-    
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v4
-
-#       - name: Setup Node.js
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version: 22
-#           cache: 'npm'
-#           cache-dependency-path: ./backend/package-lock.json
+      - name: Set up SSH
+        run: | 
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
       
-#       - name: Install Dependencies
-#         run: npm ci
+      - name: Sync app files to server
+        run: | 
+          rsync -avz --delete \
+            --exclude 'node_modules' \
+            --exclude 'dist' \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            backend \
+            ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app/
 
-#       - name: Run Type Check
-#         run: npx tsc --noEmit
+          scp -i ~/.ssh/deploy_key deploy/docker-compose.prod.yaml \
+            ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app/docker-compose.prod.yaml
 
-#       - name: Run Database Migrations
-#         env:
-#           DB_URL: ${{ secrets.DB_URL }}
-#         run: npm run db:migrate
-
-#       - name: Run Integration Tests
-#         env:
-#           DB_URL: ${{ secrets.DB_URL }}
-#         run: npm run test
-
-#   deploy-to-aws:
-#     timeout-minutes: 20
-#     name: Deploy to AWS Elastic Container Registry
-#     needs: test-and-verify
-#     runs-on: ubuntu-latest
-#     permissions:
-#       id-token: write
-#       contents: read
-
-#     steps: 
-#       - name: Checkout Code
-#         uses: actions/checkout@v4
-
-#       - name: Configure AWS Credentials
-#         uses: aws-actions/configure-aws-credentials@v4
-#         with:
-#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           aws-region: ap-south-1
+          scp -i ~/.ssh/deploy_key deploy/deploy.sh \
+            ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app/deploy.sh
       
-#       - name: Login to Amazon ECR
-#         id: login-ecr
-#         uses: aws-actions/amazon-ecr-login@v2
-
-      
-#       - name: Build, Tag, and Push Docker Image
-#         uses: docker/build-push-action@v6
-#         with:
-#           context: ./backend
-#           push: true
-#           tags: | 
-#             ${{ steps.login-ecr.outputs.registry }}/live-booking-engine:${{ github.sha }}
-#             ${{ steps.login-ecr.outputs.registry }}/live-booking-engine:latest
-#           cache-from: type=gha
-#           cache-to: type=gha,mode=max
-
-
+      - name: Run deploy script on server
+        run: | 
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} \
+            "chmod +x /home/ubuntu/app/deploy.sh && /home/ubuntu/app/deploy.sh"
