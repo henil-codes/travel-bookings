@@ -1,4 +1,4 @@
-export type TripStatus = 'pending' | 'cancelled' | 'completed' | 'boarding' | 'departed';
+export type TripStatus = 'scheduled' | 'cancelled' | 'completed' | 'boarding' | 'departed';
 
 export interface Trip {
     id: string;
