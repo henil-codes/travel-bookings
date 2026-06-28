@@ -180,9 +180,4 @@ codebase — this is intentional, not a workflow gap. Claude Code should:
   — nothing —
 
 ### Next up (in order)
-1. Minimal AWS deploy: ECS Fargate or single EC2 + RDS + Redis, GitHub Actions
-   CI/CD (deploy.yml exists as a skeleton — commented out, ECR push only,
-   no actual deploy step yet, no Terraform written)
-2. Frontend (not started — default Vite+React scaffold only): booking flow
-   for customers + minimal admin view for the client
-3. Booking-confirmation/cancellation emails (minimal, via Resend)
+  — nothing —
