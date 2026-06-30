@@ -16,7 +16,7 @@ function flattenSeatMap(data: unknown): Seat[] {
   return [];
 }
 
-export function useSeatmap(tripId: string) {
+export function useSeatMap(tripId: string) {
   const token = useAuthStore((state) => state.token);
   const queryClient = useQueryClient();
 
