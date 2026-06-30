@@ -1,10 +1,13 @@
+import type { ZodNumber, ZodNumberDef } from "zod/v3";
+
 export type SeatStatus = 'available' | 'locked' | 'reserved' | 'sold';
 export type SeatType = 'standard' | 'accessible' | 'women_only';
 
 export interface Seat {
     id: string;
     tripId: string;
-    seatNumber: string;
+    seatType: SeatType;
+    seatNumber: number;
     price: number; // paise
     status: SeatStatus;
     lockedByUserId: string | null;
