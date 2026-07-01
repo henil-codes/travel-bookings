@@ -47,6 +47,8 @@ export function RegisterPage() {
         '/auth/register',
         data
       );
+      
+      setAuth(res.data.data.user, res.data.data.token);
       navigate('/', { replace: true });
     } catch (error) {
       setApiError(getApiError(error));
