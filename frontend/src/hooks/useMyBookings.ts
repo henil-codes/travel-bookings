@@ -8,7 +8,7 @@ export function useMyBookings(page = 1) {
     queryKey: ['myBookings', page],
     queryFn: async () => {
       const res = await api.get<ApiResponse<BookingWithDetails[]>>(
-        `/bookings?page=${page}&limit-10`
+        `/bookings?page=${page}&limit=10`
       );
       return res.data.data;
     },
