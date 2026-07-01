@@ -28,7 +28,7 @@ type FormData = z.infer<typeof schema>;
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  // const setAuth = useAuthStore((state) => state.setAuth);
+  const setAuth = useAuthStore((state) => state.setAuth);
   const [apiError, setApiError] = useState('');
 
   const {
@@ -47,6 +47,8 @@ export function RegisterPage() {
         '/auth/register',
         data
       );
+      
+      setAuth(res.data.data.user, res.data.data.token);
       navigate('/', { replace: true });
     } catch (error) {
       setApiError(getApiError(error));
