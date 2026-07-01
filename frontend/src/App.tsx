@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ProctedRoute } from './core/ProctectedRoute';
 import { CustomerLayout } from './layouts/CustomerLayout';
 import { LoginPage } from './pages/customer/LoginPage';

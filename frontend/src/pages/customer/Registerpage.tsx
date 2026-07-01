@@ -28,7 +28,7 @@ type FormData = z.infer<typeof schema>;
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  // const setAuth = useAuthStore((state) => state.setAuth);
   const [apiError, setApiError] = useState('');
 
   const {
