@@ -1,5 +1,3 @@
-import type { ZodNumber, ZodNumberDef } from "zod/v3";
-
 export type SeatStatus = 'available' | 'locked' | 'reserved' | 'sold';
 export type SeatType = 'standard' | 'accessible' | 'women_only';
 

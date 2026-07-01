@@ -5,7 +5,7 @@ import { useSeatMap } from '../../hooks/useSeatMap';
 import { SeatMap } from '../../components/seat/SeatMap';
 import { Spinner } from '../../components/ui/Spinner';
 import { Alert } from '../../components/ui/Alert';
-import { Button } from '../../components/ui/Button';
+// import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { api, getApiError } from '../../core/api';
 import { useAuthStore } from '../../store/useAuthStore';
