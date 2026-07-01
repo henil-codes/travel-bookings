@@ -21,6 +21,7 @@ export function CheckoutPage() {
   const {
     selectedTrip,
     selectedSeat,
+    bookingId,
     setBookingId,
     setRazorpayOrderId,
     clearBooking,
@@ -31,6 +32,8 @@ export function CheckoutPage() {
   const [paying, setPaying] = useState(false);
 
   const handleExpire = useCallback(() => {
+    if (paying) return;
+
     clearBooking();
     navigate(`/trips/${selectedTrip?.id}`, {
       state: { message: 'Seat hold expired. Please select again.' },
@@ -54,13 +57,17 @@ export function CheckoutPage() {
     setPaying(true);
 
     try {
-      const bookingRes = await api.post<ApiResponse<Booking>>('/bookings', {
-        seatId: selectedSeat!.id,
-        tripId: selectedTrip!.id,
-        passenger,
-      });
-      const bookingId = bookingRes.data.data.id;
-      setBookingId(bookingId);
+      let currentBookingId = bookingId;
+
+      if (!currentBookingId) {
+        const bookingRes = await api.post<ApiResponse<Booking>>('/bookings', {
+          seatId: selectedSeat!.id,
+          tripId: selectedTrip!.id,
+          passenger,
+        });
+        currentBookingId = bookingRes.data.data.id;
+        setBookingId(currentBookingId);
+      }
 
       const orderRes = await api.post<ApiResponse<RazorpayOrderResponse>>(
         `/payments/${bookingId}/order`

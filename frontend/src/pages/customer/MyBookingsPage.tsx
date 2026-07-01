@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Alert } from '../../components/ui/Alert';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
+import { Spinner } from '../../components/ui/Spinner';
 import { api, getApiError } from '../../core/api';
 import type { BookingWithDetails } from '../../types/booking';
 
@@ -20,6 +21,12 @@ export function MyBookingsPage() {
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState('');
+
+  function closeCancelModal() {
+    setCancelTarget(null);
+    setCancelReason('');
+    setCancelError('');
+  }
 
   async function handleCancel() {
     if (!cancelTarget || !cancelReason.trim()) return;
@@ -43,6 +50,17 @@ export function MyBookingsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <h1 className="text-2xl font-bold text-slate-900 mb-6">My Bookings</h1>
+      {isLoading && (
+        <div className="flex justify-center py-16">
+          <Spinner size="lg" />
+        </div>
+      )}
+
+      {isError && (
+        <Alert variant="error">
+          Failed to load bookings. Please try again later.
+        </Alert>
+      )}
       {!isLoading &&
         !isError &&
         bookings &&
@@ -127,7 +145,7 @@ export function MyBookingsPage() {
       {/* Cancel Confirmation modal */}
       <Modal
         open={!!cancelTarget}
-        onClose={() => setCancelTarget(null)}
+        onClose={() => closeCancelModal()}
         title="Cancel booking"
       >
         <p className="text-sm text-slate-600 mb-4">
@@ -149,7 +167,7 @@ export function MyBookingsPage() {
           <Button
             variant="secondary"
             className="flex-1"
-            onClick={() => setCancelTarget(null)}
+            onClick={() => closeCancelModal()}
           >
             Keep booking
           </Button>
