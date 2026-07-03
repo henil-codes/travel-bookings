@@ -19,6 +19,11 @@ export const users = pgTable('users', {
     role: roleEnum('role').default('customer').notNull(),
     accountStatus: accountStatusEnum('account_status').notNull(),
 
+    // DRIVER SPECIFIC FIELDS
+    licenseNumber: varchar('license_number', { length: 50 }),
+    licenseIssueDate: timestamp('license_issue_date'),
+    licenseExpiryDate: timestamp('license_expiry_date'),
+
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     suspendedUntil: timestamp('suspended_until'),

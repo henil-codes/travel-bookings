@@ -22,7 +22,19 @@ export const resetPasswordSchema = z.object({
     newPassword: z.string().min(8),
 })
 
+export const driverRegisterSchema = z.object({
+    name: z.string().min(1).max(255),
+    email: z.email(),
+    password: z.string().min(8),
+    countryCode: z.string().min(1).max(5),
+    localPhone: z.string().min(5).max(15),
+    licenseNumber: z.string().min(5).max(50),
+    licenseIssueDate: z.date(),
+    licenseExpiryDate: z.date(),
+})
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
+export type DriverRegisterInput = z.infer<typeof driverRegisterSchema>;
