@@ -3,6 +3,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { AuthService } from './auth.service';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import {
+  driverRegisterSchema,
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
@@ -125,6 +126,18 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send({ success: true });
     }
   );
+
+  server.post('/driver/register', 
+    { 
+      schema: {
+        body: driverRegisterSchema,
+      }
+    }, async (request, reply) => {
+      const { ...userData } = request.body;
+      const user = await AuthService.driverRegister(userData);
+      return reply.code(201).send({ success: true, data: { user }});
+    }
+  )
 
   // --- Helper route to verify JWT functionality, can be removed later ---
   server.get(

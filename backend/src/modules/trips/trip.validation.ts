@@ -57,6 +57,7 @@ export const updateTripStatusSchema = z.object({
 });
 
 export const tripFilterSchema = z.object({
+    driverId: z.uuid().optional(),
     startLocation: z.string().min(1).optional(),
     endLocation: z.string().min(1).optional(),
     date: z.iso.date({ message: 'Use YYYY-MM-DD format'}).optional(),
