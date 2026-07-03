@@ -97,8 +97,8 @@ export function DriverRegisterPage() {
         countryCode: data.countryCode,
         localPhone: data.localPhone,
         licenseNumber: data.licensenumber,
-        licenseIssueDate: data.licenseIssueDate.toISOString(),
-        licenseExpiryDate: data.licenseExpiryDate.toISOString(),
+        licenseIssueDate: data.licenseIssueDate,
+        licenseExpiryDate: data.licenseExpiryDate,
       });
       setSubmitted(true);
     } catch (error) {
@@ -338,7 +338,7 @@ export function DriverRegisterPage() {
           </form>
         </div>
 
-        <p className="text-center text-brand-300 text-sm mt-">
+        <p className="text-center text-brand-300 text-sm mt-6">
           Already applied?{' '}
           <Link
             to="/driver/login"
