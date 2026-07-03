@@ -3,6 +3,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { AuthService } from './auth.service';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import {
+  driverRegisterSchema,
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
@@ -129,11 +130,11 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
   server.post('/driver/register', 
     { 
       schema: {
-        body: registerSchema,
+        body: driverRegisterSchema,
       }
     }, async (request, reply) => {
-      const { licenseNumber, yearsOfExperience, ...userData } = request.body;
-      const user = await AuthService.registerDriver(userData);
+      const { ...userData } = request.body;
+      const user = await AuthService.driverRegister(userData);
       return reply.code(201).send({ success: true, data: { user }});
     }
   )
