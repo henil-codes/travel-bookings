@@ -52,6 +52,10 @@ export class TripService {
   static async listTrips(filters: TripFilterInput) {
     const conditions = [];
 
+    if (filters.driverId) {
+      conditions.push(eq(trips.driverId, filters.driverId));
+    }
+
     if (filters.startLocation) {
       conditions.push(ilike(trips.startLocation, `%${filters.startLocation}%`));
     }

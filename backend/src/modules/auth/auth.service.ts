@@ -4,7 +4,7 @@ import { eq, and, lt } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { ConflictError, UnauthorizedError } from '@/core/errors';
-import { RegisterInput, LoginInput } from './auth.validation';
+import { RegisterInput, LoginInput, DriverRegisterInput } from './auth.validation';
 import { passwordResetTokens } from '@/db/schema/passwordResetTokens';
 import { sendPasswordResetEmail } from '@/core/email';
 
@@ -33,6 +33,7 @@ export class AuthService {
           passwordHash,
           authProvider: 'local',
           accountStatus: 'active',
+          role: 'customer',
         })
         .returning();
 
@@ -173,5 +174,39 @@ export class AuthService {
     await db
       .delete(passwordResetTokens)
       .where(eq(passwordResetTokens.id, resetToken.id));
+  }
+
+  static async driverRegister(input: DriverRegisterInput) {
+    try {
+      const [existingDriver] = await db.select().from(users).where(eq(users.email, input.email));
+
+      if (existingDriver) {
+        throw new ConflictError('Email is already registered');
+      }
+
+      const saltRounds = 10;
+      const passwordHash = await bcrypt.hash(input.password, saltRounds);
+
+      // Calculate years of experience as years.
+
+      const [newDriver] = await db.insert(users).values({
+        name: input.name,
+        email: input.email,
+        countryCode: input.countryCode,
+        localPhone: input.localPhone,
+        passwordHash,
+        licenseNumber: input.licenseNumber,
+        licenseIssueDate: input.licenseIssueDate,
+        licenseExpiryDate: input.licenseExpiryDate,
+        authProvider: 'local',
+        accountStatus: 'deactivated',
+        role: 'driver',
+      }).returning();
+ 
+      const { passwordHash: _, ...safeDriver } = newDriver;
+      return safeDriver;
+    } catch (error: any) {
+      throw error;
+    }
   }
 }

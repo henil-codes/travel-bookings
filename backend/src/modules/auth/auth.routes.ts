@@ -126,6 +126,18 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
   );
 
+  server.post('/driver/register', 
+    { 
+      schema: {
+        body: registerSchema,
+      }
+    }, async (request, reply) => {
+      const { licenseNumber, yearsOfExperience, ...userData } = request.body;
+      const user = await AuthService.registerDriver(userData);
+      return reply.code(201).send({ success: true, data: { user }});
+    }
+  )
+
   // --- Helper route to verify JWT functionality, can be removed later ---
   server.get(
     '/me',
