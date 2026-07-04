@@ -113,7 +113,6 @@ export function DriverDashboardPage() {
   const queryClient = useQueryClient();
 
   const activeTrips = useMyDriverTrips();
-  const allTrips = useMyDriverTrips();
 
   const [confirmTarget, setConfirmTarget] = useState<{
     trip: Trip;
