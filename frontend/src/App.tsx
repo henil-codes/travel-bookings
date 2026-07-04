@@ -1,6 +1,9 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { ProctedRoute } from './core/ProctectedRoute';
+import { ActiveDriverRoute, ProctedRoute } from './core/ProctectedRoute';
 import { CustomerLayout } from './layouts/CustomerLayout';
+import { DriverLayout } from './layouts/DriverLayout'
+
+// Customer pages
 import { LoginPage } from './pages/customer/LoginPage';
 import { RegisterPage } from './pages/customer/Registerpage';
 import { ForgotPasswordPage } from './pages/customer/ForgotPasswordPage';
@@ -10,11 +13,19 @@ import { TripDetailPage } from './pages/customer/TripDetailPage';
 import { CheckoutPage } from './pages/customer/CheckoutPage';
 import { BookingConfirmPage } from './pages/customer/BookingConfirmPage';
 import { MyBookingsPage } from './pages/customer/MyBookingsPage';
+
+// Driver pages
+import { DriverLoginPage } from './pages/driver/DriverLoginPage'
+import { DriverRegisterPage } from './pages/driver/DriverRegisterPage'
+import { DriverPendingPage } from './pages/driver/DriverPendingPage'
+import { DriverDashboardPage } from './pages/driver/DriverDashboardPage';
+
+// Error pages
 import { NotFoundPage } from './pages/errors/NotFoundPage';
 import { ForbiddenPage } from './pages/errors/ForbiddenPage';
 
 const router = createBrowserRouter([
-  // Public auth pages
+  // Customer auth pages
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
@@ -40,6 +51,29 @@ const router = createBrowserRouter([
   },
 
   // Driver routes
+  { path: '/driver/login', element: <DriverLoginPage /> },
+  {path: '/driver/register', element: <DriverRegisterPage /> },
+
+  // Driver protected routes
+  {
+    element: <ProctedRoute allowedRoles={['driver']} redirectTo="/driver/login" />,
+    children: [
+      // Driver pending page
+      { path: '/driver/pending', element: <DriverPendingPage /> },
+      // Driver dashboard page
+      {
+        element: <ActiveDriverRoute />,
+        children: [
+          { 
+            element: <DriverLayout />,
+            children: [
+              {path: '/driver/dashboard', element: <DriverDashboardPage /> },
+            ]
+          }
+        ]
+      }
+    ]
+  },
   // Admin routes
 
   // Error pages
