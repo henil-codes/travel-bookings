@@ -80,7 +80,7 @@ export function DriverPendingPage() {
               <div className="bg-slate-50 rounded-xl p-4 mt-6 text-left text-sm space-y-2">
                 {[
                   { icon: '✓', text: 'Application submitted', done: true },
-                  { icon: '⏳', text: 'Backgroud verification', done: false },
+                  { icon: '⏳', text: 'Background verification', done: false },
                   { icon: '—', text: 'Account activation', done: false },
                 ].map(({ icon, text, done }) => (
                   <div

@@ -51,10 +51,10 @@ function TripStatusCard({
         <div>
           <p className="font-semibold text-slate-900 text-lg">
             {trip.startLocation}
-            <span className="text-slate-400 mx-2">"→</span>
+            <span className="text-slate-400 mx-2">→</span>
             {trip.endLocation}
           </p>
-          <p className="text-sm text-slate-500 mt-0 5">{trip.name}</p>
+          <p className="text-sm text-slate-500 mt-0.5">{trip.name}</p>
         </div>
         <Badge label={trip.status} />
       </div>
@@ -163,7 +163,7 @@ export function DriverDashboardPage() {
       </div>
 
       {/* Summary cards*/}
-      <div className="grid grid-cols-2 sm:grid cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
         {[
           {
             label: 'Active Trips',
@@ -183,7 +183,7 @@ export function DriverDashboardPage() {
         ].map(({ label, value, color }) => (
           <div key={label} className={`rounded-xl px-5 py-4 ${color}`}>
             <p className="text-2xl font-bold">{value}</p>
-            <p className="text-sm font-medium mt-0 5 opacity-80">{label}</p>
+            <p className="text-sm font-medium mt-0.5 opacity-80">{label}</p>
           </div>
         ))}
       </div>
@@ -223,7 +223,7 @@ export function DriverDashboardPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {trips
+            {[...trips]
               .sort(
                 (a, b) =>
                   new Date(a.departureTime).getTime() -
