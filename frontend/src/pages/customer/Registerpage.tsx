@@ -48,7 +48,7 @@ export function RegisterPage() {
         data
       );
       
-      setAuth(res.data.data.user);
+      setAuth(res.data.data.user, res.data.data.token);
       navigate('/', { replace: true });
     } catch (error) {
       setApiError(getApiError(error));

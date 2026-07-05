@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { api } from '../core/api';
+import { useAuthStore } from '../store/useAuthStore';
 import type { Seat } from '../types/seat';
 import type { ApiResponse } from '../types/api';
 
@@ -16,6 +17,7 @@ function flattenSeatMap(data: unknown): Seat[] {
 }
 
 export function useSeatMap(tripId: string) {
+  const token = useAuthStore((state) => state.token);
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -29,6 +31,7 @@ export function useSeatMap(tripId: string) {
 
   useEffect(() => {
     const socket = io(import.meta.env.VITE_API_URL, {
+      auth: token ? { token } : undefined,
       transports: ['websocket'],
     });
 
@@ -50,7 +53,7 @@ export function useSeatMap(tripId: string) {
       socket.emit('leave:trip', tripId);
       socket.disconnect();
     };
-  }, [tripId, queryClient]);
+  }, [tripId, token, queryClient]);
 
   return query;
 }

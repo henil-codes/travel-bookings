@@ -44,7 +44,7 @@ export function LoginPage() {
         '/auth/login',
         data
       );
-      setAuth(res.data.data.user);
+      setAuth(res.data.data.user, res.data.data.token);
       const from =
         (location.state as { from?: string })?.from ??
         roleHome(res.data.data.user.role);
