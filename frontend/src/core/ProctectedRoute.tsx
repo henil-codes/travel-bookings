@@ -8,17 +8,17 @@ interface Props {
 }
 
 export function ProctedRoute({ allowedRoles, redirectTo = '/login' }: Props) {
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
 
-  if (!user) return <Navigate to={redirectTo} replace />;
+  if (!token || !user) return <Navigate to={redirectTo} replace />;
   if (!allowedRoles.includes(user.role)) return <Navigate to="/403" replace />;
 
   return <Outlet />;
 }
 
 export function ActiveDriverRoute() {
-  const { user } = useAuthStore();
-  if (!user) return <Navigate to="/driver/login" replace />;
+  const { user, token } = useAuthStore();
+  if (!token || !user) return <Navigate to="/driver/login" replace />;
   if (user.role !== 'driver') return <Navigate to="/403" replace />;
   if (user.accountStatus !== 'active')
     return <Navigate to="/driver/pending" replace />;
