@@ -77,19 +77,15 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 
       const jwtToken = fastify.jwt.sign({ id: user.id, role: user.role });
 
-      return reply.send({
-        success: true,
-        data: { user, token: jwtToken },
-      });
+      const redirectUrl = `${process.env.CORS_ORIGIN}/oauth-success?token=${jwtToken}`;
+
+      return reply.redirect(redirectUrl);
     } catch (error: any) {
       request.log.error(
         { err: error, cause: error.cause },
         'Google OAuth callback error:'
       );
-      return reply.code(400).send({
-        success: false,
-        message: `Invalid or missing authorization code: ${error.message}`,
-      });
+      return reply.redirect(`${process.env.CORS_ORIGIN}/login?error=auth_failed`);
     }
   });
 
