@@ -209,4 +209,21 @@ export class AuthService {
       throw error;
     }
   }
+
+  static async getUserById(id: string) {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Always strip the password hash and sensitive data before sending to the client!
+    const { passwordHash: _, ...safeUser } = user;
+    
+    return safeUser;
+  }
 }
