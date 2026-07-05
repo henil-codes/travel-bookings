@@ -8,7 +8,7 @@ interface AuthState {
     setAuth: (user: User) => void;
     clearAuth: () => void;
 }
-``
+
 export const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
