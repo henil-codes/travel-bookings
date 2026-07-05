@@ -50,10 +50,22 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         role: user.role,
       });
 
-      return reply.send({
-        success: true,
-        data: { user, token },
+      reply.cookie('token', token, {
+        domain: process.env.COOKIE_DOMAIN,
+        path: '/',
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
       });
+
+      const dest =
+        user.role === 'admin'
+          ? '/admin'
+          : user.role === 'driver'
+            ? '/driver/dashboard'
+            : '/';
+
+      return reply.redirect(`${process.env.CORS_ORIGIN}${dest}`);
     }
   );
 
@@ -78,9 +90,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       const jwtToken = fastify.jwt.sign({ id: user.id, role: user.role });
 
       reply.cookie('token', jwtToken, {
-        domain: `.${process.env.CORS_ORIGIN}`
-          ?.replace('https://', '')
-          .replace('http://', ''),
+        domain: process.env.COOKIE_DOMAIN,
         path: '/',
         httpOnly: true,
         secure: true,
@@ -159,11 +169,14 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     '/me',
     { preHandler: [fastify.authenticate] },
     async (request, reply) => {
+
+      const user = await AuthService.getUserById(request.user.id);
+      
       return reply.send({
         success: true,
         data: {
           message: 'You are securely authenticated!',
-          jwtPayload: request.user,
+          data: { user },
         },
       });
     }
