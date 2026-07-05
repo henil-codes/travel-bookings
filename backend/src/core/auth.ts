@@ -1,5 +1,6 @@
 import fp from 'fastify-plugin'
 import fastifyJwt from '@fastify/jwt'
+import cookie from '@fastify/cookie';
 import { FastifyReply, FastifyRequest } from 'fastify'
 
 export const authPlugin = fp(async (fastify, opts) => {
@@ -9,11 +10,21 @@ export const authPlugin = fp(async (fastify, opts) => {
         throw new Error('JWT_SECRET is required for authentication');
     }
 
+    // Register the cookie plugin
+    fastify.register(cookie, {
+        secret: process.env.COOKIE_SECRET, 
+        hook: 'onRequest',
+    })
+
     // Register the JWT plugin
     fastify.register(fastifyJwt, {
         secret: secret,
         sign: {
             expiresIn: '7d',
+        },
+        cookie: {
+            cookieName: 'token',
+            signed: false,
         }
     })
 
