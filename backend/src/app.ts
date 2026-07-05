@@ -44,6 +44,9 @@ export const buildApp = (): FastifyInstance => {
   // Plugins & Compilers
   app.register(cors, {
     origin: process.env.CORS_ORIGIN,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true,
   });
 
   app.register(cookie);
