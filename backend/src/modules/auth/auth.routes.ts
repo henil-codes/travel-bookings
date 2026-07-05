@@ -28,10 +28,23 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         role: user.role,
       });
 
-      return reply.code(201).send({
-        success: true,
-        data: { user, token },
+      reply.cookie('token', token, {
+        domain: process.env.COOKIE_DOMAIN,
+        path: '/',
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
       });
+
+      const dest =
+        user.role === 'admin'
+          ? '/admin'
+          : user.role === 'driver'
+            ? '/driver/dashboard'
+            : '/';
+
+      return reply.redirect(`${process.env.CORS_ORIGIN}${dest}`);
     }
   );
 
@@ -56,6 +69,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         httpOnly: true,
         secure: true,
         sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
       });
 
       const dest =
@@ -95,6 +109,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         httpOnly: true,
         secure: true,
         sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
       });
 
       const dest =
@@ -169,9 +184,8 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     '/me',
     { preHandler: [fastify.authenticate] },
     async (request, reply) => {
-
       const user = await AuthService.getUserById(request.user.id);
-      
+
       return reply.send({
         success: true,
         data: {
