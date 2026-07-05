@@ -77,15 +77,32 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 
       const jwtToken = fastify.jwt.sign({ id: user.id, role: user.role });
 
-      const redirectUrl = `${process.env.CORS_ORIGIN}/oauth-success?token=${jwtToken}`;
+      reply.cookie('token', jwtToken, {
+        domain: `.${process.env.CORS_ORIGIN}`
+          ?.replace('https://', '')
+          .replace('http://', ''),
+        path: '/',
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+      });
 
-      return reply.redirect(redirectUrl);
+      const dest =
+        user.role === 'admin'
+          ? '/admin'
+          : user.role === 'driver'
+            ? '/driver/dashboard'
+            : '/';
+
+      return reply.redirect(`${process.env.CORS_ORIGIN}${dest}`);
     } catch (error: any) {
       request.log.error(
         { err: error, cause: error.cause },
         'Google OAuth callback error:'
       );
-      return reply.redirect(`${process.env.CORS_ORIGIN}/login?error=auth_failed`);
+      return reply.redirect(
+        `${process.env.CORS_ORIGIN}/login?error=oauth_failed`
+      );
     }
   });
 
@@ -123,17 +140,19 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
   );
 
-  server.post('/driver/register', 
-    { 
+  server.post(
+    '/driver/register',
+    {
       schema: {
         body: driverRegisterSchema,
-      }
-    }, async (request, reply) => {
+      },
+    },
+    async (request, reply) => {
       const { ...userData } = request.body;
       const user = await AuthService.driverRegister(userData);
-      return reply.code(201).send({ success: true, data: { user }});
+      return reply.code(201).send({ success: true, data: { user } });
     }
-  )
+  );
 
   // --- Helper route to verify JWT functionality, can be removed later ---
   server.get(

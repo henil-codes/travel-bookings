@@ -13,7 +13,6 @@ import { TripDetailPage } from './pages/customer/TripDetailPage';
 import { CheckoutPage } from './pages/customer/CheckoutPage';
 import { BookingConfirmPage } from './pages/customer/BookingConfirmPage';
 import { MyBookingsPage } from './pages/customer/MyBookingsPage';
-import { OAuthCallback } from './pages/customer/OAuthCallback';
 
 // Driver pages
 import { DriverLoginPage } from './pages/driver/DriverLoginPage';
@@ -31,7 +30,6 @@ const router = createBrowserRouter([
   { path: '/register', element: <RegisterPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/reset-password', element: <ResetPasswordPage /> },
-  { path: '/oauth-success', element: <OAuthCallback /> },
 
   // Customer pages
   {
