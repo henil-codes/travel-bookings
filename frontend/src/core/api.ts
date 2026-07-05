@@ -10,7 +10,10 @@ export const api = axios.create({
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const isUnauthorized = error.response?.status === 401;
+        const isNotAuthChecked = !error.config?.url?.includes('/auth/me');
+
+        if (isUnauthorized && isNotAuthChecked) {
             useAuthStore.getState().clearAuth();
             window.location.href = '/login';
         }
