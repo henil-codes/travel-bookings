@@ -1,23 +1,24 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ActiveDriverRoute, ProctedRoute } from './core/ProctectedRoute';
 import { CustomerLayout } from './layouts/CustomerLayout';
-import { DriverLayout } from './layouts/DriverLayout'
+import { DriverLayout } from './layouts/DriverLayout';
 
 // Customer pages
 import { LoginPage } from './pages/customer/LoginPage';
 import { RegisterPage } from './pages/customer/Registerpage';
 import { ForgotPasswordPage } from './pages/customer/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/customer/ResetPasswordPage';
-import { HomePage } from './pages/customer/HomePage'
+import { HomePage } from './pages/customer/HomePage';
 import { TripDetailPage } from './pages/customer/TripDetailPage';
 import { CheckoutPage } from './pages/customer/CheckoutPage';
 import { BookingConfirmPage } from './pages/customer/BookingConfirmPage';
 import { MyBookingsPage } from './pages/customer/MyBookingsPage';
+import { OAuthCallback } from './pages/customer/OAuthCallback';
 
 // Driver pages
-import { DriverLoginPage } from './pages/driver/DriverLoginPage'
-import { DriverRegisterPage } from './pages/driver/DriverRegisterPage'
-import { DriverPendingPage } from './pages/driver/DriverPendingPage'
+import { DriverLoginPage } from './pages/driver/DriverLoginPage';
+import { DriverRegisterPage } from './pages/driver/DriverRegisterPage';
+import { DriverPendingPage } from './pages/driver/DriverPendingPage';
 import { DriverDashboardPage } from './pages/driver/DriverDashboardPage';
 
 // Error pages
@@ -30,6 +31,7 @@ const router = createBrowserRouter([
   { path: '/register', element: <RegisterPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/reset-password', element: <ResetPasswordPage /> },
+  { path: '/oauth-success', element: <OAuthCallback /> },
 
   // Customer pages
   {
@@ -43,8 +45,11 @@ const router = createBrowserRouter([
         element: <ProctedRoute allowedRoles={['customer']} />,
         children: [
           { path: '/checkout', element: <CheckoutPage /> },
-          { path: '/booking/confirm/:bookingId', element: <BookingConfirmPage /> },
-          { path: '/my-bookings', element: <MyBookingsPage /> }
+          {
+            path: '/booking/confirm/:bookingId',
+            element: <BookingConfirmPage />,
+          },
+          { path: '/my-bookings', element: <MyBookingsPage /> },
         ],
       },
     ],
@@ -52,11 +57,13 @@ const router = createBrowserRouter([
 
   // Driver routes
   { path: '/driver/login', element: <DriverLoginPage /> },
-  {path: '/driver/register', element: <DriverRegisterPage /> },
+  { path: '/driver/register', element: <DriverRegisterPage /> },
 
   // Driver protected routes
   {
-    element: <ProctedRoute allowedRoles={['driver']} redirectTo="/driver/login" />,
+    element: (
+      <ProctedRoute allowedRoles={['driver']} redirectTo="/driver/login" />
+    ),
     children: [
       // Driver pending page
       { path: '/driver/pending', element: <DriverPendingPage /> },
@@ -64,22 +71,22 @@ const router = createBrowserRouter([
       {
         element: <ActiveDriverRoute />,
         children: [
-          { 
+          {
             element: <DriverLayout />,
             children: [
-              {path: '/driver/dashboard', element: <DriverDashboardPage /> },
-            ]
-          }
-        ]
-      }
-    ]
+              { path: '/driver/dashboard', element: <DriverDashboardPage /> },
+            ],
+          },
+        ],
+      },
+    ],
   },
   // Admin routes
 
   // Error pages
   { path: '/403', element: <ForbiddenPage /> },
   { path: '*', element: <NotFoundPage /> },
-])
+]);
 
 export default function App() {
   return <RouterProvider router={router} />;
