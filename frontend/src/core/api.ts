@@ -10,12 +10,23 @@ export const api = axios.create({
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        const isUnauthorized = error.response?.status === 401;
-        const isNotAuthChecked = !error.config?.url?.includes('/auth/me');
+        if (error.response?.status === 401) {
+            const isBootCheck = (error.config?.url ?? '').endsWith('/auth/me');
+            const publicPaths = [
+                '/login',
+                '/register',
+                '/driver/login',
+                '/driver/register',
+                '/forgot-password',
+                '/reset-password',
+            ];
+            const onPublicPage = publicPaths.some((p) => window.location.pathname.startsWith(p));
 
-        if (isUnauthorized && isNotAuthChecked) {
             useAuthStore.getState().clearAuth();
-            window.location.href = '/login';
+
+            if (!isBootCheck && !onPublicPage) {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }

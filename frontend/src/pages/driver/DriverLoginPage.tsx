@@ -36,7 +36,7 @@ export function DriverLoginPage() {
       const response = await api.post<
         ApiResponse<{ user: User; token: string }>
       >('/auth/login', data);
-      const { user, token } = response.data.data;
+      const { user } = response.data.data;
 
       if (user.role !== 'driver') {
         setApiError(
@@ -45,7 +45,7 @@ export function DriverLoginPage() {
         return;
       }
 
-      setAuth(user, token);
+      setAuth(user);
 
       if (user.accountStatus !== 'active') {
         navigate('/driver/pending', { replace: true });

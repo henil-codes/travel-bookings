@@ -1,3 +1,18 @@
+import { db } from '@/db';
+import { users } from '@/db/schema/users';
+import { eq } from 'drizzle-orm';
+
+function setAuthCookie(reply: import('fastify').FastifyReply, token: string) {
+  reply.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    domain: process.env.COOKIE_DOMAIN ?? undefined,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  });
+}
+
 import axios from 'axios';
 import { FastifyPluginAsync } from 'fastify';
 import { AuthService } from './auth.service';
@@ -27,6 +42,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         id: user.id,
         role: user.role,
       });
+      setAuthCookie(reply, token);
 
       return reply.code(201).send({
         success: true,
@@ -49,6 +65,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         id: user.id,
         role: user.role,
       });
+      setAuthCookie(reply, token);
 
       reply.cookie('token', token, {
         domain: process.env.COOKIE_DOMAIN,
@@ -169,16 +186,19 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     '/me',
     { preHandler: [fastify.authenticate] },
     async (request, reply) => {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, request.user.id));
 
-      const user = await AuthService.getUserById(request.user.id);
-      
-      return reply.send({
-        success: true,
-        data: {
-          message: 'You are securely authenticated!',
-          data: { user },
-        },
-      });
+      if (!user) {
+        return reply
+          .code(404)
+          .send({ success: false, message: 'User not found' });
+      }
+
+      const { passwordHash: _, ...safeUser } = user;
+      return reply.send({ success: true, data: safeUser });
     }
   );
 };
