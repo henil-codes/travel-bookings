@@ -19,7 +19,6 @@ import { DriverLoginPage } from './pages/driver/DriverLoginPage';
 import { DriverRegisterPage } from './pages/driver/DriverRegisterPage';
 import { DriverPendingPage } from './pages/driver/DriverPendingPage';
 import { DriverDashboardPage } from './pages/driver/DriverDashboardPage';
-import { OAuthCallback } from './pages/customer/OAuthCallback';
 
 // Error pages
 import { NotFoundPage } from './pages/errors/NotFoundPage';
@@ -88,6 +87,5 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-  <OAuthCallback />;
   return <RouterProvider router={router} />;
 }
