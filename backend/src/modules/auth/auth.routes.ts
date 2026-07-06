@@ -1,8 +1,9 @@
 import { db } from '@/db';
 import { users } from '@/db/schema/users';
 import { eq } from 'drizzle-orm';
+import { FastifyReply } from 'fastify';
 
-function setAuthCookie(reply: import('fastify').FastifyReply, token: string) {
+function setAuthCookie(reply: FastifyReply, token: string) {
   reply.cookie('token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
