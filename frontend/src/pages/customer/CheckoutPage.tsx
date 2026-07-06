@@ -4,7 +4,6 @@ import {
   PassengerForm,
   type PassengerFormData,
 } from '../../components/booking/PassengerForm';
-import { BookingSummary } from '../../components/booking/BookingSummary';
 import { SeatLockTimer } from '../../components/booking/SeatLockTimer';
 import { Button } from '../../components/ui/Button';
 import { Alert } from '../../components/ui/Alert';
@@ -21,15 +20,39 @@ export function CheckoutPage() {
   const {
     selectedTrip,
     selectedSeats,
-    bookingId,
-    setBookingId,
+    setBookingIds,
     setRazorpayOrderId,
     clearBooking,
   } = useBookingStore();
 
-  const [passenger, setPassenger] = useState<PassengerFormData | null>(null);
+  const [passengers, setPassengers] = useState<(PassengerFormData | null)[]>(
+    () => selectedSeats.map(() => null)
+  );
+  const [createdBookingIds, setCreatedBookingIds] = useState<string[]>([]);
   const [apiError, setApiError] = useState('');
   const [paying, setPaying] = useState(false);
+
+  const allPassengersValid = passengers.length > 0 && passengers.every(Boolean);
+  const totalPaise = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
+
+  const earliestLock = selectedSeats.reduce<string | null>((earliest, seat) => {
+    if (!seat.lockedUntil) return earliest;
+    if (!earliest) return seat.lockedUntil;
+    return new Date(seat.lockedUntil) < new Date(earliest)
+      ? seat.lockedUntil
+      : earliest;
+  }, null);
+
+  const handlePassengerChange = useCallback(
+    (index: number, data: PassengerFormData | null) => {
+      setPassengers((prev) => {
+        const next = [...prev];
+        next[index] = data;
+        return next;
+      });
+    },
+    []
+  );
 
   const handleExpire = useCallback(() => {
     if (paying) return;
@@ -38,7 +61,7 @@ export function CheckoutPage() {
     navigate(`/trips/${selectedTrip?.id}`, {
       state: { message: 'Seat hold expired. Please select again.' },
     });
-  }, [clearBooking, navigate, selectedTrip?.id]);
+  }, [clearBooking, navigate, selectedTrip?.id, paying]);
 
   if (!selectedTrip || !selectedSeats.length) {
     return (
@@ -52,25 +75,28 @@ export function CheckoutPage() {
   }
 
   async function handlePay() {
-    if (!passenger) return;
+    if (!allPassengersValid) return;
     setApiError('');
     setPaying(true);
 
     try {
-      let currentBookingId = bookingId;
+      let allIds = [...createdBookingIds];
 
-      if (!currentBookingId) {
-        const bookingRes = await api.post<ApiResponse<Booking>>('/bookings', {
-          seatId: selectedSeats[0]!.id,
+      for (let i = allIds.length; i < selectedSeats.length; i++) {
+        const response = await api.post<ApiResponse<Booking>>('/bookings', {
+          seatId: selectedSeats[i]!.id,
           tripId: selectedTrip!.id,
-          passenger,
+          passenger: passengers[i]!,
         });
-        currentBookingId = bookingRes.data.data.id;
-        setBookingId(currentBookingId);
+        allIds = [...allIds, response.data.data.id];
+        setCreatedBookingIds([...allIds]);
       }
 
+      setBookingIds(allIds);
+      const firstId = allIds[0]!;
+
       const orderRes = await api.post<ApiResponse<RazorpayOrderResponse>>(
-        `/payments/${bookingId}/order`
+        `/payments/${firstId}/order`
       );
       const { razorpayOrderId, amount, currency, keyId } = orderRes.data.data;
       setRazorpayOrderId(razorpayOrderId);
@@ -81,7 +107,7 @@ export function CheckoutPage() {
         currency,
         order_id: razorpayOrderId,
         name: 'BusBook',
-        description: `${selectedTrip!.startLocation} ${selectedTrip!.endLocation}`,
+        description: `${selectedTrip!.startLocation} → ${selectedTrip!.endLocation} · ${selectedSeats.length} seat${selectedSeats.length > 1 ? 's' : ''} `,
         prefill: {
           name: user?.name,
           email: user?.email,
@@ -90,13 +116,13 @@ export function CheckoutPage() {
         handler: async (response) => {
           try {
             await api.post('/payments/verify', {
-              bookingId,
+              bookingId: firstId,
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
             });
             clearBooking();
-            navigate(`/booking/confirm/${bookingId}`);
+            navigate(`/booking/confirm/${firstId}`);
           } catch (error) {
             setApiError(getApiError(error));
             setPaying(false);
@@ -110,7 +136,7 @@ export function CheckoutPage() {
       razorpay.on('payment.failed', async (response) => {
         try {
           await api.post('/payments/failure', {
-            bookingId,
+            bookingId: firstId,
             gatewayOrderId: response.error.metadata.order_id,
             gatewayResponse: JSON.stringify(response.error),
           });
@@ -132,19 +158,33 @@ export function CheckoutPage() {
         Complete your booking
       </h1>
 
-      {selectedSeats[0]?.lockedUntil && (
+      {earliestLock && (
         <div className="mb-6">
-          <SeatLockTimer
-            lockedUntil={selectedSeats[0]?.lockedUntil}
-            onExpire={handleExpire}
-          />
+          <SeatLockTimer lockedUntil={earliestLock} onExpire={handleExpire} />
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Passenger form*/}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6">
-          <PassengerForm onValidChange={setPassenger} />
+        <div className="lg:col-span-2 space-y-6">
+          {selectedSeats.map((seat, index) => (
+            <div
+              key={seat.id}
+              className="bg-white rounded-xl border border-slate-200 p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-slate-800">
+                  Passenger {index + 1}
+                </h2>
+                <span className="text-sm font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                  Seat {seat.seatNumber}
+                </span>
+              </div>
+              <PassengerForm
+                onValidChange={(data) => handlePassengerChange(index, data)}
+              />
+            </div>
+          ))}
 
           {apiError && (
             <div className="mt-4">
@@ -155,7 +195,7 @@ export function CheckoutPage() {
           <div className="mt-6 pt-4 border-t border-slate-100">
             <Button
               onClick={handlePay}
-              disabled={!passenger}
+              disabled={!allPassengersValid}
               loading={paying}
               size="lg"
               className="w-full"
@@ -169,8 +209,51 @@ export function CheckoutPage() {
         </div>
 
         {/* Summary */}
-        <div>
-          <BookingSummary trip={selectedTrip} seat={selectedSeats[0]} />
+        <div className="bg-white rounded-xl border border-slate-200 p-6 h-fit space-y-4">
+          <h2 className="font-semibold text-slate-900">Booking Summary</h2>
+
+          <div className="space-y-1 text-sm">
+            <p className="font-medium text-slate-800">{selectedTrip.name}</p>
+            <p className="text-slate-600">
+              {selectedTrip.startLocation} → {selectedTrip.endLocation}
+            </p>
+            <p className="text-xs text-slate-400">
+              {new Date(selectedTrip.departureTime).toLocaleString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+              })}
+            </p>
+          </div>
+
+          <div className="border-t border-slate-100 pt-4 space-y-2">
+            {selectedSeats.map((seat, i) => (
+              <div key={seat.id} className="flex justify-between text-sm">
+                <span className="text-slate-600">
+                  Seat {seat.seatNumber}{' '}
+                  <span className="text-xs text-slate-400">(P{i + 1})</span>
+                </span>
+                <span className="font-medium text-slate-800">
+                  ₹{(seat.price / 100).toLocaleString('en-IN')}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-slate-100 pt-3 flex justify-between items-baseline">
+            <span className="font-semibold text-slate-900">Total</span>
+            <span className="font-bold text-lg text-brand-600">
+              ₹{(totalPaise / 100).toLocaleString('en-IN')}
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-400">
+            {selectedSeats.length} seat{selectedSeats.length > 1 ? 's' : ''} ·{' '}
+            {selectedTrip.capacity} total capacity
+          </p>
         </div>
       </div>
     </div>
