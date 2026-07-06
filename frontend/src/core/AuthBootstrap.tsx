@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function AuthBootstrap({ children }: Props) {
-  const { isAuthenticated, setUser } = useAuthStore();
+  const { isAuthenticated, setUser, clearAuth } = useAuthStore();
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -20,7 +20,7 @@ export function AuthBootstrap({ children }: Props) {
       .then((response) => {
         setUser(response.data.data);
       })
-      .catch(() => {});
+      .catch(() => {clearAuth()});
   }, []);
 
   return <>{children}</>;

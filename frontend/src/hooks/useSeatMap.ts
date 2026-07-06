@@ -17,7 +17,7 @@ function flattenSeatMap(data: unknown): Seat[] {
 }
 
 export function useSeatMap(tripId: string) {
-  const token = useAuthStore((state) => state.token);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -31,7 +31,7 @@ export function useSeatMap(tripId: string) {
 
   useEffect(() => {
     const socket = io(import.meta.env.VITE_API_URL, {
-      auth: token ? { token } : undefined,
+      auth: isAuthenticated ? { user: useAuthStore.getState().user } : undefined,
       transports: ['websocket'],
     });
 
@@ -53,7 +53,7 @@ export function useSeatMap(tripId: string) {
       socket.emit('leave:trip', tripId);
       socket.disconnect();
     };
-  }, [tripId, token, queryClient]);
+  }, [tripId, isAuthenticated, queryClient]);
 
   return query;
 }
