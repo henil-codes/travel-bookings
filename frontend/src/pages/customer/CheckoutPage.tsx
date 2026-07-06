@@ -20,7 +20,7 @@ export function CheckoutPage() {
   const { user } = useAuthStore();
   const {
     selectedTrip,
-    selectedSeat,
+    selectedSeats,
     bookingId,
     setBookingId,
     setRazorpayOrderId,
@@ -40,7 +40,7 @@ export function CheckoutPage() {
     });
   }, [clearBooking, navigate, selectedTrip?.id]);
 
-  if (!selectedTrip || !selectedSeat) {
+  if (!selectedTrip || !selectedSeats.length) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
         <p className="text-slate-500">No seat selected.</p>
@@ -61,7 +61,7 @@ export function CheckoutPage() {
 
       if (!currentBookingId) {
         const bookingRes = await api.post<ApiResponse<Booking>>('/bookings', {
-          seatId: selectedSeat!.id,
+          seatId: selectedSeats[0]!.id,
           tripId: selectedTrip!.id,
           passenger,
         });
@@ -132,10 +132,10 @@ export function CheckoutPage() {
         Complete your booking
       </h1>
 
-      {selectedSeat.lockedUntil && (
+      {selectedSeats[0]?.lockedUntil && (
         <div className="mb-6">
           <SeatLockTimer
-            lockedUntil={selectedSeat.lockedUntil}
+            lockedUntil={selectedSeats[0]?.lockedUntil}
             onExpire={handleExpire}
           />
         </div>
@@ -160,7 +160,7 @@ export function CheckoutPage() {
               size="lg"
               className="w-full"
             >
-              Pay ₹{(selectedSeat.price / 100).toLocaleString('en-IN')}
+              Pay ₹{(selectedSeats[0]?.price / 100).toLocaleString('en-IN')}
             </Button>
             <p className="text-center text-xs text-slate-400 mt-2">
               Secured by Razorpay · UPI, Cards, Net Banking accepted
@@ -170,7 +170,7 @@ export function CheckoutPage() {
 
         {/* Summary */}
         <div>
-          <BookingSummary trip={selectedTrip} seat={selectedSeat} />
+          <BookingSummary trip={selectedTrip} seat={selectedSeats[0]} />
         </div>
       </div>
     </div>

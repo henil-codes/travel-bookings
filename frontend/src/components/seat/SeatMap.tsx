@@ -1,30 +1,46 @@
+import { useMemo } from 'react';
 import { SeatTile } from './SeatTile';
 import type { Seat } from '../../types/seat';
 
+interface Slot {
+  seatNumber: number;
+  seat: Seat | null;
+}
+
 interface Props {
   seats: Seat[];
-  selectedSeatId: string | null;
+  capacity: number;
+  selectedSeatIds: string[];
   currentUserId: string | null;
-  onSeatSelect: (seat: Seat) => void;
+  onSeatToggle: (seat: Seat) => void;
 }
 
 export function SeatMap({
   seats,
-  selectedSeatId,
+  capacity,
+  selectedSeatIds,
   currentUserId,
-  onSeatSelect,
+  onSeatToggle,
 }: Props) {
-  const sorted = [...seats].sort((a, b) => a.seatNumber - b.seatNumber);
+  const seatByNumber = useMemo(() => new Map(seats.map((s) => [s.seatNumber, s])), [seats]);
+  
+  // Generate every slot 1.. capacity, and map to seat if exists
+  const allSlots = useMemo<Slot[]>(
+    () => Array.from({ length: capacity}, (_, i) => ({
+      seatNumber: i + 1,
+      seat: seatByNumber.get(i + 1) ?? null,
+    })),
+    [capacity, seatByNumber]
+  )
 
-  const rows: [Seat | null, Seat | null, Seat | null, Seat | null][] = [];
-  for (let i = 0; i < sorted.length; i += 4) {
-    rows.push([
-      sorted[i] ?? null,
-      sorted[i + 1] ?? null,
-      sorted[i + 2] ?? null,
-      sorted[i + 3] ?? null,
-    ]);
-  }
+  // Group into rows of 4 for a 2 + aisle + 2 bus layout
+  const rows = useMemo(() => {
+    const result: Slot[][] = [];
+    for (let i = 0; i < allSlots.length; i += 4) {
+      result.push(allSlots.slice(i, i + 4));
+    }
+    return result;
+  }, [allSlots]);
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6">
@@ -55,50 +71,38 @@ export function SeatMap({
             key={rowIndex}
             className="grid grid-cols-[1fr_1fr_0.5fr_1fr_1fr] gap-2 items-center"
           >
-            {row[0] ? (
               <SeatTile
-                seat={row[0]}
-                isSelected={row[0].id === selectedSeatId}
+                seat={row[0]?.seat ?? null}
+                seatNumber={row[0]?.seatNumber ?? rowIndex * 4 + 1}
+                isSelected={!!row[0]?.seat && selectedSeatIds.includes(row[0].seat.id)}
                 currentUserId={currentUserId}
-                onSelect={onSeatSelect}
+                onToggle={onSeatToggle}
               />
-            ) : (
-              <div />
-            )}
-            {row[1] ? (
               <SeatTile
-                seat={row[1]}
-                isSelected={row[1].id === selectedSeatId}
+                seat={row[1]?.seat ?? null}
+                seatNumber={row[1]?.seatNumber ?? rowIndex * 4 + 2}
+                isSelected={!!row[1].seat && selectedSeatIds.includes(row[1].seat.id)}
                 currentUserId={currentUserId}
-                onSelect={onSeatSelect}
+                onToggle={onSeatToggle}
               />
-            ) : (
-              <div />
-            )}
             {/* Aisle */}
             <div className="flex justify-center">
               <div className="w-px h-6 bg-slate-200" />
             </div>
-            {row[2] ? (
               <SeatTile
-                seat={row[2]}
-                isSelected={row[2].id === selectedSeatId}
+                seat={row[2]?.seat ?? null}
+                seatNumber={row[2]?.seatNumber ?? rowIndex * 4 + 3}
+                isSelected={!!row[2].seat && selectedSeatIds.includes(row[2].seat.id)}
                 currentUserId={currentUserId}
-                onSelect={onSeatSelect}
+                onToggle={onSeatToggle}
               />
-            ) : (
-              <div />
-            )}
-            {row[3] ? (
               <SeatTile
-                seat={row[3]}
-                isSelected={row[3].id === selectedSeatId}
+                seat={row[3]?.seat ?? null}
+                seatNumber={row[3]?.seatNumber ?? rowIndex * 4 + 4}
+                isSelected={!!row[3].seat && selectedSeatIds.includes(row[3].seat.id)}
                 currentUserId={currentUserId}
-                onSelect={onSeatSelect}
+                onToggle={onSeatToggle}
               />
-            ) : (
-              <div />
-            )}
           </div>
         ))}
       </div>
@@ -109,10 +113,10 @@ export function SeatMap({
           { label: 'Available', className: 'bg-seat-available' },
           {
             label: 'Selected',
-            className: 'bg-seat-mine ring-2 ring-slate-900 ring-offset-1',
+            className: 'bg-brand-600 ring-2 ring-brand-900 ring-offset-1',
           },
-          { label: 'Locked', className: 'bg-seat-locked opacity-70' },
-          { label: 'sold', className: 'bg-seat-sold opacity-50' },
+          { label: 'Locked', className: 'bg-seat-locked opacity-60' },
+          { label: 'sold', className: 'bg-seat-sold opacity-40' },
         ].map(({ label, className }) => (
           <div
             key={label}
