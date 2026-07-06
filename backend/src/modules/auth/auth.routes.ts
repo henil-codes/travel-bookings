@@ -67,22 +67,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       });
       setAuthCookie(reply, token);
 
-      reply.cookie('token', token, {
-        domain: process.env.COOKIE_DOMAIN,
-        path: '/',
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-      });
-
-      const dest =
-        user.role === 'admin'
-          ? '/admin'
-          : user.role === 'driver'
-            ? '/driver/dashboard'
-            : '/';
-
-      return reply.redirect(`${process.env.CORS_ORIGIN}${dest}`);
+      return reply.code(201).send({ success: true, data: { user, token } });
     }
   );
 
@@ -105,14 +90,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       });
 
       const jwtToken = fastify.jwt.sign({ id: user.id, role: user.role });
-
-      reply.cookie('token', jwtToken, {
-        domain: process.env.COOKIE_DOMAIN,
-        path: '/',
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-      });
+      setAuthCookie(reply, jwtToken);
 
       const dest =
         user.role === 'admin'

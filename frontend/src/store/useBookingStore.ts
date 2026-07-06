@@ -7,13 +7,13 @@ const MAX_SEATS = 6;
 interface BookingState {
   selectedTrip: Trip | null;
   selectedSeats: Seat[];
-  bookingId: string | null;
+  bookingIds: string[];
   razorpayOrderId: string | null;
 
   setSelectedTrip: (trip: Trip) => void;
   toggleSeat: (seat: Seat | null) => void;
   clearSeats: () => void;
-  setBookingId: (bookingId: string) => void;
+  setBookingIds: (bookingIds: string[]) => void;
   setRazorpayOrderId: (razorpayOrderId: string) => void;
   clearBooking: () => void;
 }
@@ -21,15 +21,15 @@ interface BookingState {
 export const useBookingStore = create<BookingState>()((set, get) => ({
   selectedTrip: null,
   selectedSeats: [],
-  bookingId: null,
+  bookingIds: [],
   razorpayOrderId: null,
 
   setSelectedTrip: (trip) =>
-    set({ selectedTrip: trip, selectedSeats: [], bookingId: null }),
+    set({ selectedTrip: trip, selectedSeats: [], bookingIds: [] }),
 
   toggleSeat: (seat) => {
     if (!seat) return;
-    
+
     const { selectedSeats } = get();
     const alreadySelected = selectedSeats.some((s) => s.id === seat.id);
 
@@ -44,14 +44,14 @@ export const useBookingStore = create<BookingState>()((set, get) => ({
   },
   clearSeats: () => set({ selectedSeats: [] }),
 
-  setBookingId: (id) => set({ bookingId: id }),
+  setBookingIds: (ids) => set({ bookingIds: ids }),
   setRazorpayOrderId: (id) => set({ razorpayOrderId: id }),
 
   clearBooking: () =>
     set({
       selectedTrip: null,
       selectedSeats: [],
-      bookingId: null,
+      bookingIds: [],
       razorpayOrderId: null,
     }),
 }));
