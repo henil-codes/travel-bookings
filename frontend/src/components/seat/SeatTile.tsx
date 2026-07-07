@@ -1,7 +1,7 @@
 import type { Seat } from '../../types/seat';
 
 const statusClasses: Record<string, string> = {
-    available: 'bg-seat-avilable hover:opacity-80 text-white cursor-pointer',
+    available: 'bg-seat-available hover:opacity-80 text-white cursor-pointer',
     selected: 'bg-brand-600 text-white ring-2 ring-brand-900 ring-offset-1 cursor-pointer',
     lockedByMe: 'bg-seat-mine text-white ring-2 ring-offset-1 ring-slate-700 cursor-pointer',
     locked: 'bg-seat-locked text-white cursor-not-allowed opacity-60',
@@ -26,7 +26,7 @@ interface Props {
 
 export function SeatTile({ seat, seatNumber, isSelected, currentUserId, onToggle }: Props) {
     if (!seat) {
-        return (
+        return ( 
             <div className={`w-10 h-10 rounded-md text-xs font-semibold flex items-center justify-center ${statusClasses.placeholder}`}>
                 {seatNumber}
             </div>
@@ -46,7 +46,7 @@ export function SeatTile({ seat, seatNumber, isSelected, currentUserId, onToggle
             disabled={!isClickable}
             onClick={() => isClickable && onToggle(seat)}
             title={`Seat ${seat.seatNumber} — ${seat.seatType} —  ₹${(seat.price / 100).toLocaleString('en-IN')}`}
-            className={`w-10 h-10 rounded-md text-xs font-semibold flex items-center justify-enter transition-all duration-150 select-none relative ${classes}`}
+            className={`w-10 h-10 rounded-md text-xs font-semibold flex items-center justify-center transition-all duration-150 select-none relative ${classes}`}
         >
             {seat.seatNumber}
             {seatTypeIcon[seat.seatType] && (
