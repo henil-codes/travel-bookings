@@ -46,7 +46,7 @@ export function SeatMap({
     <div className="bg-white rounded-xl border border-slate-200 p-6">
       {/* Driver indicator */}
       <div className="flex justify-end mb-4">
-        <div className="flex items-center gap-1 5 text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
           <svg
             className="w-3 h-3"
             fill="none"
@@ -74,14 +74,14 @@ export function SeatMap({
               <SeatTile
                 seat={row[0]?.seat ?? null}
                 seatNumber={row[0]?.seatNumber ?? rowIndex * 4 + 1}
-                isSelected={!!row[0]?.seat && selectedSeatIds.includes(row[0].seat.id)}
+                isSelected={row[0]?.seat !== null && selectedSeatIds.includes(row[0].seat.id)}
                 currentUserId={currentUserId}
                 onToggle={onSeatToggle}
               />
               <SeatTile
                 seat={row[1]?.seat ?? null}
                 seatNumber={row[1]?.seatNumber ?? rowIndex * 4 + 2}
-                isSelected={!!row[1].seat && selectedSeatIds.includes(row[1].seat.id)}
+                isSelected={row[1]?.seat !== null && selectedSeatIds.includes(row[1].seat.id)}
                 currentUserId={currentUserId}
                 onToggle={onSeatToggle}
               />
@@ -92,14 +92,14 @@ export function SeatMap({
               <SeatTile
                 seat={row[2]?.seat ?? null}
                 seatNumber={row[2]?.seatNumber ?? rowIndex * 4 + 3}
-                isSelected={!!row[2].seat && selectedSeatIds.includes(row[2].seat.id)}
+                isSelected={row[2]?.seat !== null && selectedSeatIds.includes(row[2].seat.id)}
                 currentUserId={currentUserId}
                 onToggle={onSeatToggle}
               />
               <SeatTile
                 seat={row[3]?.seat ?? null}
                 seatNumber={row[3]?.seatNumber ?? rowIndex * 4 + 4}
-                isSelected={!!row[3].seat && selectedSeatIds.includes(row[3].seat.id)}
+                isSelected={row[3]?.seat !== null && selectedSeatIds.includes(row[3].seat.id)}
                 currentUserId={currentUserId}
                 onToggle={onSeatToggle}
               />
@@ -116,7 +116,7 @@ export function SeatMap({
             className: 'bg-brand-600 ring-2 ring-brand-900 ring-offset-1',
           },
           { label: 'Locked', className: 'bg-seat-locked opacity-60' },
-          { label: 'sold', className: 'bg-seat-sold opacity-40' },
+          { label: 'Sold', className: 'bg-seat-sold opacity-40' },
         ].map(({ label, className }) => (
           <div
             key={label}
