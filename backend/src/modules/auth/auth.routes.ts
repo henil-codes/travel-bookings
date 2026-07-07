@@ -72,6 +72,15 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
   );
 
+  server.post('/logout', async (request, reply) => {
+    reply.clearCookie('token', {
+      domain: process.env.COOKIE_DOMAIN ?? undefined,
+      path: '/',
+    })
+    
+    return reply.send({ success: true, message: 'Logged out successfully' });
+  })
+
   server.get('/google/callback', async (request, reply) => {
     try {
       const { token } =
