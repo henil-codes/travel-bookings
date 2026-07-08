@@ -43,7 +43,6 @@ const schema = z
     }
   });
 
-
 export type PassengerFormData = z.infer<typeof schema>;
 
 interface Props {
@@ -66,83 +65,85 @@ export function PassengerForm({ onValidChange }: Props) {
 
   useEffect(() => {
     if (isValid) {
-        const values = getValues();
-        onValidChange({
-            ...values, 
-            idNumber: values.idNumber.toUpperCase().replace(/[\s-]/g, ''),
-        })
+      const values = getValues();
+      onValidChange({
+        ...values,
+        idNumber: values.idNumber.toUpperCase().replace(/[\s-]/g, ''),
+      });
     } else {
-        onValidChange(null);
+      onValidChange(null);
     }
   }, [watched, isValid, getValues, onValidChange]);
 
   return (
     <div className="space-y-4">
-        <h3 className="text-base font-semibold text-slate-900">
-            Passenger details
-        </h3>
+      <h3 className="text-base font-semibold text-slate-900">
+        Passenger details
+      </h3>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          {...register('name')}
+          id="p-name"
+          label="Full name"
+          placeholder="As on goverment ID"
+          error={errors.name?.message}
+        />
+        <Input
+          {...register('age', { valueAsNumber: true })}
+          id="p-age"
+          type="number"
+          label="Age"
+          placeholder="25"
+          error={errors.age?.message}
+        />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input 
-                {...register('name')}
-                id="p-name"
-                label="Full name"
-                placeholder="As on goverment ID"
-                error={errors.name?.message}
-            />
-            <Input 
-                {...register('age')}
-                id="p-age"
-                type="number"
-                label="Age"
-                placeholder="25"
-                error={errors.age?.message}
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Select
-                    {...register('gender')}
-                    id="p-gender"
-                    label="Gender"
-                    error={errors.gender?.message}
-                    options={[
-                        { value: 'male', label: 'Male'},
-                        { value: 'female', label: 'Female'},
-                        { value: 'other', label: 'Other'},
-                    ]}
-                 />
+          <Select
+            {...register('gender')}
+            id="p-gender"
+            label="Gender"
+            error={errors.gender?.message}
+            options={[
+              { value: 'male', label: 'Male' },
+              { value: 'female', label: 'Female' },
+              { value: 'other', label: 'Other' },
+            ]}
+          />
 
-                 <Select 
-                    {...register('idType')}
-                    id="p-idType"
-                    label="ID type"
-                    error={errors.idType?.message}
-                    options={[
-                        { value: 'aadhar', label: 'Aadhar'},
-                        { value: 'pan', label: 'PAN Card'},
-                        { value: 'passport', label: 'Passport'},
-                        { value: 'driving_license', label: 'Driving License'},
-                    ]}
-                 />
-            </div>
-
-            <Input 
-                {...register('idNumber')}
-                id="p-idNumber"
-                label="ID number"
-                placeholder="Enter ID number"
-                error={errors.idNumber?.message}
-                className="uppercase"
-            />
-
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input 
-                {...register('isAccessibilityRequired')}
-                type="checkbox" 
-                className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
-                />
-                <span className="text-sm text-slate-700">Requires accessibility accommodations</span>
-            </label>
+          <Select
+            {...register('idType')}
+            id="p-idType"
+            label="ID type"
+            error={errors.idType?.message}
+            options={[
+              { value: 'aadhar', label: 'Aadhar' },
+              { value: 'pan', label: 'PAN Card' },
+              { value: 'passport', label: 'Passport' },
+              { value: 'driving_license', label: 'Driving License' },
+            ]}
+          />
         </div>
+
+        <Input
+          {...register('idNumber')}
+          id="p-idNumber"
+          label="ID number"
+          placeholder="Enter ID number"
+          error={errors.idNumber?.message}
+          className="uppercase"
+        />
+
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            {...register('isAccessibilityRequired')}
+            type="checkbox"
+            className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
+          />
+          <span className="text-sm text-slate-700">
+            Requires accessibility accommodations
+          </span>
+        </label>
+      </div>
     </div>
-  )
+  );
 }
