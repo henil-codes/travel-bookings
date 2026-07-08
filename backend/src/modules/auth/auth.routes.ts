@@ -68,7 +68,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       });
       setAuthCookie(reply, token);
 
-      return reply.code(201).send({ success: true, data: { user, token } });
+      return reply.code(200).send({ success: true, data: { user, token } });
     }
   );
 

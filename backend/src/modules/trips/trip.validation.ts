@@ -11,6 +11,7 @@ export const createTripSchema = z
     vehicleId: z.uuid(),
     driverId: z.uuid(),
     capacity: z.number().int().positive(),
+    basePrice: z.number().int().positive(),
   })
   .superRefine((data, ctx) => {
     if (new Date(data.departureTime) >= new Date(data.arrivalTime)) {
