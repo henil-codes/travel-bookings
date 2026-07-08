@@ -80,6 +80,7 @@ describe('Trips Schema & Integrity', () => {
         vehicleId: testVehicleId,
         capacity: 50,
         driverId: testDriverId,
+        basePrice: 5000,
       },
       { id: testManagerId, role: 'manager' }
     );
@@ -111,6 +112,7 @@ describe('Trips Schema & Integrity', () => {
         capacity: 30,
         vehicleId: testVehicleId,
         driverId: testDriverId,
+        basePrice: 5000,
       },
       { id: testManagerId, role: 'manager' }
     );
@@ -203,6 +205,7 @@ describe('TripService - updateTrip', () => {
         vehicleId: testVehicleId,
         capacity: 40,
         driverId: testDriverId,
+        basePrice: 5000,
       },
       { id: testManagerId, role: 'manager' }
     );
@@ -367,6 +370,7 @@ describe('TripService - updateTripStatus', () => {
         vehicleId: testVehicleId,
         capacity: 40,
         driverId: testDriverId,
+        basePrice: 5000,
       },
       { id: testManagerId, role: 'manager' }
     );
@@ -542,6 +546,7 @@ describe('TripService - deleteTrip()', () => {
         vehicleId: testVehicleId,
         capacity: 40,
         driverId: testDriverId,
+        basePrice: 5000,
       },
       { id: testManagerId, role: 'manager' }
     );
@@ -580,14 +585,6 @@ describe('TripService - deleteTrip()', () => {
   it('should delete a trip and its seat as admin', async () => {
     const trip = await createTrip();
     const tripId = trip.id;
-
-    await db.insert(seats).values({
-        tripId,
-        seatNumber: 1,
-        price: 1000,
-        status: 'available',
-        seatType: 'standard',
-    })
 
     await TripService.deleteTrip(tripId, { id: testAdminId, role: 'admin' });
 

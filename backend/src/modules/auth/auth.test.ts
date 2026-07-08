@@ -274,8 +274,8 @@ describe('AuthService', () => {
       const body = await meResponse.json();
 
       expect(body.success).toBe(true);
-      expect(body.data.jwtPayload.id).toBe(registeredUserId);
-      expect(body.data.jwtPayload.role).toBe('customer');
+      expect(body.data.id).toBe(registeredUserId);
+      expect(body.data.role).toBe('customer');
     });
 
     it('GET /me should return 401 with a tampered token', async () => {
@@ -396,14 +396,23 @@ describe('AuthService', () => {
     })
 
     it('GET /google/callback without code should return 4xx', async () => {
-        const response = await fetch(`${serverUrl}/api/v1/auth/google/callback`);
-        expect(response.status).toBeGreaterThanOrEqual(400);
-        expect(response.status).toBeLessThan(500);
+        const response = await fetch(`${serverUrl}/api/v1/auth/google/callback`, {
+          redirect: 'manual'
+        });
+        expect(response.status).toBe(302);
+
+        const location = response.headers.get('location');
+        expect(location).toContain('/login?error=oauth_failed');
     })
 
     it('GET /google/callback with invalid code should return 400 or 500', async () => {
-        const response = await fetch(`${serverUrl}/api/v1/auth/google/callback?code=invalidcode`);
-        expect(response.status).toBeGreaterThanOrEqual(400);
+        const response = await fetch(`${serverUrl}/api/v1/auth/google/callback?code=invalidcode`, {
+          redirect: 'manual'
+        });
+        expect(response.status).toBe(302);
+
+        const location = response.headers.get('location');
+        expect(location).toContain('/login?error=oauth_failed');
     })
   })
 });

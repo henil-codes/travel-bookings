@@ -12,9 +12,14 @@ import { ConflictError, NotFoundError, UnauthorizedError } from '@/core/errors';
 import { eq, and, gte, lt, ilike, sql } from 'drizzle-orm';
 
 export class TripService {
-  static async createTrip(input: CreateTripPayload, createdBy: { id: string; role: string }) {
+  static async createTrip(
+    input: CreateTripPayload,
+    createdBy: { id: string; role: string }
+  ) {
     if (createdBy.role !== 'manager' && createdBy.role !== 'admin') {
-      throw new UnauthorizedError('You do not have permission to create a trip.')
+      throw new UnauthorizedError(
+        'You do not have permission to create a trip.'
+      );
     }
 
     const [vehicle] = await db
@@ -27,25 +32,37 @@ export class TripService {
     }
 
     if (input.arrivalTime <= input.departureTime) {
-      throw new ConflictError("Arrival time must be after departure time");
+      throw new ConflictError('Arrival time must be after departure time');
     }
 
-    const [trip] = await db
-      .insert(trips)
-      .values({
-        name: input.name,
-        startLocation: input.startLocation,
-        endLocation: input.endLocation,
-        departureTime: new Date(input.departureTime),
-        arrivalTime: new Date(input.arrivalTime),
-        vehicleId: input.vehicleId,
-        driverId: input.driverId,
-        capacity: input.capacity,
-        status: 'scheduled',
-      })
-      .returning();
+    return await db.transaction(async (tx) => {
+      const [trip] = await tx
+        .insert(trips)
+        .values({
+          name: input.name,
+          startLocation: input.startLocation,
+          endLocation: input.endLocation,
+          departureTime: new Date(input.departureTime),
+          arrivalTime: new Date(input.arrivalTime),
+          vehicleId: input.vehicleId,
+          driverId: input.driverId,
+          capacity: input.capacity,
+          status: 'scheduled',
+        })
+        .returning();
 
-    return trip;
+      const seatRows = Array.from({ length: input.capacity }, (_, i) => ({
+        tripId: trip.id,
+        seatNumber: i + 1,
+        seatType: 'standard' as const,
+        price: input.basePrice,
+        status: 'available' as const,
+      }));
+
+      await tx.insert(seats).values(seatRows);
+
+      return trip;
+    });
   }
 
   // list trips with optional filters and pagination
@@ -168,8 +185,12 @@ export class TripService {
       );
     }
 
-    const newDepartureTime = input.departureTime ? new Date(input.departureTime) : trip.departureTime;
-    const newArrivalTime = input.arrivalTime ? new Date(input.arrivalTime) : trip.arrivalTime;
+    const newDepartureTime = input.departureTime
+      ? new Date(input.departureTime)
+      : trip.departureTime;
+    const newArrivalTime = input.arrivalTime
+      ? new Date(input.arrivalTime)
+      : trip.arrivalTime;
 
     if (input.departureTime || input.arrivalTime) {
       if (newArrivalTime <= newDepartureTime) {
@@ -178,16 +199,25 @@ export class TripService {
     }
 
     if (input.vehicleId && input.vehicleId !== trip.vehicleId) {
-      const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, input.vehicleId));
+      const [vehicle] = await db
+        .select()
+        .from(vehicles)
+        .where(eq(vehicles.id, input.vehicleId));
 
       if (!vehicle) {
         throw new NotFoundError('Vehicle');
       }
 
-      const isConflict = await TripService.checkVehicleAvailability(input.vehicleId, newDepartureTime, tripId);
+      const isConflict = await TripService.checkVehicleAvailability(
+        input.vehicleId,
+        newDepartureTime,
+        tripId
+      );
 
       if (isConflict) {
-        throw new ConflictError('Vehicle is already assigned to another trip during the specified time');
+        throw new ConflictError(
+          'Vehicle is already assigned to another trip during the specified time'
+        );
       }
     }
 
@@ -200,7 +230,11 @@ export class TripService {
       ...(input.vehicleId && { vehicleId: input.vehicleId }),
     };
 
-    const [updatedTrip] = await db.update(trips).set(updateData).where(eq(trips.id, tripId)).returning();
+    const [updatedTrip] = await db
+      .update(trips)
+      .set(updateData)
+      .where(eq(trips.id, tripId))
+      .returning();
 
     return updatedTrip;
   }
@@ -211,7 +245,11 @@ export class TripService {
     input: UpdateTripStatusInput,
     requestingUser: { id: string; role: string }
   ) {
-    if (requestingUser.role !== 'manager' && requestingUser.role !== 'admin' && requestingUser.role !== 'driver') {
+    if (
+      requestingUser.role !== 'manager' &&
+      requestingUser.role !== 'admin' &&
+      requestingUser.role !== 'driver'
+    ) {
       throw new UnauthorizedError(
         'You do not have permission to update this trip'
       );
@@ -219,8 +257,13 @@ export class TripService {
 
     const trip = await TripService.getTripById(tripId);
 
-    if (requestingUser.role === 'driver' && trip.driverId !== requestingUser.id) {
-      throw new UnauthorizedError('You can only update status of trips assigned to you');
+    if (
+      requestingUser.role === 'driver' &&
+      trip.driverId !== requestingUser.id
+    ) {
+      throw new UnauthorizedError(
+        'You can only update status of trips assigned to you'
+      );
     }
 
     // validate status transition
@@ -248,16 +291,23 @@ export class TripService {
   }
 
   // deleteTrip - admin only
-  static async deleteTrip(tripId: string, requestingUser: { id: string; role: string }) {
+  static async deleteTrip(
+    tripId: string,
+    requestingUser: { id: string; role: string }
+  ) {
     if (requestingUser.role !== 'admin') {
-      throw new UnauthorizedError('You do not have permission to delete this trip');
+      throw new UnauthorizedError(
+        'You do not have permission to delete this trip'
+      );
     }
 
     const trip = await TripService.getTripById(tripId);
 
     // prevent deletion if trip has already started
     if (['departed', 'completed'].includes(trip.status)) {
-      throw new ConflictError('Cannot delete trip that has already been ' + trip.status);
+      throw new ConflictError(
+        'Cannot delete trip that has already been ' + trip.status
+      );
     }
 
     await db.transaction(async (tx) => {
@@ -266,6 +316,6 @@ export class TripService {
 
       // delete the trip
       await tx.delete(trips).where(eq(trips.id, tripId));
-    })
+    });
   }
 }
