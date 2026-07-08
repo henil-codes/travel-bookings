@@ -395,7 +395,7 @@ describe('AuthService', () => {
         await app.close();
     })
 
-    it('GET /google/callback without code should return 4xx', async () => {
+    it('GET /google/callback without code should redirect to login with error', async () => {
         const response = await fetch(`${serverUrl}/api/v1/auth/google/callback`, {
           redirect: 'manual'
         });
@@ -405,7 +405,7 @@ describe('AuthService', () => {
         expect(location).toContain('/login?error=oauth_failed');
     })
 
-    it('GET /google/callback with invalid code should return 400 or 500', async () => {
+    it('GET /google/callback with invalid code should redirect to login with error', async () => {
         const response = await fetch(`${serverUrl}/api/v1/auth/google/callback?code=invalidcode`, {
           redirect: 'manual'
         });
