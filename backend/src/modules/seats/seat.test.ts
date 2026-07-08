@@ -8,8 +8,6 @@ import { SeatService } from './seat.service';
 import { ConflictError, NotFoundError } from '@/core/errors';
 import { eq } from 'drizzle-orm';
 import { TripService } from '@/modules/trips/trip.service';
-import { double } from 'drizzle-orm/mysql-core';
-import { setTraceSigInt } from 'node:util';
 
 describe('SeatService - lockSeat()', () => {
   let testTripId: string;
@@ -103,29 +101,20 @@ describe('SeatService - lockSeat()', () => {
         vehicleId: testVehicleId,
         capacity: 40,
         driverId: testDriverId,
+        basePrice: 5000
       },
       { id: testManagerId, role: 'manager' }
     );
     testTripId = trip.id;
 
-    const [seat] = await db
-      .insert(seats)
-      .values({
-        tripId: testTripId,
-        seatNumber: 12,
-        price: 4500,
-        status: 'available',
-        seatType: 'standard',
-        lockedByUserId: testUserId,
-      })
-      .returning();
-    testSeatId = seat.id;
+    const seatMap = await TripService.getSeatMap(testTripId);
+    testSeatId = seatMap.available[1].id;
   }, 15000);
 
   // Clean up database after tests
   afterAll(async () => {
     await db.transaction(async (tx) => {
-      await tx.delete(seats).where(eq(seats.id, testSeatId));
+      await tx.delete(seats).where(eq(seats.tripId, testTripId));
       await tx.delete(trips).where(eq(trips.id, testTripId));
       await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
       await tx.delete(users).where(eq(users.email, 'seattest@example.com'));
@@ -314,22 +303,18 @@ describe('SeatService - unlockSeat()', () => {
       vehicleId: testVehicleId,
       capacity: 40,
       driverId: testDriverId,
+      basePrice: 5000,
     }, { id: testManagerId, role: 'manager'});
     testTripId = trip.id;
 
-    const [seat] = await db.insert(seats).values({
-      tripId: testTripId,
-      seatNumber: 7,
-      price: 3500,
-      status: 'available',
-      seatType: 'standard',
-    }).returning();
-    testSeatId = seat.id;
+    const seatMap = await TripService.getSeatMap(testTripId);
+    testSeatId = seatMap.available[2].id;
+
   }, 15000);
 
   afterAll(async () => {
     await db.transaction(async (tx) => {
-      await tx.delete(seats).where(eq(seats.id, testSeatId));
+      await tx.delete(seats).where(eq(seats.tripId, testTripId));
       await tx.delete(trips).where(eq(trips.id, testTripId));
       await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
       await tx.delete(users).where(eq(users.email, 'unlock.owner@example.com'));

@@ -10,6 +10,7 @@ import { eq } from 'drizzle-orm';
 import { TripService } from '@/modules/trips/trip.service';
 import { ConflictError } from '@/core/errors';
 import { BookingService } from './booking.service';
+import { SeatService } from '@/modules/seats/seat.service';
 import { NotFoundError } from '@/core/errors';
 import { resolveObjectURL } from 'node:buffer';
 
@@ -101,30 +102,22 @@ describe('Bookings Schema & Integrity', () => {
         vehicleId: testVehicleId,
         capacity: 40,
         driverId: testDriverId,
+        basePrice: 8000,
       },
       { id: testManagerId, role: 'manager' }
     );
     testTripId = trip.id;
 
-    const [seat] = await db
-      .insert(seats)
-      .values({
-        tripId: testTripId,
-        seatNumber: 5,
-        price: 8000,
-        status: 'locked',
-        seatType: 'standard',
-        lockedByUserId: testUserId,
-        lockedUntil: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
-      })
-      .returning();
-    testSeatId = seat.id;
+    const seatMap = await TripService.getSeatMap(testTripId);
+    testSeatId = seatMap.available[0].id;
+
+    await SeatService.lockSeat(testSeatId, testUserId); // Lock for 10 minutes
   }, 15000);
 
   afterAll(async () => {
     await db.transaction(async (tx) => {
       await tx.delete(bookings).where(eq(bookings.id, testBookingId));
-      await tx.delete(seats).where(eq(seats.id, testSeatId));
+      await tx.delete(seats).where(eq(seats.tripId, testTripId));
       await tx.delete(trips).where(eq(trips.id, testTripId));
       await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
       await tx.delete(passengers).where(eq(passengers.id, passengerId));
@@ -281,24 +274,16 @@ describe('BookingService - getBookingById()', () => {
         vehicleId: testVehicleId,
         capacity: 40,
         driverId: testDriverId,
+        basePrice: 6000,
       },
       { id: testManagerId, role: 'manager' }
     );
     testTripId = trip.id;
 
-    const [seat] = await db
-      .insert(seats)
-      .values({
-        tripId: testTripId,
-        seatNumber: 3,
-        price: 7500,
-        status: 'locked',
-        seatType: 'standard',
-        lockedByUserId: testUserId,
-        lockedUntil: new Date(Date.now() + 10 * 60 * 1000),
-      })
-      .returning();
-    testSeatId = seat.id;
+    const seatMap = await TripService.getSeatMap(testTripId);
+    testSeatId = seatMap.available[0].id;
+
+    await SeatService.lockSeat(testSeatId, testUserId); // Lock for 10 minutes
 
     const [passenger] = await db
       .insert(passengers)
@@ -327,7 +312,7 @@ describe('BookingService - getBookingById()', () => {
     await db.transaction(async (tx) => {
       await tx.delete(bookings).where(eq(bookings.id, testBookingId));
       await tx.delete(passengers).where(eq(passengers.idNumber, 'GBI123456'));
-      await tx.delete(seats).where(eq(seats.id, testSeatId));
+      await tx.delete(seats).where(eq(seats.tripId, testTripId));
       await tx.delete(trips).where(eq(trips.id, testTripId));
       await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
       await tx.delete(users).where(eq(users.id, testUserId));
@@ -425,24 +410,16 @@ describe('BookingService - cancelBooking()', () => {
         vehicleId: testVehicleId,
         capacity: 40,
         driverId: testDriverId,
+        basePrice: 6000,
       },
       { id: testManagerId, role: 'manager' }
     );
     testTripId = trip.id;
 
-    const [seat] = await db
-      .insert(seats)
-      .values({
-        tripId: testTripId,
-        seatNumber: 2,
-        price: 3000,
-        status: 'locked',
-        seatType: 'standard',
-        lockedByUserId: testUserId,
-        lockedUntil: new Date(Date.now() + 10 * 60 * 1000),
-      })
-      .returning();
-    testSeatId = seat.id;
+    const seatMap = await TripService.getSeatMap(testTripId);
+    testSeatId = seatMap.available[0].id;
+
+    await SeatService.lockSeat(testSeatId, testUserId); // Lock for 10 minutes
 
     const { booking } = await BookingService.createBooking(
       {
@@ -465,7 +442,7 @@ describe('BookingService - cancelBooking()', () => {
   afterAll(async () => {
     await db.transaction(async (tx) => {
       await tx.delete(bookings).where(eq(bookings.id, testBookingId));
-      await tx.delete(seats).where(eq(seats.id, testSeatId));
+      await tx.delete(seats).where(eq(seats.tripId, testTripId));
       await tx.delete(trips).where(eq(trips.id, testTripId));
       await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
       await tx.delete(passengers).where(eq(passengers.idNumber, 'CANCEL123'));
@@ -602,25 +579,18 @@ describe('BookingService - listBookings()', () => {
         vehicleId: testVehicleId,
         capacity: 40,
         driverId: testDriverId,
+        basePrice: 6000,
       },
       { id: testManagerId, role: 'manager' }
     );
     testTripId = trip.id;
 
+    const seatMap = await TripService.getSeatMap(testTripId);
+
     // create two seats and two bookings owned by testUser
     for (let i = 0; i < 2; i++) {
-      const [seat] = await db
-        .insert(seats)
-        .values({
-          tripId: testTripId,
-          seatNumber: 20 + i,
-          price: 2000,
-          status: 'locked',
-          seatType: 'standard',
-          lockedByUserId: testUserId,
-          lockedUntil: new Date(Date.now() + 10 * 60 * 1000),
-        })
-        .returning();
+      const seat = seatMap.available[i+10];
+      await SeatService.lockSeat(seat.id, testUserId); // Lock for 10 minutes
 
       const { booking } = await BookingService.createBooking(
         {
@@ -640,15 +610,8 @@ describe('BookingService - listBookings()', () => {
       createBookingIds.push(booking.id);
     }
 
-    const [otherSeat] = await db.insert(seats).values({
-      tripId: testTripId,
-      seatNumber: 25,
-      price: 2000,
-      status: 'locked',
-      seatType: 'standard',
-      lockedByUserId: otherUserId,
-      lockedUntil: new Date(Date.now() + 10 * 60 * 1000),
-    }).returning();
+    const otherSeat = seatMap.available[20];
+    await SeatService.lockSeat(otherSeat.id, otherUserId); // Lock for 10 minutes
 
     const { booking: otherBooking } = await BookingService.createBooking({
       tripId: testTripId,
@@ -671,10 +634,10 @@ describe('BookingService - listBookings()', () => {
         const [booking] = await tx.select().from(bookings).where(eq(bookings.id, id));
         if(booking) {
           await tx.delete(bookings).where(eq(bookings.id, id));
-          await tx.delete(seats).where(eq(seats.id, booking.seatId));
         }
         await tx.delete(passengers).where(eq(passengers.id, booking.passengerId))
       }
+      await tx.delete(seats).where(eq(seats.tripId, testTripId));
       await tx.delete(trips).where(eq(trips.id, testTripId));
       await tx.delete(vehicles).where(eq(vehicles.id, testVehicleId));
       await tx.delete(users).where(eq(users.id, testUserId));

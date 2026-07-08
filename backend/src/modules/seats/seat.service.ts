@@ -53,6 +53,7 @@ export class SeatService {
                 seatId: updateSeat.id,
                 status: 'locked',
                 lockedUntil: updateSeat.lockedUntil,
+                lockedByUserId: updateSeat.lockedByUserId,
             })
 
             return updateSeat;
@@ -90,6 +91,7 @@ export class SeatService {
                 seatId: updateSeat.id,
                 status: 'available',
                 lockedUntil: null,
+                lockedByUserId: null,
             })
 
             return updateSeat;
