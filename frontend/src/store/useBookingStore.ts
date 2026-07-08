@@ -11,6 +11,7 @@ interface BookingState {
   razorpayOrderId: string | null;
 
   setSelectedTrip: (trip: Trip) => void;
+  setSelectedSeats: (seats: Seat[]) => void;
   toggleSeat: (seat: Seat | null) => void;
   clearSeats: () => void;
   setBookingIds: (bookingIds: string[]) => void;
@@ -25,7 +26,9 @@ export const useBookingStore = create<BookingState>()((set, get) => ({
   razorpayOrderId: null,
 
   setSelectedTrip: (trip) =>
-    set({ selectedTrip: trip, selectedSeats: [], bookingIds: [] }),
+    set((state) => state.selectedTrip?.id === trip.id ? { selectedTrip: trip } : { selectedTrip: trip, selectedSeats: [], bookingIds: []}),
+
+  setSelectedSeats: (seats) => set({ selectedSeats: seats}),
 
   toggleSeat: (seat) => {
     if (!seat) return;
