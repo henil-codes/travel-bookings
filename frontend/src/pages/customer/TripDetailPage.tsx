@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useSeatMap } from '../../hooks/useSeatMap';
@@ -35,7 +35,7 @@ export function TripDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { setSelectedTrip, selectedSeats, toggleSeat } = useBookingStore();
+  const { setSelectedTrip, selectedSeats, toggleSeat, setSelectedSeats } = useBookingStore();
   const [lockError, setLockError] = useState('');
   const [locking, setLocking] = useState(false);
 
@@ -49,6 +49,12 @@ export function TripDetailPage() {
   });
 
   const seatQuery = useSeatMap(id!);
+
+  useEffect(() => {
+    if (tripQuery.data) {
+      setSelectedTrip(tripQuery.data);
+    }
+  }, [tripQuery.data, setSelectedTrip]);
 
   async function handleSeatToggle(seat: Seat) {
     if (!user) {
@@ -69,12 +75,14 @@ export function TripDetailPage() {
     setLocking(true);
 
     try {
-      await Promise.all(
+      const responses = await Promise.all(
         selectedSeats.map((seat) =>
           api.post('/seats/lock', { seatId: seat.id })
         )
       );
-      setSelectedTrip(tripQuery.data!);
+      const lockedSeats = responses.map((res) => res.data.data);
+      setSelectedSeats(lockedSeats);
+      
       navigate('/checkout');
     } catch (error) {
       setLockError(getApiError(error));
@@ -200,7 +208,7 @@ export function TripDetailPage() {
               <div>
                 <p className="text-xs text-slate-400">Total</p>
                 <p className="text-xl font-bold text-slate-900">
-                  ₹{totalPrice.toLocaleString('en-IN')}
+                  ₹{(totalPrice / 100).toLocaleString('en-IN')}
                 </p>
               </div>
               <Button
