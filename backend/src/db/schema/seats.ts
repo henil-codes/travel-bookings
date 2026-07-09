@@ -51,7 +51,7 @@ export const seats = pgTable(
     ),
     expiredLocks: index('idx_expired_locks')
       .on(table.lockedUntil)
-      .where(sql`status = 'locked'`),
+      .where(sql`${table.status} = 'locked'`),
   })
 );
 

@@ -19,15 +19,8 @@
     {
       "idx": 2,
       "version": "7",
-      "when": 1783573540018,
-      "tag": "0002_clammy_gladiator",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1783621158235,
-      "tag": "0003_chilly_magneto",
+      "when": 1783625271038,
+      "tag": "0002_smiling_cloak",
       "breakpoints": true
     }
   ]
