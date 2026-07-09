@@ -8,7 +8,7 @@ import {
   decimal,
   index,
 } from 'drizzle-orm/pg-core';
-import { InferSelectModel, relations } from 'drizzle-orm';
+import { InferSelectModel, relations, sql } from 'drizzle-orm';
 import { trips } from './trips';
 import { users } from './users';
 
@@ -36,8 +36,7 @@ export const seats = pgTable(
     seatNumber: integer('seat_number').notNull(),
     price: integer('price').notNull(),
     status: seatStatusEnum('status').default('available').notNull(),
-    lockedByUserId: uuid('locked_by_user_id')
-      .references(() => users.id),
+    lockedByUserId: uuid('locked_by_user_id').references(() => users.id),
     lockedUntil: timestamp('locked_until'),
     version: integer('version').default(0).notNull(),
   },
@@ -50,6 +49,9 @@ export const seats = pgTable(
       table.tripId,
       table.status
     ),
+    expiredLocks: index('idx_expired_locks')
+      .on(table.lockedUntil)
+      .where(sql`status = 'locked'`),
   })
 );
 

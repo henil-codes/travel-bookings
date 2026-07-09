@@ -5,8 +5,8 @@ const startServer = async () => {
 
   try {
     const port = parseInt(process.env.PORT!, 10);
-    
-    if(isNaN(port)) {
+
+    if (isNaN(port)) {
       throw new Error('PORT environment variable is not set or invalid');
     }
 
@@ -15,6 +15,22 @@ const startServer = async () => {
 
     await app.listen({ port, host: '0.0.0.0' });
     console.log(`Server is running on port ${port}`);
+
+    let isShuttingDown = false;
+    for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+      process.on(signal, async () => {
+        if (isShuttingDown) return;
+        isShuttingDown = true;
+        app.log.info(`Received ${signal}, shutting down gracefully...`);
+        try {
+          await app.close();
+          process.exit(0);
+        } catch (error) {
+          app.log.error(error);
+          process.exit(1);
+        }
+      });
+    }
   } catch (error) {
     app.log.error(error);
     process.exit(1);
