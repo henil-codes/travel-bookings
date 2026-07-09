@@ -1,5 +1,5 @@
 {
-  "id": "2207c5cb-1ef3-46e1-a2d5-44e7a6f85355",
+  "id": "bbef7432-a7ac-45cd-bad6-391678c151b9",
   "prevId": "90b88b31-9c1f-4f04-af11-1a51ea444fe0",
   "version": "7",
   "dialect": "postgresql",
@@ -384,7 +384,7 @@
             }
           ],
           "isUnique": false,
-          "where": "status = 'locked",
+          "where": "\"seats\".\"status\" = 'locked'",
           "concurrently": false,
           "method": "btree",
           "with": {}
