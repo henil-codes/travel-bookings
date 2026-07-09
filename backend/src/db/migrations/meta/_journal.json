@@ -15,6 +15,20 @@
       "when": 1783214356260,
       "tag": "0001_cold_alex_wilder",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783573540018,
+      "tag": "0002_clammy_gladiator",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783621158235,
+      "tag": "0003_chilly_magneto",
+      "breakpoints": true
     }
   ]
 }

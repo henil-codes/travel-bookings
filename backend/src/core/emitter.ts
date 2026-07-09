@@ -9,6 +9,7 @@ export interface AppEvents {
         tripId: string,
         status: string,
         lockedUntil: Date | null;
+        lockedByUserId: string | null;
     };
 }
 
