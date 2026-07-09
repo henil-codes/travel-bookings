@@ -4,6 +4,18 @@ export const createOrderParamsSchema = z.object({
     bookingId: z.string().uuid({ message: 'Invalid booking ID format' }),
 })
 
+export const createOrderResponseSchema = z.object({
+    success: z.literal(true),
+    message: z.string(),
+    data: z.object({
+        razorpayOrderId: z.string(),
+        amount: z.number().int(),
+        currency: z.string(),
+        keyId: z.string(),
+    })
+
+})
+
 // Verify payment - called after Razorpay checkout succeeds on client
 export const verifyPaymentSchema = z.object({
     bookingId: z.string().uuid({ message: 'Invalid booking ID format' }),
