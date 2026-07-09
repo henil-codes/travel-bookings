@@ -14,6 +14,7 @@ import { authRoutes } from './modules/auth/auth.routes';
 import { bookingRoutes } from './modules/bookings/booking.routes';
 import { paymentRoutes } from './modules/payments/payment.routes';
 import { tripRoutes } from './modules/trips/trip.routes';
+import { seatLockSweeperPlugin } from './core/SeatLockSweeper';
 
 export const buildApp = (): FastifyInstance => {
   const envToLogger = {
@@ -49,6 +50,7 @@ export const buildApp = (): FastifyInstance => {
   });
 
   app.register(socketPlugin);
+  app.register(seatLockSweeperPlugin)
   app.register(authPlugin);
   app.register(fastifyOauth2, {
     name: 'googleOAuth2',

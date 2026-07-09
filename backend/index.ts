@@ -15,6 +15,13 @@ const startServer = async () => {
 
     await app.listen({ port, host: '0.0.0.0' });
     console.log(`Server is running on port ${port}`);
+
+    for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+      process.on(signal, async () => {
+        await app.close();
+        process.exit(0);
+      });
+    }
   } catch (error) {
     app.log.error(error);
     process.exit(1);

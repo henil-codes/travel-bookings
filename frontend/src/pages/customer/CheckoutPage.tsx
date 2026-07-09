@@ -11,7 +11,7 @@ import { api, getApiError } from '../../core/api';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useBookingStore } from '../../store/useBookingStore';
 import type { ApiResponse } from '../../types/api';
-import type { Booking } from '../../types/booking';
+import type { Booking, Passenger } from '../../types/booking';
 import type { RazorpayOrderResponse } from '../../types/payment';
 
 export function CheckoutPage() {
@@ -83,12 +83,12 @@ export function CheckoutPage() {
       let allIds = [...createdBookingIds];
 
       for (let i = allIds.length; i < selectedSeats.length; i++) {
-        const response = await api.post<ApiResponse<Booking>>('/bookings', {
+        const response = await api.post<ApiResponse<{ booking: Booking; passenger: Passenger }>>('/bookings', {
           seatId: selectedSeats[i]!.id,
           tripId: selectedTrip!.id,
           passenger: passengers[i]!,
         });
-        allIds = [...allIds, response.data.data.id];
+        allIds = [...allIds, response.data.data.booking.id];
         setCreatedBookingIds([...allIds]);
       }
 
