@@ -52,7 +52,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
 
             const filterUserId = (requestingUser.role === 'admin' || requestingUser.role === 'manager') ? userId : requestingUser.id;
 
-            const result = await BookingService.listBookings({
+            const result = await BookingService.listBookingWithDetails({
                 userId: filterUserId,
                 status,
                 page,
@@ -74,7 +74,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
             params: bookingParamsSchema,
         }
     }, async (request, reply) => {
-        const booking = await BookingService.getBookingById(request.params.id);
+        const booking = await BookingService.getBookingDetails(request.params.id);
 
         if (request.user.role !== 'admin' && request.user.role !== 'manager' && booking.bookedBy !== request.user.id) {
             throw new UnauthorizedError('You do not have permission to this booking.')

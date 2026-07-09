@@ -41,7 +41,7 @@ export interface BookingWithDetails extends Booking {
         arrivalTime: string;
     };
     seat: {
-        seatNumber: string;
+        seatNumber: number;
         seatType: string;
     };
     passenger: Passenger;
