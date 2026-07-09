@@ -29,7 +29,11 @@ const bookingDetailSelect = {
     seatNumber: seats.seatNumber,
     seatType: seats.seatType,
   },
-  passenger: passengers,
+  passenger: {
+    name: passengers.name,
+    updatedAt: passengers.updatedAt,
+    createdAt: passengers.createdAt,
+  },
 };
 
 type BookingDetailRow = {
@@ -39,7 +43,10 @@ type BookingDetailRow = {
     'name' | 'startLocation' | 'endLocation' | 'departureTime' | 'arrivalTime'
   >;
   seat: Pick<typeof seats.$inferSelect, 'seatNumber' | 'seatType'>;
-  passenger: typeof passengers.$inferSelect;
+  passenger: Pick<
+    typeof passengers.$inferSelect,
+    'name' | 'updatedAt' | 'createdAt'
+  >;
 };
 
 function toBookingWithDetails(row: BookingDetailRow) {
@@ -212,12 +219,12 @@ export class BookingService {
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .limit(input.limit)
       .offset(offset)
-      .orderBy(bookings.createdAt);
+      .orderBy(desc(bookings.createdAt));
 
     return result;
   }
 
-    static async getBookingDetails(bookingId: BookingParams['id']) {
+  static async getBookingDetails(bookingId: BookingParams['id']) {
     const [row] = await db
       .select(bookingDetailSelect)
       .from(bookings)
@@ -235,27 +242,33 @@ export class BookingService {
 
   static async listBookingWithDetails(input: BookingFilter) {
     const conditions = [];
-    if (input.userId) {conditions.push(eq(bookings.bookedBy, input.userId))}
-    if (input.status) {conditions.push(eq(bookings.status, input.status))}
-    if (input.from) {conditions.push(gte(bookings.createdAt, new Date(input.from)))}
+    if (input.userId) {
+      conditions.push(eq(bookings.bookedBy, input.userId));
+    }
+    if (input.status) {
+      conditions.push(eq(bookings.status, input.status));
+    }
+    if (input.from) {
+      conditions.push(gte(bookings.createdAt, new Date(input.from)));
+    }
     if (input.to) {
-        const toDate = new Date(input.to);
-        toDate.setDate(toDate.getDate() + 1);
-        conditions.push(lte(bookings.createdAt, toDate));
+      const toDate = new Date(input.to);
+      toDate.setDate(toDate.getDate() + 1);
+      conditions.push(lte(bookings.createdAt, toDate));
     }
 
     const offset = (input.page - 1) * input.limit;
 
     const rows = await db
-    .select(bookingDetailSelect)
-    .from(bookings)
-    .innerJoin(trips, eq(bookings.tripId, trips.id))
-    .innerJoin(seats, eq(bookings.seatId, seats.id))
-    .innerJoin(passengers, eq(bookings.passengerId, passengers.id))
-    .where(conditions.length ? and(...conditions) : undefined)
-    .limit(input.limit)
-    .offset(offset)
-    .orderBy(desc(bookings.createdAt));
+      .select(bookingDetailSelect)
+      .from(bookings)
+      .innerJoin(trips, eq(bookings.tripId, trips.id))
+      .innerJoin(seats, eq(bookings.seatId, seats.id))
+      .innerJoin(passengers, eq(bookings.passengerId, passengers.id))
+      .where(conditions.length ? and(...conditions) : undefined)
+      .limit(input.limit)
+      .offset(offset)
+      .orderBy(desc(bookings.createdAt));
 
     return rows.map(toBookingWithDetails);
   }
