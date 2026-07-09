@@ -16,8 +16,12 @@ const startServer = async () => {
     await app.listen({ port, host: '0.0.0.0' });
     console.log(`Server is running on port ${port}`);
 
+    let isShuttingDown = false;
     for (const signal of ['SIGINT', 'SIGTERM'] as const) {
       process.on(signal, async () => {
+        if (isShuttingDown) return;
+        isShuttingDown = true;
+        app.log.info(`Received ${signal}, shutting down gracefully...`);
         try {
           await app.close();
           process.exit(0);

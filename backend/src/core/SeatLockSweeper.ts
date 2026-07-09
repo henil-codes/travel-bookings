@@ -12,7 +12,7 @@ export async function releaseExpiredSeatLocks(): Promise<number> {
         status: 'available',
         lockedUntil: null,
         lockedByUserId: null,
-        version: sql`$ {seats.version} + 1`,
+        version: sql`${seats.version} + 1`,
     })
     .where(and(eq(seats.status, 'locked'), lt(seats.lockedUntil, sql `NOW()`)))
     .returning();
