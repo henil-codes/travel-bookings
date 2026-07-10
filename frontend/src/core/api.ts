@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
+import type { ApiError } from '../types/api'
 
 export const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}/api/v1`,
@@ -38,7 +39,8 @@ api.interceptors.response.use(
 
 export function getApiError(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    return error.response?.data?.message ?? error.message;
+    const data = error.response?.data as ApiError | undefined;
+    return data?.error ?? error.message;
   }
   return 'Something went wrong. Please try again.';
 }
