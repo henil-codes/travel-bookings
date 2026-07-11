@@ -4,7 +4,7 @@ import { db } from '@/db';
 import { payments, paymentMethodEnum } from '@/db/schema/payments';
 import { bookings } from '@/db/schema/bookings';
 import { seats } from '@/db/schema/seats';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { NotFoundError, ConflictError, UnauthorizedError } from '@/core/errors';
 import { appEmitter } from '@/core/emitter';
 
@@ -16,33 +16,61 @@ const razorpay = new Razorpay({
 export class PaymentService {
   // --- Create a payment order ---
   static async createPaymentOrder(bookingIds: string[], userId: string) {
-    const bookingRows = await db
-      .select()
-      .from(bookings)
-      .where(inArray(bookings.id, bookingIds));
+    const { bookingRows, existingOrder } = await db.transaction(async (tx) => {
+      const bookingRows = await db
+        .select()
+        .from(bookings)
+        .where(inArray(bookings.id, bookingIds))
+        .orderBy(bookings.id)
+        .for('update')
 
-    if (bookingRows.length !== bookingIds.length) {
-      throw new NotFoundError('Booking');
-    }
-
-    for (const booking of bookingRows) {
-      if (booking.bookedBy !== userId) {
-        throw new UnauthorizedError('You can only pay for your own bookings');
+      if (bookingRows.length !== bookingIds.length) {
+        throw new NotFoundError('Booking');
       }
-      if (booking.status !== 'pending') {
+
+      for (const booking of bookingRows) {
+        if (booking.bookedBy !== userId) {
+          throw new UnauthorizedError('You can only pay for your own bookings');
+        }
+        if (booking.status !== 'pending') {
+          throw new ConflictError(
+            `Cannot create payment order for booking with status ${booking.status}`
+          );
+        }
+      }
+
+      const currency = bookingRows[0].currency;
+      if (bookingRows.some((b) => b.currency !== currency)) {
         throw new ConflictError(
-          `Cannot create payment order for booking with status ${booking.status}`
+          'All bookings must have the same currency to create a single payment order'
         );
       }
+
+      const [existingOrder] = await tx
+        .select()
+        .from(payments)
+        .where(
+          and(
+            inArray(payments.bookingId, bookingIds),
+            eq(payments.event, 'order_created')
+          )
+        )
+        .limit(1);
+
+        return { bookingRows, existingOrder}
+    });
+
+    if (existingOrder) {
+      const order = JSON.parse(existingOrder.gatewayResponse!);
+      return {
+        razorpayOrderId: existingOrder.gatewayOrderId,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: process.env.RAZORPAY_KEY_ID!,
+      }
     }
 
-    const currency = bookingRows[0].currency;
-    if (bookingRows.some((b) => b.currency !== currency)) {
-      throw new ConflictError(
-        'All bookings must have the same currency to create a single payment order'
-      );
-    }
-
+    const currency = bookingRows[0]!.currency;
     const amountInPaise = bookingRows.reduce(
       (sum, booking) => sum + booking.totalAmount,
       0
@@ -106,6 +134,7 @@ export class PaymentService {
         .select()
         .from(bookings)
         .where(inArray(bookings.id, input.bookingIds))
+        .orderBy(bookings.id)
         .for('update');
 
       if (bookingRows.length !== input.bookingIds.length) {
@@ -181,6 +210,7 @@ export class PaymentService {
         .select()
         .from(bookings)
         .where(inArray(bookings.id, input.bookingIds))
+        .orderBy(bookings.id)
         .for('update');
 
       if (bookingRows.length !== input.bookingIds.length) {
