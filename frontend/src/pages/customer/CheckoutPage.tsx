@@ -20,6 +20,7 @@ export function CheckoutPage() {
   const {
     selectedTrip,
     selectedSeats,
+    bookingIds,
     setBookingIds,
     setRazorpayOrderId,
     clearBooking,
@@ -83,7 +84,9 @@ export function CheckoutPage() {
       let allIds = [...createdBookingIds];
 
       for (let i = allIds.length; i < selectedSeats.length; i++) {
-        const response = await api.post<ApiResponse<{ booking: Booking; passenger: Passenger }>>('/bookings', {
+        const response = await api.post<
+          ApiResponse<{ booking: Booking; passenger: Passenger }>
+        >('/bookings', {
           seatId: selectedSeats[i]!.id,
           tripId: selectedTrip!.id,
           passenger: passengers[i]!,
@@ -93,10 +96,10 @@ export function CheckoutPage() {
       }
 
       setBookingIds(allIds);
-      const firstId = allIds[0]!;
 
       const orderRes = await api.post<ApiResponse<RazorpayOrderResponse>>(
-        `/payments/${firstId}/order`
+        `/payments/order`,
+        { bookingIds: bookingIds }
       );
       const { razorpayOrderId, amount, currency, keyId } = orderRes.data.data;
       setRazorpayOrderId(razorpayOrderId);
@@ -116,13 +119,13 @@ export function CheckoutPage() {
         handler: async (response) => {
           try {
             await api.post('/payments/verify', {
-              bookingId: firstId,
+              bookingIds,
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
             });
             clearBooking();
-            navigate(`/booking/confirm/${firstId}`);
+            navigate(`/booking/confirm/${bookingIds[0]}`);
           } catch (error) {
             setApiError(getApiError(error));
             setPaying(false);
@@ -136,7 +139,7 @@ export function CheckoutPage() {
       razorpay.on('payment.failed', async (response) => {
         try {
           await api.post('/payments/failure', {
-            bookingId: firstId,
+            bookingIds,
             gatewayOrderId: response.error.metadata.order_id,
             gatewayResponse: JSON.stringify(response.error),
           });
@@ -200,7 +203,7 @@ export function CheckoutPage() {
               size="lg"
               className="w-full"
             >
-              Pay ₹{(selectedSeats[0]?.price / 100).toLocaleString('en-IN')}
+              Pay ₹{(totalPaise / 100).toLocaleString('en-IN')}
             </Button>
             <p className="text-center text-xs text-slate-400 mt-2">
               Secured by Razorpay · UPI, Cards, Net Banking accepted
