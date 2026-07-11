@@ -5,12 +5,11 @@ import { PaymentService } from './payment.service';
 import { BookingService } from '../bookings/booking.service';
 import {
   verifyPaymentSchema,
-  createOrderParamsSchema,
+  createOrderBodySchema,
   paymentFailureSchema,
   refundParamsSchema,
   initiateRefundSchema,
   webhookHeaderSchema,
-  createOrderResponseSchema,
 } from './payment.validation';
 import { requireRole } from '@/core/guards';
 import { UnauthorizedError } from '@/core/errors';
@@ -22,27 +21,19 @@ export const paymentRoutes: FastifyPluginAsync = async (
 
   // POST /:bookingId/order - Create Razorpay order
   server.post(
-    '/:bookingId/order',
+    '/order',
     {
       preHandler: [fastify.authenticate],
       schema: {
         description: 'Create Razorpay order for a pending booking',
         tags: ['Payments'],
-        params: createOrderParamsSchema,
-        response: { 201: createOrderResponseSchema },
+        body: createOrderBodySchema,
       },
     },
     async (request, reply) => {
-      const booking = await BookingService.getBookingById(
-        request.params.bookingId
-      );
-
-      if (booking.bookedBy !== request.user.id) {
-        throw new UnauthorizedError('You can only pay for your own bookings');
-      }
-
       const order = await PaymentService.createPaymentOrder(
-        request.params.bookingId
+        request.body.bookingIds,
+        request.user.id
       );
 
       return reply.status(201).send({
@@ -67,23 +58,18 @@ export const paymentRoutes: FastifyPluginAsync = async (
     },
     async (request, reply) => {
       const {
-        bookingId,
+        bookingIds,
         razorpayOrderId,
         razorpayPaymentId,
         razorpaySignature,
       } = request.body;
 
-      const booking = await BookingService.getBookingById(bookingId);
-
-      if (booking.bookedBy !== request.user.id) {
-        throw new UnauthorizedError('You can only verify your own payments');
-      }
-
       const result = await PaymentService.handleSuccess({
-        bookingId,
+        bookingIds,
         gatewayOrderId: razorpayOrderId,
         gatewayPaymentId: razorpayPaymentId,
         gatewayPaymentSignature: razorpaySignature,
+        userId: request.user.id,
       });
 
       return reply.status(200).send({
@@ -106,17 +92,13 @@ export const paymentRoutes: FastifyPluginAsync = async (
       },
     },
     async (request, reply) => {
-      const booking = await BookingService.getBookingById(
-        request.body.bookingId
-      );
 
-      if (booking.bookedBy !== request.user.id) {
-        throw new UnauthorizedError(
-          'You can only report failure for your own payments'
-        );
-      }
-
-      await PaymentService.handleFailure(request.body);
+      await PaymentService.handleFailure({
+        bookingIds: request.body.bookingIds,
+        gatewayOrderId: request.body.gatewayOrderId,
+        gatewayResponse: request.body.gatewayResponse,
+        userId: request.user.id,
+      });
 
       return reply.status(200).send({
         success: true,
@@ -174,8 +156,6 @@ export const paymentRoutes: FastifyPluginAsync = async (
           error: 'Missing Razorpay webhook signature',
         });
       }
-
-      console.log('Raw Body: ', request.rawBody);
 
       await PaymentService.handleWebhook({
         rawBody: request.rawBody as string,
