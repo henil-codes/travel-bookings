@@ -29,6 +29,13 @@
       "when": 1783804510642,
       "tag": "0003_fat_squirrel_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783805560590,
+      "tag": "0004_awesome_galactus",
+      "breakpoints": true
     }
   ]
 }
