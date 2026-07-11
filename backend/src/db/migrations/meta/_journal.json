@@ -26,15 +26,8 @@
     {
       "idx": 3,
       "version": "7",
-      "when": 1783804510642,
-      "tag": "0003_fat_squirrel_girl",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1783805560590,
-      "tag": "0004_awesome_galactus",
+      "when": 1783806001638,
+      "tag": "0003_mighty_typhoid_mary",
       "breakpoints": true
     }
   ]

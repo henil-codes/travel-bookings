@@ -1,1 +1,0 @@
-ALTER TYPE "public"."trip_status" ADD VALUE 'confirmed' BEFORE 'cancelled';
