@@ -13,7 +13,6 @@ import { users } from './users';
 
 export const tripStatusEnum = pgEnum('trip_status', [
   'scheduled',
-  'confirmed',
   'cancelled',
   'completed',
   'boarding',
