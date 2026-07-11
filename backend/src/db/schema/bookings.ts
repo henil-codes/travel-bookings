@@ -16,6 +16,7 @@ import { passengers } from './passengers';
 
 export const paymentStatusEnum = pgEnum('payment_status', [
   'pending',
+  'confirmed',
   'completed',
   'failed',
   'cancelled',
