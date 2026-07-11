@@ -4,7 +4,7 @@ import { db } from '@/db';
 import { payments, paymentMethodEnum } from '@/db/schema/payments';
 import { bookings } from '@/db/schema/bookings';
 import { seats } from '@/db/schema/seats';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { NotFoundError, ConflictError, UnauthorizedError } from '@/core/errors';
 import { appEmitter } from '@/core/emitter';
 
@@ -15,55 +15,74 @@ const razorpay = new Razorpay({
 
 export class PaymentService {
   // --- Create a payment order ---
-  static async createPaymentOrder(bookingId: string) {
-    const [booking] = await db
+  static async createPaymentOrder(bookingIds: string[], userId: string) {
+    const bookingRows = await db
       .select()
       .from(bookings)
-      .where(eq(bookings.id, bookingId));
+      .where(inArray(bookings.id, bookingIds));
 
-    if (!booking) {
+    if (bookingRows.length !== bookingIds.length) {
       throw new NotFoundError('Booking');
     }
 
-    if (booking.status !== 'pending') {
+    for (const booking of bookingRows) {
+      if (booking.bookedBy !== userId) {
+        throw new UnauthorizedError('You can only pay for your own bookings');
+      }
+      if (booking.status !== 'pending') {
+        throw new ConflictError(
+          `Cannot create payment order for booking with status ${booking.status}`
+        );
+      }
+    }
+
+    const currency = bookingRows[0].currency;
+    if (bookingRows.some((b) => b.currency !== currency)) {
       throw new ConflictError(
-        'Cannot create payment order with status ' + booking.status
+        'All bookings must have the same currency to create a single payment order'
       );
     }
 
-    const amountInPaise = booking.totalAmount;
+    const amountInPaise = bookingRows.reduce(
+      (sum, booking) => sum + booking.totalAmount,
+      0
+    );
 
     const order = await razorpay.orders.create({
       amount: amountInPaise,
-      currency: booking.currency,
-      receipt: booking.id,
+      currency,
+      receipt: bookingRows[0].id,
+      notes: { bookingIds: bookingIds.join(',') },
     });
 
     // Save the payment order details in the database
-    await db.insert(payments).values({
-      bookingId: booking.id,
-      gatewayOrderId: order.id,
-      event: 'order_created',
-      amount: booking.totalAmount,
-      currency: booking.currency,
-      gatewayResponse: JSON.stringify(order),
-    });
+    await db.insert(payments).values(
+      bookingRows.map((booking) => ({
+        bookingId: booking.id,
+        gatewayOrderId: order.id,
+        event: 'order_created' as const,
+        amount: booking.totalAmount,
+        currency: booking.currency,
+        gatewayResponse: JSON.stringify(order),
+      }))
+    );
 
     // return order details to the frontend
     return {
       razorpayOrderId: order.id,
       amount: amountInPaise,
-      currency: booking.currency,
+      currency,
       keyId: process.env.RAZORPAY_KEY_ID!,
     };
   }
 
   // --- Called after Razorpay checkout success, to verify and capture payment ---
   static async handleSuccess(input: {
-    bookingId: string;
+    bookingIds: string[];
     gatewayOrderId: string;
     gatewayPaymentId: string;
     gatewayPaymentSignature: string;
+    userId: string;
     method?: (typeof paymentMethodEnum.enumValues)[number];
   }) {
     // Verify the payment signature
@@ -83,112 +102,141 @@ export class PaymentService {
     }
 
     return await db.transaction(async (tx) => {
-      const [booking] = await tx
+      const bookingRows = await tx
         .select()
         .from(bookings)
-        .where(eq(bookings.id, input.bookingId))
+        .where(inArray(bookings.id, input.bookingIds))
         .for('update');
 
-      if (!booking) {
+      if (bookingRows.length !== input.bookingIds.length) {
         throw new NotFoundError('Booking');
       }
 
-      if (booking.status !== 'pending') {
-        throw new ConflictError(
-          'Cannot capture payment for booking with status ' + booking.status
-        );
+      for (const booking of bookingRows) {
+        if (booking.bookedBy !== input.userId) {
+          throw new UnauthorizedError('You can only verify your own payments');
+        }
+        if (booking.status !== 'pending') {
+          throw new ConflictError(
+            'Cannot capture payment for booking with status ' + booking.status
+          );
+        }
       }
 
       // Record the successful payment
-      await tx.insert(payments).values({
-        bookingId: input.bookingId,
-        gatewayOrderId: input.gatewayOrderId,
-        gatewayPaymentId: input.gatewayPaymentId,
-        gatewayPaymentSignature: input.gatewayPaymentSignature,
-        event: 'payment_captured',
-        method: input.method,
-        amount: booking.totalAmount,
-        currency: booking.currency,
-        gatewayResponse: JSON.stringify(input),
-      });
+      await tx.insert(payments).values(
+        bookingRows.map((booking) => ({
+          bookingId: booking.id,
+          gatewayOrderId: input.gatewayOrderId,
+          gatewayPaymentId: input.gatewayPaymentId,
+          gatewayPaymentSignature: input.gatewayPaymentSignature,
+          event: 'payment_captured' as const,
+          method: input.method,
+          amount: booking.totalAmount,
+          currency: booking.currency,
+          gatewayResponse: JSON.stringify(input),
+        }))
+      );
 
       // Update booking status to confirmed
-      const [updatedBooking] = await tx
+      const updatedBookings = await tx
         .update(bookings)
         .set({
           status: 'completed',
           updatedAt: new Date(),
         })
-        .where(eq(bookings.id, input.bookingId))
+        .where(inArray(bookings.id, input.bookingIds))
         .returning();
 
       // Update seat status to booked
+      const seatIds = updatedBookings.map((booking) => booking.seatId);
       await tx
         .update(seats)
         .set({ status: 'sold' })
-        .where(eq(seats.id, booking.seatId));
+        .where(inArray(seats.id, seatIds));
 
-      appEmitter.emit('seat:status_changed', {
-        seatId: booking.seatId,
-        status: 'sold',
-        lockedUntil: null,
-      });
+      for (const booking of updatedBookings) {
+        appEmitter.emit('seat:status_changed', {
+          tripId: booking.tripId,
+          seatId: booking.seatId,
+          status: 'sold',
+          lockedUntil: null,
+          lockedByUserId: null,
+        });
+      }
 
-      return updatedBooking;
+      return updatedBookings;
     });
   }
 
   // --- Handle payment failure ---
   static async handleFailure(input: {
-    bookingId: string;
+    bookingIds: string[];
     gatewayOrderId: string;
     gatewayResponse?: string;
+    userId: string;
   }) {
     return await db.transaction(async (tx) => {
-      const [booking] = await tx
+      const bookingRows = await tx
         .select()
         .from(bookings)
-        .where(eq(bookings.id, input.bookingId))
+        .where(inArray(bookings.id, input.bookingIds))
         .for('update');
 
-      if (!booking) {
+      if (bookingRows.length !== input.bookingIds.length) {
         throw new NotFoundError('Booking');
       }
 
-      if (booking.status !== 'pending') {
-        throw new ConflictError(
-          'Cannot record payment failure for booking with status ' +
-            booking.status
-        );
+      for (const booking of bookingRows) {
+        if (booking.bookedBy !== input.userId) {
+          throw new UnauthorizedError(
+            'You can only record payment failure for your own bookings'
+          );
+        }
       }
 
-      await tx.insert(payments).values({
-        bookingId: input.bookingId,
-        gatewayOrderId: input.gatewayOrderId,
-        event: 'payment_failed',
-        amount: booking.totalAmount,
-        currency: booking.currency,
-        gatewayResponse: input.gatewayResponse,
-      });
+      const pendingBookings = bookingRows.filter(
+        (booking) => booking.status === 'pending'
+      );
+      if (pendingBookings.length === 0) {
+        return;
+      }
 
+      await tx.insert(payments).values(
+        pendingBookings.map((booking) => ({
+          bookingId: booking.id,
+          gatewayOrderId: input.gatewayOrderId,
+          event: 'payment_failed' as const,
+          amount: booking.totalAmount,
+          currency: booking.currency,
+          gatewayResponse: input.gatewayResponse,
+        }))
+      );
+
+      const pendingIds = pendingBookings.map((booking) => booking.id);
       await tx
         .update(bookings)
         .set({
           status: 'failed',
           updatedAt: new Date(),
         })
-        .where(eq(bookings.id, input.bookingId));
+        .where(inArray(bookings.id, pendingIds));
 
+      const seatIds = pendingBookings.map((booking) => booking.seatId);
       await tx
         .update(seats)
         .set({ status: 'available' })
-        .where(eq(seats.id, booking.seatId));
+        .where(inArray(seats.id, seatIds));
 
-      appEmitter.emit('seat:status_changed', {
-        seatId: booking.seatId,
-        status: 'available',
-        lockedUntil: null,
-      });
+      for (const booking of pendingBookings) {
+        appEmitter.emit('seat:status_changed', {
+          tripId: booking.tripId,
+          seatId: booking.seatId,
+          status: 'available',
+          lockedUntil: null,
+          lockedByUserId: null,
+        });
+      }
     });
   }
 
@@ -246,7 +294,7 @@ export class PaymentService {
         gatewayOrderId: capturedPayment.gatewayOrderId,
         gatewayPaymentId: capturedPayment.gatewayPaymentId,
         gatewayRefundId: refund.id,
-        event: 'refund_initiated',
+        event: 'refund_initiated' as const,
         amount: booking.totalAmount,
         refundAmount: refundAmount,
         currency: booking.currency,
@@ -311,7 +359,7 @@ export class PaymentService {
         gatewayOrderId: existingRefund.gatewayOrderId,
         gatewayPaymentId: paymentId,
         gatewayRefundId: refundId,
-        event: 'refund_completed',
+        event: 'refund_completed' as const,
         amount: existingRefund.amount,
         refundAmount: existingRefund.refundAmount,
         currency: existingRefund.currency,
