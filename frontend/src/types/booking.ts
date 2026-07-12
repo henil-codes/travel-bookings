@@ -1,4 +1,4 @@
-export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
+export type PaymentStatus = 'pending' | 'confirmed' | 'completed' | 'failed' | 'cancelled' | 'refunded';
 export type Gender = 'male' | 'female' | 'other';
 export type IdType = 'aadhar' | 'pan' | 'passport' | 'driving_license';
 
