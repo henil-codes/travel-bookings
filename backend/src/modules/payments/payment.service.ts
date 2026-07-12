@@ -171,7 +171,7 @@ export class PaymentService {
       const updatedBookings = await tx
         .update(bookings)
         .set({
-          status: 'completed',
+          status: 'confirmed',
           updatedAt: new Date(),
         })
         .where(inArray(bookings.id, input.bookingIds))
@@ -287,8 +287,8 @@ export class PaymentService {
         throw new NotFoundError('Booking');
       }
 
-      if (booking.status !== 'completed') {
-        throw new ConflictError('Only completed bookings can be refunded');
+      if (booking.status !== 'confirmed') {
+        throw new ConflictError('Only confirmed bookings can be refunded');
       }
 
       // find the captured payment to get gatewayPaymentId
