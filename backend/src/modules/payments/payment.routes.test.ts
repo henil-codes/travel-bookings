@@ -236,7 +236,7 @@ describe('Payment Routes Integration', () => {
 
             expect(res.status).toBe(200);
             expect(body.success).toBe(true);
-            expect(body.data.status).toBe('completed');
+            expect(body.data.status).toBe('confirmed');
         })
 
         it('should not verify payment with reused order ID', async () => {
@@ -286,7 +286,7 @@ describe('Payment Routes Integration', () => {
         beforeAll(async () => {
             await resetState();
 
-            await db.update(bookings).set({ status: 'completed' }).where(eq(bookings.id, testBookingId));
+            await db.update(bookings).set({ status: 'confirmed' }).where(eq(bookings.id, testBookingId));
             await db.update(seats).set({ status: 'sold' }).where(eq(seats.id, testSeatId));
             await db.insert(payments).values({
                 bookingId: testBookingId,
