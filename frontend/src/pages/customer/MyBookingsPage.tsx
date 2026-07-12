@@ -96,7 +96,7 @@ export function MyBookingsPage() {
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
                       <p className="font-semibold text-slate-900">
-                        {booking.trip.startLocation} → " "{booking.trip.endLocation}
+                        {booking.trip.startLocation} → {booking.trip.endLocation}
                       </p>
                       <p className="text-sm text-slate-500 mt-0 5">{dep}</p>
                     </div>
