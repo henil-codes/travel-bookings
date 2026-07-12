@@ -86,7 +86,7 @@ export function MyBookingsPage() {
                 }
               );
               const canCancel =
-                booking.status === 'pending' || booking.status === 'completed';
+                booking.status === 'pending' || booking.status === 'confirmed';
 
               return (
                 <div
