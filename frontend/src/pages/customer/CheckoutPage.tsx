@@ -20,7 +20,6 @@ export function CheckoutPage() {
   const {
     selectedTrip,
     selectedSeats,
-    bookingIds,
     setBookingIds,
     setRazorpayOrderId,
     clearBooking,
@@ -99,7 +98,7 @@ export function CheckoutPage() {
 
       const orderRes = await api.post<ApiResponse<RazorpayOrderResponse>>(
         `/payments/order`,
-        { bookingIds: bookingIds }
+        { bookingIds: allIds }
       );
       const { razorpayOrderId, amount, currency, keyId } = orderRes.data.data;
       setRazorpayOrderId(razorpayOrderId);
@@ -119,13 +118,13 @@ export function CheckoutPage() {
         handler: async (response) => {
           try {
             await api.post('/payments/verify', {
-              bookingIds,
+              bookingIds: allIds,
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
             });
             clearBooking();
-            navigate(`/booking/confirm/${bookingIds[0]}`);
+            navigate(`/booking/confirm/${allIds[0]}`);
           } catch (error) {
             setApiError(getApiError(error));
             setPaying(false);
@@ -139,7 +138,7 @@ export function CheckoutPage() {
       razorpay.on('payment.failed', async (response) => {
         try {
           await api.post('/payments/failure', {
-            bookingIds,
+            bookingIds: allIds,
             gatewayOrderId: response.error.metadata.order_id,
             gatewayResponse: JSON.stringify(response.error),
           });
