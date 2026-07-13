@@ -1,3 +1,4 @@
+import { PaymentService } from '@/modules/payments/payment.service';
 import { db } from '@/db';
 import { bookings, paymentStatusEnum } from '@/db/schema/bookings';
 import { seats } from '@/db/schema/seats';
@@ -283,28 +284,42 @@ export class BookingService {
       throw new NotFoundError('Booking');
     }
 
-    if (booking.status !== 'pending') {
-      throw new ConflictError(
-        `Cannot cancel a booking with status: ${booking.status}`
-      );
+    if (booking.status === 'pending') {
+      const [updatedBooking] = await db
+        .update(bookings)
+        .set({
+          status: 'cancelled',
+          cancellationReason: input.cancellationReason,
+          cancelledAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(bookings.id, bookingId))
+        .returning();
+
+      await db
+        .update(seats)
+        .set({ status: 'available', lockedUntil: null, lockedByUserId: null })
+        .where(eq(seats.id, booking.seatId));
+
+      return updatedBooking;
     }
 
-    const [updatedBooking] = await db
-      .update(bookings)
-      .set({
-        status: 'cancelled',
+    if (booking.status === 'confirmed') {
+      PaymentService.initiateRefund({
+        bookingId,
         cancellationReason: input.cancellationReason,
-        cancelledAt: new Date(),
-        updatedAt: new Date(),
       })
+
+      const [refunded] = await db
+      .select()
+      .from(bookings)
       .where(eq(bookings.id, bookingId))
-      .returning();
 
-    await db
-      .update(seats)
-      .set({ status: 'available', lockedUntil: null, lockedByUserId: null })
-      .where(eq(seats.id, booking.seatId));
+      return refunded;
+    }
 
-    return updatedBooking;
+    throw new ConflictError(
+      'Booking cannot be cancelled. Only pending or confirmed bookings can be cancelled.'
+    )
   }
 }
