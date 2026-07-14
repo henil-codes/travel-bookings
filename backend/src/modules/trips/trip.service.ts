@@ -1,6 +1,6 @@
 import { db } from '@/db';
-import { vehicles } from '@/db/schema';
-import { seats } from '@/db/schema';
+import { vehicles } from '@/db/schema/vehicles';
+import { seats } from '@/db/schema/seats';
 import type {
   CreateTripPayload,
   UpdateTripPayload,
@@ -8,8 +8,10 @@ import type {
   TripFilterInput,
 } from './trip.validation';
 import { trips, tripStatusEnum } from '@/db/schema/trips';
+import { bookings } from '@/db/schema/bookings';
+import { PaymentService } from '../payments/payment.service';
 import { ConflictError, NotFoundError, UnauthorizedError } from '@/core/errors';
-import { eq, and, gte, lt, ilike, sql } from 'drizzle-orm';
+import { eq, and, gte, lt, ilike, sql, inArray } from 'drizzle-orm';
 
 export class TripService {
   static async createTrip(
@@ -279,6 +281,56 @@ export class TripService {
       throw new ConflictError(
         `Invalid status transition from ${trip.status} to ${input.status}`
       );
+    }
+
+    if (input.status === 'cancelled') {
+      return db.transaction(async (tx) => {
+        const [updatedTrip] = await tx
+          .update(trips)
+          .set({ status: input.status })
+          .where(eq(trips.id, tripId))
+          .returning();
+
+        const affectedBookings = await tx
+          .select()
+          .from(bookings)
+          .where(
+            and(
+              eq(bookings.tripId, tripId),
+              inArray(bookings.status, ['confirmed', 'pending'])
+            )
+          )
+          .orderBy(bookings.createdAt);
+
+        for (const booking of affectedBookings) {
+          if (booking.status === 'confirmed') {
+            await PaymentService.initiateRefund({
+              bookingId: booking.id,
+              cancellationReason: 'Trip cancelled by operator',
+            });
+          } else {
+            await tx
+              .update(bookings)
+              .set({
+                status: 'cancelled',
+                updatedAt: new Date(),
+                cancelledAt: new Date(),
+              })
+              .where(eq(bookings.id, booking.id));
+
+            await tx
+              .update(seats)
+              .set({
+                status: 'available',
+                lockedUntil: null,
+                lockedByUserId: null,
+              })
+              .where(eq(seats.id, booking.seatId));
+          }
+        }
+
+        return updatedTrip;
+      });
     }
 
     const [updatedTrip] = await db
