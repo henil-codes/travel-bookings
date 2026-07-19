@@ -12,6 +12,7 @@ import { bookings } from '@/db/schema/bookings';
 import { PaymentService } from '../payments/payment.service';
 import { ConflictError, NotFoundError, UnauthorizedError } from '@/core/errors';
 import { eq, and, gte, lt, ilike, sql, inArray } from 'drizzle-orm';
+import { refundOutbox } from '@/db/schema/refundOutbox';
 
 export class TripService {
   static async createTrip(
@@ -277,20 +278,30 @@ export class TripService {
       cancelled: [],
     };
 
-    if (!validTransitions[trip.status].includes(input.status)) {
-      throw new ConflictError(
-        `Invalid status transition from ${trip.status} to ${input.status}`
-      );
-    }
+    return db.transaction(async (tx) => {
+      const [lockedTrip] = await tx
+        .select()
+        .from(trips)
+        .where(eq(trips.id, tripId))
+        .for('update');
 
-    if (input.status === 'cancelled') {
-      return db.transaction(async (tx) => {
-        const [updatedTrip] = await tx
-          .update(trips)
-          .set({ status: input.status })
-          .where(eq(trips.id, tripId))
-          .returning();
+      if (!lockedTrip) {
+        throw new NotFoundError('Trip');
+      }
 
+      if (!validTransitions[lockedTrip.status]?.includes(input.status)) {
+        throw new ConflictError(
+          `Invalid status transition from ${lockedTrip.status} to ${input.status}`
+        );
+      }
+
+      const [updatedTrip] = await tx
+        .update(trips)
+        .set({ status: input.status })
+        .where(eq(trips.id, tripId))
+        .returning();
+
+      if (input.status === 'cancelled') {
         const affectedBookings = await tx
           .select()
           .from(bookings)
@@ -304,7 +315,7 @@ export class TripService {
 
         for (const booking of affectedBookings) {
           if (booking.status === 'confirmed') {
-            await PaymentService.initiateRefund({
+            await tx.insert(refundOutbox).values({
               bookingId: booking.id,
               cancellationReason: 'Trip cancelled by operator',
             });
@@ -328,10 +339,10 @@ export class TripService {
               .where(eq(seats.id, booking.seatId));
           }
         }
+      }
 
-        return updatedTrip;
-      });
-    }
+      return updatedTrip;
+    });
 
     const [updatedTrip] = await db
       .update(trips)
