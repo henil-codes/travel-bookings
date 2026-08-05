@@ -7,3 +7,4 @@ export * from './vehicles';
 export * from './relations';
 export * from './payments';
 export * from './passwordResetTokens';
+export * from './refundOutbox';

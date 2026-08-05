@@ -1,6 +1,6 @@
 import { db } from '@/db';
-import { vehicles } from '@/db/schema';
-import { seats } from '@/db/schema';
+import { vehicles } from '@/db/schema/vehicles';
+import { seats } from '@/db/schema/seats';
 import type {
   CreateTripPayload,
   UpdateTripPayload,
@@ -8,8 +8,11 @@ import type {
   TripFilterInput,
 } from './trip.validation';
 import { trips, tripStatusEnum } from '@/db/schema/trips';
+import { bookings } from '@/db/schema/bookings';
+import { PaymentService } from '../payments/payment.service';
 import { ConflictError, NotFoundError, UnauthorizedError } from '@/core/errors';
-import { eq, and, gte, lt, ilike, sql } from 'drizzle-orm';
+import { eq, and, gte, lt, ilike, sql, inArray } from 'drizzle-orm';
+import { refundOutbox } from '@/db/schema/refundOutbox';
 
 export class TripService {
   static async createTrip(
@@ -275,19 +278,71 @@ export class TripService {
       cancelled: [],
     };
 
-    if (!validTransitions[trip.status].includes(input.status)) {
-      throw new ConflictError(
-        `Invalid status transition from ${trip.status} to ${input.status}`
-      );
-    }
+    return db.transaction(async (tx) => {
+      const [lockedTrip] = await tx
+        .select()
+        .from(trips)
+        .where(eq(trips.id, tripId))
+        .for('update');
 
-    const [updatedTrip] = await db
-      .update(trips)
-      .set({ status: input.status })
-      .where(eq(trips.id, tripId))
-      .returning();
+      if (!lockedTrip) {
+        throw new NotFoundError('Trip');
+      }
 
-    return updatedTrip;
+      if (!validTransitions[lockedTrip.status]?.includes(input.status)) {
+        throw new ConflictError(
+          `Invalid status transition from ${lockedTrip.status} to ${input.status}`
+        );
+      }
+
+      const [updatedTrip] = await tx
+        .update(trips)
+        .set({ status: input.status })
+        .where(eq(trips.id, tripId))
+        .returning();
+
+      if (input.status === 'cancelled') {
+        const affectedBookings = await tx
+          .select()
+          .from(bookings)
+          .where(
+            and(
+              eq(bookings.tripId, tripId),
+              inArray(bookings.status, ['confirmed', 'pending'])
+            )
+          )
+          .orderBy(bookings.createdAt);
+
+        for (const booking of affectedBookings) {
+          if (booking.status === 'confirmed') {
+            await tx.insert(refundOutbox).values({
+              bookingId: booking.id,
+              cancellationReason: 'Trip cancelled by operator',
+            });
+          } else {
+            await tx
+              .update(bookings)
+              .set({
+                status: 'cancelled',
+                updatedAt: new Date(),
+                cancelledAt: new Date(),
+              })
+              .where(eq(bookings.id, booking.id));
+
+            await tx
+              .update(seats)
+              .set({
+                status: 'available',
+                lockedUntil: null,
+                lockedByUserId: null,
+              })
+              .where(eq(seats.id, booking.seatId));
+          }
+        }
+      }
+
+      return updatedTrip;
+    });
   }
 
   // deleteTrip - admin only
