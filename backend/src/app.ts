@@ -15,6 +15,7 @@ import { bookingRoutes } from './modules/bookings/booking.routes';
 import { paymentRoutes } from './modules/payments/payment.routes';
 import { tripRoutes } from './modules/trips/trip.routes';
 import { seatLockSweeperPlugin } from './core/SeatLockSweeper';
+import { refundProcessorPlugin } from './core/refundProcessor';
 
 export const buildApp = (): FastifyInstance => {
   const envToLogger = {
@@ -31,7 +32,6 @@ export const buildApp = (): FastifyInstance => {
   const app = Fastify({
     logger:
       envToLogger[process.env.NODE_ENV as keyof typeof envToLogger] ?? true,
-
   });
 
   const rawCallbackUrl = process.env.GOOGLE_CALLBACK_URL;
@@ -50,7 +50,7 @@ export const buildApp = (): FastifyInstance => {
   });
 
   app.register(socketPlugin);
-  app.register(seatLockSweeperPlugin)
+  app.register(seatLockSweeperPlugin);
   app.register(authPlugin);
   app.register(fastifyOauth2, {
     name: 'googleOAuth2',
@@ -69,11 +69,12 @@ export const buildApp = (): FastifyInstance => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-    }
+    },
   });
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   app.setErrorHandler(globalErrorHandler);
+  app.register(refundProcessorPlugin);
   app.register(rawBody, {
     field: 'rawBody',
     global: false,
