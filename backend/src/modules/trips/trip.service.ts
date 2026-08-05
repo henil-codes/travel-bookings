@@ -343,14 +343,6 @@ export class TripService {
 
       return updatedTrip;
     });
-
-    const [updatedTrip] = await db
-      .update(trips)
-      .set({ status: input.status })
-      .where(eq(trips.id, tripId))
-      .returning();
-
-    return updatedTrip;
   }
 
   // deleteTrip - admin only

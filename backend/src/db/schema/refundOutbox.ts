@@ -29,9 +29,10 @@ export const refundOutbox = pgTable(
     }).notNull(),
     status: outboxStatusEnum('status').default('pending').notNull(),
     attempts: integer('attempts').default(0).notNull(),
-    lastError: varchar('last_error', { length: 255 }),
+    lastError: varchar('last_error', { length: 1024 }),
 
     processedAt: timestamp('processed_at'),
+    leasedAt: timestamp('leased_at'),
     nextAttemptAt: timestamp('next_attempt_at').defaultNow().notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
