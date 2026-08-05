@@ -1,12 +1,13 @@
 import fp from 'fastify-plugin';
-import { and, eq, lte, lt, sql } from 'drizzle-orm';
+import { and, or, eq, lte, lt, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { refundOutbox } from '@/db/schema/refundOutbox';
 import { PaymentService } from '@/modules/payments/payment.service';
 
-const POLL_INTERVAL_MS = 1500;
+const POLL_INTERVAL_MS = 15000;
 const MAX_ATTEMPTS = 5;
 const BATCH_SIZE = 10;
+const LEASE_TIMEOUT_MS = 5 * 60 * 1000;
 
 export async function processRefundOutbox(): Promise<void> {
   const claimed = await db.transaction(async (tx) => {
@@ -14,9 +15,18 @@ export async function processRefundOutbox(): Promise<void> {
       .select()
       .from(refundOutbox)
       .where(
-        and(
-          eq(refundOutbox.status, 'pending'),
-          lte(refundOutbox.nextAttemptAt, sql`NOW()`)
+        or(
+          and(
+            eq(refundOutbox.status, 'pending'),
+            lte(refundOutbox.nextAttemptAt, sql`NOW()`)
+          ),
+          and(
+            eq(refundOutbox.status, 'processing'),
+            lt(
+              refundOutbox.leasedAt,
+              sql`NOW() - ${sql.raw(`interval '${LEASE_TIMEOUT_MS} milliseconds'`)}`
+            )
+          )
         )
       )
       .orderBy(refundOutbox.createdAt)
@@ -27,7 +37,7 @@ export async function processRefundOutbox(): Promise<void> {
 
     await tx
       .update(refundOutbox)
-      .set({ status: 'processing' })
+      .set({ status: 'processing', leasedAt: sql`NOW()` })
       .where(
         sql`${refundOutbox.id} IN (${sql.join(
           rows.map((row) => sql`${row.id}`),
@@ -47,7 +57,7 @@ export async function processRefundOutbox(): Promise<void> {
 
       await db
         .update(refundOutbox)
-        .set({ status: 'completed', processedAt: new Date() })
+        .set({ status: 'completed', processedAt: new Date(), leasedAt: null })
         .where(eq(refundOutbox.id, row.id));
       continue;
     } catch (error) {
@@ -59,6 +69,7 @@ export async function processRefundOutbox(): Promise<void> {
           .set({
             status: 'completed',
             processedAt: new Date(),
+            leasedAt: null,
             lastError: 'already processed',
           })
           .where(eq(refundOutbox.id, row.id));
@@ -77,6 +88,7 @@ export async function processRefundOutbox(): Promise<void> {
           attempts,
           lastError: message.slice(0, 1024),
           nextAttemptAt: sql`NOW() + (${backoffSec} * interval '1 second')`,
+          leasedAt: null,
         })
         .where(eq(refundOutbox.id, row.id));
     }

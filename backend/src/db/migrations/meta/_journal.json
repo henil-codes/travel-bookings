@@ -29,6 +29,13 @@
       "when": 1783806001638,
       "tag": "0003_mighty_typhoid_mary",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785960447604,
+      "tag": "0004_elite_starhawk",
+      "breakpoints": true
     }
   ]
 }
