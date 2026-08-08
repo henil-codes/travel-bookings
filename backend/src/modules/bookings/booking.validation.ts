@@ -65,6 +65,7 @@ export const cancelBookingSchema = z.object({
 // List bookings - query filters
 export const bookingFilterSchema = z.object({
     userId: z.string().uuid({ message: 'Invalid user ID format' }).optional(),
+    tripId: z.string().uuid({ message: 'Invalid trip ID format' }).optional(),
     status: z.enum(paymentStatusEnum.enumValues).optional(),
     from: z.iso.date({ message: 'Use YYYY-MM-DD format'}).optional(),
     to: z.iso.date({ message: 'Use YYYY-MM-DD format'}).optional(),

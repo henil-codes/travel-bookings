@@ -47,14 +47,17 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
         }
     },
         async (request, reply) => {
-            const { userId, status, page, limit } = request.query;
+            const { userId, tripId, status, from, to, page, limit } = request.query;
             const requestingUser = request.user;
 
             const filterUserId = (requestingUser.role === 'admin' || requestingUser.role === 'manager') ? userId : requestingUser.id;
 
             const result = await BookingService.listBookingWithDetails({
                 userId: filterUserId,
+                tripId,
                 status,
+                from, 
+                to,
                 page,
                 limit,
             })

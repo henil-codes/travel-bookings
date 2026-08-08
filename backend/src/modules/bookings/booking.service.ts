@@ -246,6 +246,9 @@ export class BookingService {
     if (input.userId) {
       conditions.push(eq(bookings.bookedBy, input.userId));
     }
+    if (input.tripId) {
+      conditions.push(eq(bookings.tripId, input.tripId));
+    }
     if (input.status) {
       conditions.push(eq(bookings.status, input.status));
     }
