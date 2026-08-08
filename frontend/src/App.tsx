@@ -1,5 +1,5 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { ActiveDriverRoute, ProctedRoute } from './core/ProctectedRoute';
+import { ActiveDriverRoute, ProtectedRoute } from './core/ProctectedRoute';
 import { CustomerLayout } from './layouts/CustomerLayout';
 import { DriverLayout } from './layouts/DriverLayout';
 
@@ -40,7 +40,7 @@ const router = createBrowserRouter([
 
       // Protected pages
       {
-        element: <ProctedRoute allowedRoles={['customer']} />,
+        element: <ProtectedRoute allowedRoles={['customer']} />,
         children: [
           { path: '/checkout', element: <CheckoutPage /> },
           {
@@ -60,7 +60,7 @@ const router = createBrowserRouter([
   // Driver protected routes
   {
     element: (
-      <ProctedRoute allowedRoles={['driver']} redirectTo="/driver/login" />
+      <ProtectedRoute allowedRoles={['driver']} redirectTo="/driver/login" />
     ),
     children: [
       // Driver pending page

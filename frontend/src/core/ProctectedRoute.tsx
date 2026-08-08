@@ -7,7 +7,7 @@ interface Props {
   redirectTo?: string;
 }
 
-export function ProctedRoute({ allowedRoles, redirectTo = '/login' }: Props) {
+export function ProtectedRoute({ allowedRoles, redirectTo = '/login' }: Props) {
   const { user } = useAuthStore();
 
   if (!user) return <Navigate to={redirectTo} replace />;
