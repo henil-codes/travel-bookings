@@ -10,6 +10,7 @@ import {
   refundParamsSchema,
   initiateRefundSchema,
   webhookHeaderSchema,
+  refundOutboxFilterSchema,
 } from './payment.validation';
 import { requireRole } from '@/core/guards';
 import { UnauthorizedError } from '@/core/errors';
@@ -92,7 +93,6 @@ export const paymentRoutes: FastifyPluginAsync = async (
       },
     },
     async (request, reply) => {
-
       await PaymentService.handleFailure({
         bookingIds: request.body.bookingIds,
         gatewayOrderId: request.body.gatewayOrderId,
@@ -131,6 +131,27 @@ export const paymentRoutes: FastifyPluginAsync = async (
         success: true,
         message: 'Refund Initiated successfully',
         data: refund,
+      });
+    }
+  );
+
+  server.get(
+    '/refund-outbox',
+    {
+      preHandler: [fastify.authenticate, requireRole('admin', 'manager')],
+      schema: {
+        description:
+          'Admin only. Lists refund outbox rows, defaults to failed (exhausted retries after 5 attempts)',
+        tags: ['Payments', 'Admin'],
+        querystring: refundOutboxFilterSchema,
+      },
+    },
+    async (request, reply) => {
+      const result = await PaymentService.listRefundOutbox(request.query);
+
+      return reply.status(200).send({
+        success: true,
+        data: result,
       });
     }
   );
