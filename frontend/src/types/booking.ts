@@ -46,3 +46,12 @@ export interface BookingWithDetails extends Booking {
     };
     passenger: Passenger;
 }
+
+export interface AdminBookingFilter {
+    status?: PaymentStatus;
+    tripId?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+    limit?: number;
+}
