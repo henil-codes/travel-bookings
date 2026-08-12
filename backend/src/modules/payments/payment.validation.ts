@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { outboxStatusEnum } from '@/db/schema/refundOutbox';
 
 export const createOrderBodySchema = z.object({
   bookingIds: z
@@ -65,6 +66,13 @@ export const refundParamsSchema = z.object({
   bookingId: z.string().uuid({ message: 'Invalid booking ID format' }),
 });
 
+// List refund outbox rows - admin only, defaults to failed (exhausted retries)
+export const refundOutboxFilterSchema = z.object({
+  status: z.enum(outboxStatusEnum.enumValues).optional().default('failed'),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+});
+
 // Webhook - Razorpay server-to-server event
 export const webhookHeaderSchema = z.object({
   'x-razorpay-signature': z
@@ -75,3 +83,4 @@ export const webhookHeaderSchema = z.object({
 export type CreateOrderBody = z.infer<typeof createOrderBodySchema>;
 export type VerifyPaymentBody = z.infer<typeof verifyPaymentSchema>;
 export type PaymentFailureBody = z.infer<typeof paymentFailureSchema>;
+export type RefundOutboxFilter = z.infer<typeof refundOutboxFilterSchema>;

@@ -4,7 +4,9 @@ import { db } from '@/db';
 import { payments, paymentMethodEnum } from '@/db/schema/payments';
 import { bookings } from '@/db/schema/bookings';
 import { seats } from '@/db/schema/seats';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, desc } from 'drizzle-orm';
+import { refundOutbox } from '@/db/schema/refundOutbox';
+import type { RefundOutboxFilter } from './payment.validation';
 import { NotFoundError, ConflictError, UnauthorizedError } from '@/core/errors';
 import { appEmitter } from '@/core/emitter';
 
@@ -22,7 +24,7 @@ export class PaymentService {
         .from(bookings)
         .where(inArray(bookings.id, bookingIds))
         .orderBy(bookings.id)
-        .for('update')
+        .for('update');
 
       if (bookingRows.length !== bookingIds.length) {
         throw new NotFoundError('Booking');
@@ -57,7 +59,7 @@ export class PaymentService {
         )
         .limit(1);
 
-        return { bookingRows, existingOrder}
+      return { bookingRows, existingOrder };
     });
 
     if (existingOrder) {
@@ -67,7 +69,7 @@ export class PaymentService {
         amount: order.amount,
         currency: order.currency,
         keyId: process.env.RAZORPAY_KEY_ID!,
-      }
+      };
     }
 
     const currency = bookingRows[0]!.currency;
@@ -357,6 +359,21 @@ export class PaymentService {
 
       return refund;
     });
+  }
+
+  // --- Admin only: List refund outbox rows for retrying failed refunds ---
+  static async listRefundOutbox(input: RefundOutboxFilter) {
+    const offset = (input.page - 1) * input.limit;
+
+    const rows = await db
+      .select()
+      .from(refundOutbox)
+      .where(eq(refundOutbox.status, input.status))
+      .limit(input.limit)
+      .offset(offset)
+      .orderBy(desc(refundOutbox.createdAt));
+
+    return rows;
   }
 
   // --- Razorpay webhook handler Verfies webhook signature and records the event ---
