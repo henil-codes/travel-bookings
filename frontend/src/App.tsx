@@ -20,6 +20,12 @@ import { DriverRegisterPage } from './pages/driver/DriverRegisterPage';
 import { DriverPendingPage } from './pages/driver/DriverPendingPage';
 import { DriverDashboardPage } from './pages/driver/DriverDashboardPage';
 
+// Admin pages
+import { AdminLayout } from './layouts/AdminLayout';
+import { AdminBookingsPage } from './pages/admin/AdminBookingsPage';
+import { AdminTripDetailPage } from './pages/admin/AdminTripDetailPage';
+import { AdminRefundOutboxPage } from './pages/admin/AdminRefundOutboxPage';
+
 // Error pages
 import { NotFoundPage } from './pages/errors/NotFoundPage';
 import { ForbiddenPage } from './pages/errors/ForbiddenPage';
@@ -79,7 +85,21 @@ const router = createBrowserRouter([
       },
     ],
   },
+
   // Admin routes
+  {
+    element: <ProtectedRoute allowedRoles={['admin', 'manager']} />,
+    children: [
+      {
+        element: <AdminLayout />,
+        children: [
+          { path: '/admin', element: <AdminBookingsPage /> },
+          { path: '/admin/trips/:id', element: <AdminTripDetailPage /> },
+          { path: '/admin/refunds', element: <AdminRefundOutboxPage /> },
+        ],
+      },
+    ],
+  },
 
   // Error pages
   { path: '/403', element: <ForbiddenPage /> },
