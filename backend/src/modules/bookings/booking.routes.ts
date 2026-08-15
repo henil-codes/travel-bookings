@@ -89,28 +89,6 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
         })
     })
 
-    // GET /admin/all - admin-only: all bookings unfiltered
-    server.get('/admin/all', {
-        preHandler: [fastify.authenticate, requireRole('admin', 'manager')],
-        schema: {
-            description: 'Admin only. Returns all bookings without filters.',
-            tags: ['Bookings', 'Admin'],
-            querystring: bookingFilterSchema,
-        }
-    }, async (request, reply) => {
-        const { page, limit } = request.query;
-
-        const result = await BookingService.listBookings({
-            page,
-            limit,
-        })
-
-        return reply.status(200).send({
-            success: true,
-            data: result,
-        })
-    })
-
     // POST /:id/cancel - cancel a booking 
     server.post('/:id/cancel', {
         preHandler: [fastify.authenticate],
