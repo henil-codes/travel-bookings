@@ -1,7 +1,11 @@
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useFailedRefunds } from '../../hooks/useFailedRefunds';
 import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
 import { Alert } from '../../components/ui/Alert';
 import { Spinner } from '../../components/ui/Spinner';
+import { api, getApiError } from '../../core/api';
 
 export function AdminRefundOutboxPage() {
   const {
@@ -9,6 +13,28 @@ export function AdminRefundOutboxPage() {
     isLoading,
     isError,
   } = useFailedRefunds({ status: 'failed' });
+
+  const queryClient = useQueryClient();
+
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [retryError, setRetryError] = useState<{
+    id: string;
+    message: string;
+  } | null>(null);
+
+  async function handleRetry(id: string) {
+    setRetryingId(id);
+    setRetryError(null);
+
+    try {
+      await api.post(`/payments/refund-outbox/${id}/retry`);
+      queryClient.invalidateQueries({ queryKey: ['failedRefunds'] });
+    } catch (error) {
+      setRetryError({ id, message: getApiError(error) });
+    } finally {
+      setRetryingId(null);
+    }
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -71,6 +97,23 @@ export function AdminRefundOutboxPage() {
                       {new Date(row.createdAt).toLocaleString('en-IN')}
                     </p>
                   </div>
+                </div>
+
+                {retryError?.id === row.id && (
+                  <div className="mt-3">
+                    <Alert variant="error">{retryError.message}</Alert>
+                  </div>
+                )}
+
+                <div className="mt-4 pt-3 border-t border-slate-100">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    loading={retryingId === row.id}
+                    onClick={() => handleRetry(row.id)}
+                  >
+                    Retry refund
+                  </Button>
                 </div>
               </div>
             ))}

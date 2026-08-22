@@ -11,6 +11,7 @@ import {
   initiateRefundSchema,
   webhookHeaderSchema,
   refundOutboxFilterSchema,
+  refundOutboxParamsSchema,
 } from './payment.validation';
 import { requireRole } from '@/core/guards';
 import { UnauthorizedError } from '@/core/errors';
@@ -155,6 +156,28 @@ export const paymentRoutes: FastifyPluginAsync = async (
       });
     }
   );
+
+  // POST /refund-outbox/:id/retry - Admin only: retry a failed refund outbox row
+  server.post(
+    '/refund-outbox/:id/retry',
+    {
+      preHandler: [fastify.authenticate, requireRole('admin', 'manager')],
+      schema: {
+        description: 'Admin only. Resets a failed refund outbox row to pending so the processor retries it on its next poll.',
+        tags: ['Payments', 'Admin'],
+        params: refundOutboxParamsSchema,
+      }
+    },
+    async (request, reply) => {
+      const result = await PaymentService.retryRefund(request.params.id);
+
+      return reply.status(200).send({
+        success: true,
+        message: 'Refund queued for retry',
+        data: result,
+      })
+    }
+  )
 
   // POST /webhook - Razorpay sever-to-server webhook
   server.post(
