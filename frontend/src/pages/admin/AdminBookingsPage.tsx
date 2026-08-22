@@ -114,6 +114,10 @@ export function AdminBookingsPage() {
                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                   {[
                     { label: 'Passenger', value: booking.passenger.name },
+                    {
+                      label: 'Booked By',
+                      value: `${booking.bookedByUser.name} · ${booking.bookedByUser.email}`,
+                    },
                     { label: 'Seat', value: `#${booking.seat.seatNumber}` },
                     {
                       label: 'Amount',
