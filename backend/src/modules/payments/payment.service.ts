@@ -376,6 +376,40 @@ export class PaymentService {
     return rows;
   }
 
+  // --- Admin only: retry a failed refund outbox row ---
+  static async retryRefund(outboxId: string) {
+    return await db.transaction(async (tx) => {
+      const [row] = await tx
+        .select()
+        .from(refundOutbox)
+        .where(eq(refundOutbox.id, outboxId))
+        .for('update');
+
+      if (!row) {
+        throw new NotFoundError('Refund outbox row');
+      }
+
+      if (row.status !== 'failed') {
+        throw new ConflictError(
+          `Only failed refund outbox rows can be retried (current status: ${row.status})`
+        );
+      }
+
+      const [updatedRow] = await tx
+        .update(refundOutbox)
+        .set({
+          status: 'pending',
+          attempts: 0,
+          lastError: null,
+          nextAttemptAt: new Date(),
+        })
+        .where(eq(refundOutbox.id, outboxId))
+        .returning();
+
+      return updatedRow;
+    });
+  }
+
   // --- Razorpay webhook handler Verfies webhook signature and records the event ---
   static async handleWebhook(input: { rawBody: string; signature: string }) {
     const expectedSignature = crypto
