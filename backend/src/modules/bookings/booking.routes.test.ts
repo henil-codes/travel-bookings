@@ -346,14 +346,14 @@ describe('Booking Routes Integration', () => {
   });
 
   // GET /admin/all - admin only
-  describe('GET /bookings/admin/all', () => {
+  describe('GET /bookings', () => {
     it('should return 403 for customer', async () => {
-      const res = await get('/bookings/admin/all', customerToken);
+      const res = await get('/bookings', customerToken);
       expect(res.status).toBe(403);
     });
 
     it('admin can access all bookings', async () => {
-      const res = await get('/bookings/admin/all', adminToken);
+      const res = await get('/bookings', adminToken);
       const body = await res.json();
       expect(res.status).toBe(200);
       expect(Array.isArray(body.data)).toBe(true);
