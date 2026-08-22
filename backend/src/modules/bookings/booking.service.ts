@@ -35,6 +35,10 @@ const bookingDetailSelect = {
     updatedAt: passengers.updatedAt,
     createdAt: passengers.createdAt,
   },
+  bookedByUser: {
+    name: users.name,
+    email: users.email,
+  },
 };
 
 type BookingDetailRow = {
@@ -48,6 +52,7 @@ type BookingDetailRow = {
     typeof passengers.$inferSelect,
     'name' | 'updatedAt' | 'createdAt'
   >;
+  bookedByUser: Pick<typeof users.$inferSelect, 'name' | 'email'>;
 };
 
 function toBookingWithDetails(row: BookingDetailRow) {
@@ -56,6 +61,7 @@ function toBookingWithDetails(row: BookingDetailRow) {
     trip: row.trip,
     seat: row.seat,
     passenger: row.passenger,
+    bookedByUser: row.bookedByUser,
   };
 }
 
@@ -232,6 +238,7 @@ export class BookingService {
       .innerJoin(trips, eq(bookings.tripId, trips.id))
       .innerJoin(seats, eq(bookings.seatId, seats.id))
       .innerJoin(passengers, eq(bookings.passengerId, passengers.id))
+      .innerJoin(users, eq(bookings.bookedBy, users.id))
       .where(eq(bookings.id, bookingId));
 
     if (!row) {
@@ -269,6 +276,7 @@ export class BookingService {
       .innerJoin(trips, eq(bookings.tripId, trips.id))
       .innerJoin(seats, eq(bookings.seatId, seats.id))
       .innerJoin(passengers, eq(bookings.passengerId, passengers.id))
+      .innerJoin(users, eq(bookings.bookedBy, users.id))
       .where(conditions.length ? and(...conditions) : undefined)
       .limit(input.limit)
       .offset(offset)
@@ -311,18 +319,18 @@ export class BookingService {
       PaymentService.initiateRefund({
         bookingId,
         cancellationReason: input.cancellationReason,
-      })
+      });
 
       const [refunded] = await db
-      .select()
-      .from(bookings)
-      .where(eq(bookings.id, bookingId))
+        .select()
+        .from(bookings)
+        .where(eq(bookings.id, bookingId));
 
       return refunded;
     }
 
     throw new ConflictError(
       'Booking cannot be cancelled. Only pending or confirmed bookings can be cancelled.'
-    )
+    );
   }
 }
