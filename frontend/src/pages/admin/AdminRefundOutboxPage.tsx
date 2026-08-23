@@ -109,6 +109,7 @@ export function AdminRefundOutboxPage() {
                   <Button
                     variant="secondary"
                     size="sm"
+                    disabled={retryingId !== null}
                     loading={retryingId === row.id}
                     onClick={() => handleRetry(row.id)}
                   >
