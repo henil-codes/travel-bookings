@@ -73,6 +73,11 @@ export const refundOutboxFilterSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20),
 });
 
+// Retry a failed refund outbox row - admin only
+export const refundOutboxParamsSchema = z.object({
+  id: z.string().uuid({ message: 'Invalid refund outbox ID format' }),
+});
+
 // Webhook - Razorpay server-to-server event
 export const webhookHeaderSchema = z.object({
   'x-razorpay-signature': z
