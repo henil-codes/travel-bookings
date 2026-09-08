@@ -20,7 +20,7 @@ export const authPlugin = fp(async (fastify, opts) => {
     fastify.register(fastifyJwt, {
         secret: secret,
         sign: {
-            expiresIn: '7d',
+            expiresIn: '1d',
         },
         cookie: {
             cookieName: 'token',
