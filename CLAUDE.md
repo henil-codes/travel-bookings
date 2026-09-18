@@ -146,6 +146,25 @@ All routes are prefixed with `/api/v1/`:
 
 `@/` maps to `backend/src/` (configured in `vitest.config.ts` and `tsconfig.json`).
 
+## Known deferrals / architecture decisions
+
+- **Single-vehicle-per-trip (current model).** A trip has one vehicleId and one
+  capacity; seats are generated per-trip at create time, unique per (trip,
+  seatNumber). Multi-vehicle trips (one trip spanning several buses, showing the
+  next bus's seat map once one fills) are a known possible v2. That remodel would
+  require: a trip↔vehicle join table, seats belonging to a (trip, vehicle) rather
+  than a trip, seat-number uniqueness becoming per-(trip, vehicle), and per-vehicle
+  seat generation. DEFERRED pending client confirmation that multi-vehicle is
+  actually needed — do not build speculatively.
+
+- **Trip edit/update.** Deferred to its own slice. Editable capacity interacts with
+  seat generation (changing capacity means adding/removing seat rows against
+  possibly-booked seats), so it needs dedicated handling rather than naive CRUD.
+
+- **Admin trip delete** is only allowed when a trip has NOT started AND has zero
+  bookings. Trips with bookings are cancelled (reusing updateTripStatus →
+  cascade → refund outbox), never deleted.
+
 ## Working Agreement
 
 Henil writes all backend/frontend code by hand to build familiarity with the
