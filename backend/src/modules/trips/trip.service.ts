@@ -365,6 +365,17 @@ export class TripService {
       );
     }
 
+    const [{ bookingCount }] = await db
+      .select({ bookingCount: sql<number>`count(*)`.mapWith(Number)})
+      .from(bookings)
+      .where(eq(bookings.tripId, tripId));
+
+    if (bookingCount > 0) {
+      throw new ConflictError(
+          'Cannot delete a trip that has bookings. Cancel the trip instead.'
+      )
+    }
+
     await db.transaction(async (tx) => {
       // delete associated seats
       await tx.delete(seats).where(eq(seats.tripId, tripId));
