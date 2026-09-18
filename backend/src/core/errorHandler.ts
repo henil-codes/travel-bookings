@@ -33,6 +33,15 @@ export const globalErrorHandler = (
         })
     }
 
+    // Postgres foreign key violation errors
+    if ((error as any).code === '23503') {
+        request.log.error(`[ForeignKeyViolation] ${error.message}`);
+        return reply.status(409).send({
+            success: false, 
+            error: 'Cannot complete this action because related records still reference this resource',
+        })
+    }
+
     // Unhandled errors
     request.log.error(`[UnhandledError] ${error.message}\n${error.stack}`);
     return reply.status(500).send({
