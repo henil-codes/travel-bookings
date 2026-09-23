@@ -14,6 +14,8 @@ import { authRoutes } from './modules/auth/auth.routes';
 import { bookingRoutes } from './modules/bookings/booking.routes';
 import { paymentRoutes } from './modules/payments/payment.routes';
 import { tripRoutes } from './modules/trips/trip.routes';
+import { vehicleRoutes } from './modules/vehicles/vehicle.routes';
+import { userRoutes } from './modules/users/user.routes';
 import { seatLockSweeperPlugin } from './core/SeatLockSweeper';
 import { refundProcessorPlugin } from './core/refundProcessor';
 
@@ -88,6 +90,8 @@ export const buildApp = (): FastifyInstance => {
   app.register(tripRoutes, { prefix: '/api/v1/trips' });
   app.register(bookingRoutes, { prefix: '/api/v1/bookings' });
   app.register(paymentRoutes, { prefix: '/api/v1/payments' });
+  app.register(vehicleRoutes, { prefix: '/api/v1/vehicles' });
+  app.register(userRoutes, { prefix: '/api/v1/users' });
 
   return app;
 };
