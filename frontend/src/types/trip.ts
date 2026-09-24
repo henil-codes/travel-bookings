@@ -22,3 +22,25 @@ export interface TripFilter {
     page?: number;
     limit?: number;
 }
+
+export interface TripStats {
+    totalBookings: number;
+    activeBookings: number;
+    grossRevenue: number;
+    refundInitiated: number;
+    refundSettled: number;
+}
+
+export interface TripWithStats extends Trip {
+    stats: TripStats;
+}
+
+export interface AdminTripFilter extends TripFilter {
+    status?: TripStatus;
+    driverId?: string;
+    startLocation?: string;
+    endLocation?: string;
+    date?: string;
+    page?: number;
+    limit?: number;
+}
