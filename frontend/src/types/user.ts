@@ -16,3 +16,11 @@ export interface User {
     updatedAt: string;
     suspendedAt: string | null;
 }
+
+export interface UserOption {
+    id: string;
+    name: string;
+    email: string;
+    role: Role;
+    accountStatus: AccountStatus;
+}
