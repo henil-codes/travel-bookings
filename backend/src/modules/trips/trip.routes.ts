@@ -8,6 +8,7 @@ import {
     updateTripSchema,
     updateTripStatusSchema,
     tripFilterSchema,
+    adminTripFilterSchema
 } from './trip.validation'
 
 export const tripRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
@@ -30,6 +31,23 @@ export const tripRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =
             })
         }
     );
+
+    // GET /admin - admin + manager, trips with aggregates
+    server.get('/admin', {
+        preHandler: [fastify.authenticate, requireRole('admin', 'manager')],
+        schema: {
+            description: 'Lists trips with booking and revenue aggregates. Admin or manger only.',
+            tags: ['trips', 'Admin'],
+            querystring: adminTripFilterSchema,
+        }
+    }, async (request, reply) => {
+        const result = await TripService.listTripsForAdmin(request.query);
+
+        return reply.status(200).send({
+            success: true,
+            data: result,
+        })
+    })
 
     // GET /:id - public
     server.get('/:id', {
@@ -66,6 +84,23 @@ export const tripRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =
             })
         }
     )
+
+    // GET /:id/stats - admin + manager
+    server.get('/:id/stats', {
+        preHandler: [fastify.authenticate, requireRole('admin', 'manager')],
+        schema: {
+            description: 'Returns booking and revenue aggregates for one trip. Admin or manger only.',
+            tags: ['trips', 'Admin'],
+            params: z.object({ id: z.string().uuid() }),
+        }
+    }, async (request, reply) => {
+        const stats = await TripService.getTripStats(request.params.id);
+
+        return reply.status(200).send({
+            success: true,
+            data: stats,
+        })
+    })
 
     // POST / - admin + manager
     server.post('/', {
