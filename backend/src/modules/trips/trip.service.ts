@@ -6,12 +6,13 @@ import type {
   UpdateTripPayload,
   UpdateTripStatusInput,
   TripFilterInput,
+  AdminTripFilterInput
 } from './trip.validation';
-import { trips, tripStatusEnum } from '@/db/schema/trips';
+import { trips } from '@/db/schema/trips';
 import { bookings } from '@/db/schema/bookings';
-import { PaymentService } from '../payments/payment.service';
+import { payments } from '@/db/schema/payments';
 import { ConflictError, NotFoundError, UnauthorizedError } from '@/core/errors';
-import { eq, and, gte, lt, ilike, sql, inArray } from 'drizzle-orm';
+import { eq, and, gte, lt, ilike, sql, inArray, desc } from 'drizzle-orm';
 import { refundOutbox } from '@/db/schema/refundOutbox';
 
 export class TripService {
@@ -145,6 +146,120 @@ export class TripService {
     };
 
     return seatMap;
+  }
+
+  // bookings and payments in one statement fans out and inflates the counts.
+  static async getTripStatsMap(tripIds: string[]) {
+    const statsMap = new Map<string, {totalBookings: number; activeBookings: number; grossRevenue: number; refundInitiated: number; refundSettled: number;}>();
+
+    if (tripIds.length === 0) return statsMap;
+
+    for (const id of tripIds) {
+      statsMap.set(id, {
+        totalBookings: 0,
+        activeBookings: 0,
+        grossRevenue: 0,
+        refundInitiated: 0,
+        refundSettled: 0,
+      })
+    }
+
+    const [bookingRows, paymentRows] = await Promise.all([
+      db
+      .select({
+        tripId: bookings.tripId,
+        totalBookings: sql<number>`count(*)`.mapWith(Number),
+        activeBookings: sql<number>`count(*) filter (where ${bookings.status} in ('confirmed', 'pending'))`.mapWith(Number),
+      })
+      .from(bookings)
+      .where(inArray(bookings.tripId, tripIds))
+      .groupBy(bookings.tripId),
+
+      db
+      .select({
+        tripId: bookings.tripId,
+        grossRevenue: 
+        sql<number>`coalesce(sum(${payments.amount}) filter (where ${payments.event} = 'payment_captured'), 0)`.mapWith(Number),
+        refundInitiated: sql<number>`coalesce(sum(${payments.refundAmount}) filter (where ${payments.event} = 'refund_initiated'), 0)`.mapWith(Number),
+        refundSettled: sql<number>`coalesce(sum(${payments.refundAmount}) filter (where ${payments.event} = 'refund_completed'), 0)`.mapWith(Number),
+      })
+      .from(payments)
+      .innerJoin(bookings, eq(payments.bookingId, bookings.id))
+      .where(inArray(bookings.tripId, tripIds))
+      .groupBy(bookings.tripId),
+    ]);
+
+    for (const row of bookingRows) {
+      const stats = statsMap.get(row.tripId);
+      if (!stats) continue;
+      stats.totalBookings = row.totalBookings;
+      stats.activeBookings = row.activeBookings;
+    }
+
+    for (const row of paymentRows) {
+      const stats = statsMap.get(row.tripId);
+      if (!stats) continue;
+      stats.grossRevenue = row.grossRevenue;
+      stats.refundInitiated = row.refundInitiated;
+      stats.refundSettled = row.refundSettled;
+    }
+
+    return statsMap;
+  }
+
+  // list trips for the admin roster, each with its aggregates
+  static async listTripsForAdmin(filters: AdminTripFilterInput) {
+    const conditions = [];
+
+    if (filters.driverId) {
+      conditions.push(eq(trips.driverId, filters.driverId));
+    }
+
+    if (filters.startLocation) {
+      conditions.push(ilike(trips.startLocation, `%${filters.startLocation}%`));
+    }
+
+    if (filters.endLocation) {
+      conditions.push(ilike(trips.endLocation, `%${filters.endLocation}%`));
+    }
+
+    if (filters.status) {
+      conditions.push(eq(trips.status, filters.status));
+    }
+
+    if (filters.date) {
+      const start = new Date(filters.date);
+      const end = new Date(filters.date);
+      end.setDate(end.getDate() + 1);
+
+      conditions.push(gte(trips.departureTime, start));
+      conditions.push(lt(trips.departureTime, end));
+    }
+
+    const offset = (filters.page - 1) * filters.limit;
+
+    const rows = await db
+    .select()
+    .from(trips)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .limit(filters.limit)
+    .offset(offset)
+    .orderBy(trips.departureTime)
+
+    const statsMap = await TripService.getTripStatsMap(rows.map((t) => t.id));
+
+    return rows.map((trip) => ({
+      ...trip,
+      status: statsMap.get(trip.id)!,
+    }))
+  }
+
+  static async getTripStats(tripId: string) {
+    await TripService.getTripById(tripId);
+
+    const statsMap = await TripService.getTripStatsMap([tripId]);
+
+    return statsMap.get(tripId)!;
   }
 
   static async checkVehicleAvailability(
