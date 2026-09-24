@@ -67,7 +67,18 @@ export const tripFilterSchema = z.object({
     limit: z.coerce.number().int().positive().max(100).default(20),
 })
 
+export const adminTripFilterSchema = z.object({
+    driverId: z.uuid().optional(),
+    startLocation: z.string().min(1).optional(),
+    endLocation: z.string().min(1).optional(),
+    date: z.iso.date({ message: 'Use YYYY-MM-DD format'}).optional(),
+    status: z.enum(tripStatusEnum.enumValues).optional(),
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(100).default(20),
+})
+
 export type CreateTripPayload = z.infer<typeof createTripSchema>;
 export type UpdateTripPayload = z.infer<typeof updateTripSchema>;
 export type UpdateTripStatusInput = z.infer<typeof updateTripStatusSchema>;
 export type TripFilterInput = z.infer<typeof tripFilterSchema>;
+export type AdminTripFilterInput = z.infer<typeof adminTripFilterSchema>;
