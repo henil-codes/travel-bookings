@@ -250,7 +250,7 @@ export class TripService {
 
     return rows.map((trip) => ({
       ...trip,
-      status: statsMap.get(trip.id)!,
+      stats: statsMap.get(trip.id)!,
     }))
   }
 

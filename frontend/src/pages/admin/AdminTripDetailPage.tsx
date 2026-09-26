@@ -52,7 +52,7 @@ export function AdminTripDetailPage() {
     setCancelling(true);
     setCancelError('');
     try {
-      await api.post(`/trips/${tripId}/status`, { status: 'cancelled' });
+      await api.patch(`/trips/${tripId}/status`, { status: 'cancelled' });
       queryClient.invalidateQueries({ queryKey: ['adminTripDetail', tripId] });
       queryClient.invalidateQueries({ queryKey: ['tripStats', tripId] })
       queryClient.invalidateQueries({ queryKey: ['adminBookings'] });

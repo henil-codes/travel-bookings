@@ -57,7 +57,7 @@ export function AdminTripCreatePage() {
 
     const vehicleOptions = (vehicles ?? []).map((v) => ({
         value: v.id,
-        label: `${v.vehicleNumber} &middot; ${v.vehicleType} &middot; (${v.capacity} seats)`,
+        label: `${v.vehicleNumber} · ${v.vehicleType} · (${v.capacity} seats)`,
     }));
 
     const driverOptions = (drivers ?? []).map((d) => ({
@@ -80,8 +80,8 @@ export function AdminTripCreatePage() {
                 name: parsed.name,
                 startLocation: parsed.startLocation,
                 endLocation: parsed.endLocation,
-                departureTime: parsed.departureTime,
-                arrivalTime: parsed.arrivalTime,
+                departureTime: new Date(parsed.departureTime).toISOString(),
+                arrivalTime: new Date(parsed.arrivalTime).toISOString(),
                 vehicleId: parsed.vehicleId,
                 driverId: parsed.driverId,
                 capacity: parsed.capacity,
