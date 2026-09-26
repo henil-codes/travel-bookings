@@ -62,7 +62,7 @@ const NAV_ITEMS: NavItem[] = [
 
 function NavLinkClasses({ isActive }: { isActive: boolean }) {
   return `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-brand-50 text-brand-600'
-      : 'text-slate-600 hover:bg-slate-100'
+    : 'text-slate-600 hover:bg-slate-100'
     }`
 }
 
@@ -124,11 +124,12 @@ export function AdminLayout() {
             ))}
           </nav>
         </aside>
+        
+        <main className="flex-1">
+          <Outlet />
+        </main>
       </div>
 
-      <main className="flex-1">
-        <Outlet />
-      </main>
     </div>
   );
 }
