@@ -14,7 +14,7 @@ const STATUS_OPTIONS = [
     { value: 'boarding', label: 'Boarding' },
     { value: 'departed', label: 'Departed' },
     { value: 'completed', label: 'Completed' },
-    { value: 'Cancelled', label: 'Cancelled' },
+    { value: 'cancelled', label: 'Cancelled' },
 ];
 
 function inr(paise: number) {
