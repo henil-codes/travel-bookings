@@ -25,6 +25,8 @@ import { AdminLayout } from './layouts/AdminLayout';
 import { AdminBookingsPage } from './pages/admin/AdminBookingsPage';
 import { AdminTripDetailPage } from './pages/admin/AdminTripDetailPage';
 import { AdminRefundOutboxPage } from './pages/admin/AdminRefundOutboxPage';
+import { AdminTripsPage } from './pages/admin/AdminTripsPage';
+import { AdminTripCreatePage } from './pages/admin/AdminTripCreatePage';
 
 // Error pages
 import { NotFoundPage } from './pages/errors/NotFoundPage';
@@ -94,8 +96,11 @@ const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { path: '/admin', element: <AdminBookingsPage /> },
+          { path: '/admin/trips', element: <AdminTripsPage /> },
+          { path: '/admin/trips/new', element: <AdminTripCreatePage /> },
           { path: '/admin/trips/:id', element: <AdminTripDetailPage /> },
           { path: '/admin/refunds', element: <AdminRefundOutboxPage /> },
+
         ],
       },
     ],
