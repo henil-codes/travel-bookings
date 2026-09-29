@@ -150,7 +150,7 @@ export class TripService {
 
   // bookings and payments in one statement fans out and inflates the counts.
   static async getTripStatsMap(tripIds: string[]) {
-    const statsMap = new Map<string, {totalBookings: number; activeBookings: number; grossRevenue: number; refundInitiated: number; refundSettled: number;}>();
+    const statsMap = new Map<string, { totalBookings: number; activeBookings: number; grossRevenue: number; refundInitiated: number; refundSettled: number; }>();
 
     if (tripIds.length === 0) return statsMap;
 
@@ -166,27 +166,27 @@ export class TripService {
 
     const [bookingRows, paymentRows] = await Promise.all([
       db
-      .select({
-        tripId: bookings.tripId,
-        totalBookings: sql<number>`count(*)`.mapWith(Number),
-        activeBookings: sql<number>`count(*) filter (where ${bookings.status} in ('confirmed', 'pending'))`.mapWith(Number),
-      })
-      .from(bookings)
-      .where(inArray(bookings.tripId, tripIds))
-      .groupBy(bookings.tripId),
+        .select({
+          tripId: bookings.tripId,
+          totalBookings: sql<number>`count(*)`.mapWith(Number),
+          activeBookings: sql<number>`count(*) filter (where ${bookings.status} in ('confirmed', 'pending'))`.mapWith(Number),
+        })
+        .from(bookings)
+        .where(inArray(bookings.tripId, tripIds))
+        .groupBy(bookings.tripId),
 
       db
-      .select({
-        tripId: bookings.tripId,
-        grossRevenue: 
-        sql<number>`coalesce(sum(${payments.amount}) filter (where ${payments.event} = 'payment_captured'), 0)`.mapWith(Number),
-        refundInitiated: sql<number>`coalesce(sum(${payments.refundAmount}) filter (where ${payments.event} = 'refund_initiated'), 0)`.mapWith(Number),
-        refundSettled: sql<number>`coalesce(sum(${payments.refundAmount}) filter (where ${payments.event} = 'refund_completed'), 0)`.mapWith(Number),
-      })
-      .from(payments)
-      .innerJoin(bookings, eq(payments.bookingId, bookings.id))
-      .where(inArray(bookings.tripId, tripIds))
-      .groupBy(bookings.tripId),
+        .select({
+          tripId: bookings.tripId,
+          grossRevenue:
+            sql<number>`coalesce(sum(${payments.amount}) filter (where ${payments.event} = 'payment_captured'), 0)`.mapWith(Number),
+          refundInitiated: sql<number>`coalesce(sum(${payments.refundAmount}) filter (where ${payments.event} = 'refund_initiated'), 0)`.mapWith(Number),
+          refundSettled: sql<number>`coalesce(sum(${payments.refundAmount}) filter (where ${payments.event} = 'refund_completed'), 0)`.mapWith(Number),
+        })
+        .from(payments)
+        .innerJoin(bookings, eq(payments.bookingId, bookings.id))
+        .where(inArray(bookings.tripId, tripIds))
+        .groupBy(bookings.tripId),
     ]);
 
     for (const row of bookingRows) {
@@ -205,6 +205,20 @@ export class TripService {
     }
 
     return statsMap;
+  }
+
+  // Distinct set of cities used as a start or end location across all trips.
+  static async listKnownLocations() {
+    const [startRows, endRows] = await Promise.all([
+      db.selectDistinct({ location: trips.startLocation }).from(trips),
+      db.selectDistinct({ location: trips.endLocation }).from(trips),
+    ]);
+
+    const locations = new Set<string>()
+    for (const row of startRows) locations.add(row.location);
+    for (const row of endRows) locations.add(row.location)
+
+    return Array.from(locations).sort((a, b) => a.localeCompare(b));
   }
 
   // list trips for the admin roster, each with its aggregates
@@ -239,12 +253,12 @@ export class TripService {
     const offset = (filters.page - 1) * filters.limit;
 
     const rows = await db
-    .select()
-    .from(trips)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .limit(filters.limit)
-    .offset(offset)
-    .orderBy(trips.departureTime)
+      .select()
+      .from(trips)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .limit(filters.limit)
+      .offset(offset)
+      .orderBy(trips.departureTime)
 
     const statsMap = await TripService.getTripStatsMap(rows.map((t) => t.id));
 
@@ -481,13 +495,13 @@ export class TripService {
     }
 
     const [{ bookingCount }] = await db
-      .select({ bookingCount: sql<number>`count(*)`.mapWith(Number)})
+      .select({ bookingCount: sql<number>`count(*)`.mapWith(Number) })
       .from(bookings)
       .where(eq(bookings.tripId, tripId));
 
     if (bookingCount > 0) {
       throw new ConflictError(
-          'Cannot delete a trip that has bookings. Cancel the trip instead.'
+        'Cannot delete a trip that has bookings. Cancel the trip instead.'
       )
     }
 
