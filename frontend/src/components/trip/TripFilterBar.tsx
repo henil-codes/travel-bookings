@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { LocationAutoComplete } from '../ui/LocationAutoComplete';
+import { useLocations } from '../../hooks/useLocations';
 import type { TripFilter } from '../../types/trip';
 
 interface Props {
@@ -11,6 +13,7 @@ export function TripFilterBar({ onFilter }: Props) {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [date, setDate] = useState('');
+  const { data: locations } = useLocations();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,19 +38,21 @@ export function TripFilterBar({ onFilter }: Props) {
       className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm"
     >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Input
+        <LocationAutoComplete
           id="from"
           label="From"
           placeholder="Mumbai"
           value={from}
-          onChange={(e) => setFrom(e.target.value)}
+          onChange={setFrom}
+          locations={locations ?? []}
         />
-        <Input
+        <LocationAutoComplete
           id="to"
           label="To"
           placeholder="Pune"
           value={to}
-          onChange={(e) => setTo(e.target.value)}
+          onChange={setTo}
+          locations={locations ?? []}
         />
         <Input
           id="date"

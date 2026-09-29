@@ -49,6 +49,21 @@ export const tripRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =
         })
     })
 
+    // GET /locations - public, distinct cities used in any trip(for search autocomplete)
+    server.get('/locations', {
+        schema: {
+            description: 'Returns distinct set of cities used as a start or end location across all trips.',
+            tags: ['trips'],
+        }
+    }, async (request, reply) => {
+        const locations = await TripService.listKnownLocations();
+
+        return reply.status(200).send({
+            success: true,
+            data: locations,
+        })
+    })
+
     // GET /:id - public
     server.get('/:id', {
         schema: {
