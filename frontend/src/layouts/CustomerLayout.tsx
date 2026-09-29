@@ -33,7 +33,7 @@ export function CustomerLayout() {
                   />
                 </svg>
               </div>
-              <span className="text-lg font-bold text-slate-900">Mannat Tour and Travels</span>
+              <span className="text-lg font-bold text-slate-900">Mannat Travels</span>
             </Link>
 
             {/* Navigation Links */}
