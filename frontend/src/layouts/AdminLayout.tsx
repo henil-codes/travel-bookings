@@ -87,7 +87,7 @@ export function AdminLayout() {
                 </span>
               </div>
               <span className="text-lg font-bold text-slate-900">
-                Mannat Toor and Travels Admin
+                Mannat Travels Admin
               </span>
             </Link>
 
