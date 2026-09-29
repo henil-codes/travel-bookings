@@ -62,7 +62,7 @@ export function AdminTripCreatePage() {
 
     const driverOptions = (drivers ?? []).map((d) => ({
         value: d.id,
-        label: `${d.name} &middot; ${d.email}`,
+        label: `${d.name} · ${d.email}`,
     }))
 
     // Default capacity from the chosen vehicle - still editable
