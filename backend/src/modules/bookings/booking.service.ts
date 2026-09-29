@@ -316,10 +316,19 @@ export class BookingService {
     }
 
     if (booking.status === 'confirmed') {
-      PaymentService.initiateRefund({
-        bookingId,
-        cancellationReason: input.cancellationReason,
-      });
+      try {
+        await PaymentService.initiateRefund({
+          bookingId,
+          cancellationReason: input.cancellationReason,
+        });
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          throw new ConflictError(
+            'Booking cannot be cancelled. Only pending or confirmed bookings can be cancelled.'
+          );
+        }
+        throw error;
+      }
 
       const [refunded] = await db
         .select()
@@ -328,9 +337,5 @@ export class BookingService {
 
       return refunded;
     }
-
-    throw new ConflictError(
-      'Booking cannot be cancelled. Only pending or confirmed bookings can be cancelled.'
-    );
   }
 }
