@@ -43,7 +43,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
         schema: {
             description: 'Returns bookings. Customers see their own; admins see all; managers see bookings for their trips.',
             tags: ['Bookings'],
-            querystring: bookingFilterSchema,
+            querystring: bookingFilterSchema, 
         }
     },
         async (request, reply) => {
@@ -56,7 +56,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
                 userId: filterUserId,
                 tripId,
                 status,
-                from,
+                from, 
                 to,
                 page,
                 limit,
@@ -69,7 +69,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
         }
     )
 
-    server.get('/:id', {
+    server.get('/:id', { 
         preHandler: [fastify.authenticate],
         schema: {
             description: 'Returns a single booking by ID.',
@@ -82,7 +82,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
         if (request.user.role !== 'admin' && request.user.role !== 'manager' && booking.bookedBy !== request.user.id) {
             throw new UnauthorizedError('You do not have permission to this booking.')
         }
-
+        
         return reply.status(200).send({
             success: true,
             data: booking,
@@ -101,19 +101,19 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
     }, async (request, reply) => {
         const booking = await BookingService.getBookingById(request.params.id);
 
-        // if (request.user.role !== 'admin' && request.user.role !== 'manager') {
-        if (booking.bookedBy !== request.user.id) {
-            throw new UnauthorizedError('You do not have permission to cancel this booking.')
-        }
+        if (request.user.role !== 'admin' && request.user.role !== 'manager') {
+            if (booking.bookedBy !== request.user.id) {
+                throw new UnauthorizedError('You do not have permission to cancel this booking.')
+            }
 
-        const CANCELLATION_WINDOW_MINUTES = 2 * 60 * 60 * 1000;
-        const trip = await BookingService.getTripByBookingId(request.params.id);
-        const timeUntilDeparture = new Date(trip.departureTime).getTime() - Date.now();
-
-        if (timeUntilDeparture < CANCELLATION_WINDOW_MINUTES) {
-            throw new UnauthorizedError('Cancellation window has passed. Bookings can only be cancelled up to 2 hours before departure.')
+            const CANCELLATION_WINDOW_MINUTES = 2 * 60 * 60 * 1000;
+            const trip = await BookingService.getTripByBookingId(request.params.id);
+            const timeUntilDeparture = new Date(trip.departureTime).getTime() - Date.now();
+            
+            if (timeUntilDeparture < CANCELLATION_WINDOW_MINUTES) {
+                throw new UnauthorizedError('Cancellation window has passed. Bookings can only be cancelled up to 2 hours before departure.')
+            }
         }
-        // }
 
         const result = await BookingService.cancelBooking({
             cancellationReason: request.body.cancellationReason,
