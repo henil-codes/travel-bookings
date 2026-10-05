@@ -278,57 +278,49 @@ export class PaymentService {
     cancellationReason: string;
     refundAmount?: number;
   }) {
-
-    const { booking, capturedPayment, refundAmount } = await db.transaction(async (tx) => {
+    return await db.transaction(async (tx) => {
       const [booking] = await tx
         .select()
         .from(bookings)
         .where(eq(bookings.id, input.bookingId))
         .for('update');
 
-        if (!booking) { throw new NotFoundError('Booking'); }
-        if (booking.status !== 'confirmed') { throw new ConflictError('Only confirmed bookings can be refunded');}
+      if (!booking) {
+        throw new NotFoundError('Booking');
+      }
 
-        const [capturedPayment] = await tx
-          .select()
-          .from(payments)
-          .where(
-            and(
-              eq(payments.bookingId, input.bookingId),
-              eq(payments.event, 'payment_captured')
-            )
-          )
-          .limit(1);
+      if (booking.status !== 'confirmed') {
+        throw new ConflictError('Only confirmed bookings can be refunded');
+      }
 
-          if (!capturedPayment?.gatewayPaymentId) {
-            throw new NotFoundError('captured payment record');
-          }
+      // find the captured payment to get gatewayPaymentId
+      const [capturedPayment] = await tx
+        .select()
+        .from(payments)
+        .where(eq(payments.bookingId, input.bookingId))
+        .orderBy(payments.createdAt)
+        .limit(1);
 
-          const fullAmount = booking.totalAmount;
-          const refundAmount = input.refundAmount ?? fullAmount;
-          if (refundAmount > fullAmount) {
-            throw new ConflictError('Refund amount cannot be greater than the original amount');
-          }
+      if (!capturedPayment?.gatewayPaymentId) {
+        throw new NotFoundError('captured payment record');
+      }
 
-          await tx
-            .update(bookings)
-            .set({
-              status: 'refunded',
-              cancelledAt: new Date(),
-              cancellationReason: input.cancellationReason,
-              updatedAt: new Date(),
-            })
-            .where(eq(bookings.id, input.bookingId));
+      const fullAmount = booking.totalAmount;
+      const refundAmount = input.refundAmount ?? fullAmount;
 
-            return { booking, capturedPayment, refundAmount };
-    })
+      if (refundAmount > fullAmount) {
+        throw new ConflictError(
+          'Refund amount cannot be greater than the original amount'
+        );
+      }
 
-    const refund = await razorpay.payments.refund(
-      capturedPayment.gatewayPaymentId!,
-      { amount: refundAmount }
-    );
+      // Initiate refund via Razorpay
+      const refund = await razorpay.payments.refund(
+        capturedPayment.gatewayPaymentId,
+        { amount: refundAmount }
+      );
 
-    await db.transaction(async (tx) => {
+      // Record the refund in the database
       await tx.insert(payments).values({
         bookingId: input.bookingId,
         gatewayOrderId: capturedPayment.gatewayOrderId,
@@ -336,26 +328,37 @@ export class PaymentService {
         gatewayRefundId: refund.id,
         event: 'refund_initiated' as const,
         amount: booking.totalAmount,
-        refundAmount: refundAmount, 
+        refundAmount: refundAmount,
         currency: booking.currency,
         gatewayResponse: JSON.stringify(refund),
       });
 
+      // Update booking status to refunded
+      await tx
+        .update(bookings)
+        .set({
+          status: 'refunded',
+          cancelledAt: new Date(),
+          cancellationReason: input.cancellationReason,
+          updatedAt: new Date(),
+        })
+        .where(eq(bookings.id, input.bookingId));
+
+      // release seat
       await tx
         .update(seats)
         .set({ status: 'available', lockedUntil: null, lockedByUserId: null })
         .where(eq(seats.id, booking.seatId));
+
+      appEmitter.emit('seat:status_changed', {
+        seatId: booking.seatId,
+        status: 'available',
+        lockedUntil: null,
+        lockedByUserId: null,
+      });
+
+      return refund;
     });
-
-    appEmitter.emit('seat:status_changed', {
-      tripId: booking.tripId,
-      seatId: booking.seatId,
-      status: 'available',
-      lockedUntil: null,
-      lockedByUserId: null,
-    })
-
-    return refund;
   }
 
   // --- Admin only: List refund outbox rows for retrying failed refunds ---
