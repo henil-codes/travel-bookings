@@ -102,7 +102,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
         const booking = await BookingService.getBookingById(request.params.id);
 
         // if (request.user.role !== 'admin' && request.user.role !== 'manager') {
-        if (booking.bookedBy === request.user.id) {
+        if (booking.bookedBy !== request.user.id) {
             throw new UnauthorizedError('You do not have permission to cancel this booking.')
         }
 
