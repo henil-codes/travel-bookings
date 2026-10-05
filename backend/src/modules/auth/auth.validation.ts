@@ -33,7 +33,13 @@ export const driverRegisterSchema = z.object({
     licenseExpiryDate: z.date(),
 })
 
+export const guestSchema = z.object({
+    name: z.string().min(1).max(255),
+    email: z.email(),
+})
+
 export type RegisterInput = z.infer<typeof registerSchema>;
+export type GuestInput = z.infer<typeof guestSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
