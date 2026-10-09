@@ -1,13 +1,21 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../../core/api';
+import { api, getApiError } from '../../core/api';
+import { useAuthStore } from '../../store/useAuthStore';
 import { Spinner } from '../../components/ui/Spinner';
 import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
+import { Alert } from '../../components/ui/Alert';
 import type { BookingWithDetails } from '../../types/booking';
 import type { ApiResponse } from '../../types/api';
 
 export function BookingConfirmPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
+  const { user, isGuest } = useAuthStore();
+  const [claimSent, setClaimSent] = useState(false);
+  const [claimError, setClaimError] = useState('');
+  const [claiming, setClaiming] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['booking', bookingId],
@@ -19,6 +27,21 @@ export function BookingConfirmPage() {
     },
     enabled: !!bookingId,
   });
+
+  async function handleClaimAccount() {
+    if (!user) return;
+    setClaiming(true);
+    setClaimError('')
+
+    try {
+      await api.post('/auth/forgot-password', { email: user.email });
+      setClaimSent(true);
+    } catch (error) {
+      setClaimError(getApiError(error));
+    } finally {
+      setClaiming(false);
+    }
+  }
 
   if (isLoading)
     return (
@@ -75,40 +98,62 @@ export function BookingConfirmPage() {
       {/* Booking card */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="bg-brand-500 text-white p-5">
-            <p className="text-sm opacity-80">
-                {data.trip.startLocation} → {data.trip.endLocation}
-            </p>
-            <p className="text-xl font-bold mt-1">{dep}</p>
+          <p className="text-sm opacity-80">
+            {data.trip.startLocation} → {data.trip.endLocation}
+          </p>
+          <p className="text-xl font-bold mt-1">{dep}</p>
         </div>
 
         <div className="p-5 space-y-3 text-sm">
-            {[
-                { label: 'Booking ID', value: data.id.slice(0, 8).toUpperCase() },
-                { label: 'Passenger', value: data.passenger.name },
-                { label: 'Age', value: String(data.passenger.age) },
-                { label: 'Seat', value: `#${data.seat.seatNumber}`},
-                { label: 'Amount paid', value: `₹${(data.totalAmount / 100).toLocaleString('en-IN')}`,}
-            ].map(({ label, value }) => (
-                <div key={label} className="flex justify-between">
-                    <span className="text-slate-500">{label}</span>
-                    <span className="font-medium text-slate-900">{value}</span>
-                </div>
-            ))}
-            <div className="flex justify-between pt-2">
-                <div className="text-slate-500">Status</div>
-                <Badge label={data.status} />
+          {[
+            { label: 'Booking ID', value: data.id.slice(0, 8).toUpperCase() },
+            { label: 'Passenger', value: data.passenger.name },
+            { label: 'Age', value: String(data.passenger.age) },
+            { label: 'Seat', value: `#${data.seat.seatNumber}` },
+            { label: 'Amount paid', value: `₹${(data.totalAmount / 100).toLocaleString('en-IN')}`, }
+          ].map(({ label, value }) => (
+            <div key={label} className="flex justify-between">
+              <span className="text-slate-500">{label}</span>
+              <span className="font-medium text-slate-900">{value}</span>
             </div>
+          ))}
+          <div className="flex justify-between pt-2">
+            <div className="text-slate-500">Status</div>
+            <Badge label={data.status} />
+          </div>
         </div>
       </div>
 
+      {isGuest && (
+        <div className="mt-6 bg-brand-50 border border-brand-100 rounded-xl p-4 text-center">
+          {claimSent ? (
+            <p className="text-sm text-brand-700">
+              Check your email for a link to set a password and manage this booking anytime.
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-slate-700 mb-2">
+                Booked as a guest. Save a password to manage this booking later.
+              </p>
+              <Button size="sm" loading={claiming} onClick={handleClaimAccount}>Set a password</Button>
+              {claimError && (
+                <div className="mt-2">
+                  <Alert variant="error">{claimError}</Alert>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       <div className="mt-6 flex flex-col gap-3">
         <Link to="/my-bookings">
-            <button className="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-3 rounded-xl transition-colors">
-                View all bookings
-            </button>
+          <button className="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-3 rounded-xl transition-colors">
+            View all bookings
+          </button>
         </Link>
         <Link to="/" className="text-center text-sm text-brand-500 hover:text-brand-600 font-medium">
-            Book another trip
+          Book another trip
         </Link>
       </div>
     </div>
