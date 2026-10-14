@@ -4,7 +4,7 @@ import { eq, and, lt } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { ConflictError, UnauthorizedError } from '@/core/errors';
-import { RegisterInput, LoginInput, DriverRegisterInput } from './auth.validation';
+import { RegisterInput, LoginInput, DriverRegisterInput, GuestInput } from './auth.validation';
 import { passwordResetTokens } from '@/db/schema/passwordResetTokens';
 import { sendPasswordResetEmail } from '@/core/email';
 
@@ -42,6 +42,56 @@ export class AuthService {
     } catch (error: any) {
       throw error;
     }
+  }
+
+  static async createGuest(input: GuestInput) {
+    const [existing] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, input.email));
+
+      if (existing) {
+        if (existing.authProvider === 'google') {
+          throw new ConflictError(
+            'This email is already registered via Google. Please sign in with Google.'
+          )
+        }
+        if (existing.passwordHash) {
+          throw new ConflictError(
+            'This email is already registered. Please sign in with your password.'
+          )
+        }
+        if (existing.accountStatus !== 'active') {
+          throw new ConflictError(
+            'Account is not active. Please contact support.'
+          )
+        }
+
+        // Returning guest
+        const [updated] = await db
+          .update(users)
+          .set({ name: input.name, updatedAt: new Date() })
+          .where(eq(users.id, existing.id))
+          .returning();
+
+          const { passwordHash: _, ...safeUser } = updated;
+          return safeUser;
+      }
+
+      const [newGuest] = await db
+        .insert(users)
+        .values({
+          name: input.name,
+          email: input.email,
+          authProvider: 'local',
+          accountStatus: 'active',
+          role: 'guest',
+          passwordHash: null,
+        })
+        .returning();
+
+        const { passwordHash: _, ...safeUser } = newGuest;
+        return safeUser;
   }
 
   static async login(input: LoginInput) {
