@@ -1,6 +1,6 @@
 import { db } from '@/db'
 import { vehicles } from '@/db/schema/vehicles';
-import type { VehicleFilterInput } from './vehicle.validation'
+import type { VehicleFilterInput, CreateVehicleInput } from './vehicle.validation'
 
 export class VehicleService {
     static async listVehicles(filters: VehicleFilterInput) {
@@ -12,5 +12,10 @@ export class VehicleService {
             .limit(filters.limit)
             .offset(offset)
             .orderBy(vehicles.vehicleNumber);
+    }
+
+    static async createVehicle(input: CreateVehicleInput) {
+        const [vehicle] = await db.insert(vehicles).values(input).returning();
+        return vehicle;
     }
 }
