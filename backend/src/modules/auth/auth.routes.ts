@@ -24,6 +24,7 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  guestSchema,
 } from './auth.validation';
 
 export const authRoutes: FastifyPluginAsync = async (fastify) => {
@@ -51,6 +52,25 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
   );
+
+  server.post(
+    '/guest',
+    {
+      schema: {
+        body: guestSchema,
+      }
+    }, async (request, reply) => {
+      const user = await AuthService.createGuest(request.body);
+
+      const token = fastify.jwt.sign({
+        id: user.id,
+        role: user.role,
+      })
+      setAuthCookie(reply, token);
+
+      return reply.code(200).send({ success: true, data: { user, token } });
+    }
+  )
 
   server.post(
     '/login',

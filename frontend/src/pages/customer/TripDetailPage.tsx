@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useSeatMap } from '../../hooks/useSeatMap';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { GuestOrLoginModal } from '../../components/booking/GuestOrLoginModal';
 import { SeatMap } from '../../components/seat/SeatMap';
-import { Spinner } from '../../components/ui/Spinner';
 import { Alert } from '../../components/ui/Alert';
-import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
+import { Spinner } from '../../components/ui/Spinner';
 import { api, getApiError } from '../../core/api';
+import { useSeatMap } from '../../hooks/useSeatMap';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useBookingStore } from '../../store/useBookingStore';
-import type { Trip } from '../../types/trip';
-import type { Seat } from '../../types/seat';
 import type { ApiResponse } from '../../types/api';
+import type { Seat } from '../../types/seat';
+import type { Trip } from '../../types/trip';
 
 function formatDateTime(dateTime: string) {
   return new Date(dateTime).toLocaleString('en-IN', {
@@ -38,6 +39,7 @@ export function TripDetailPage() {
   const { setSelectedTrip, selectedSeats, toggleSeat, setSelectedSeats } = useBookingStore();
   const [lockError, setLockError] = useState('');
   const [locking, setLocking] = useState(false);
+  const [identityModalOpen, setIdentityModalOpen] = useState(false);
 
   const tripQuery = useQuery({
     queryKey: ['trip', id],
@@ -57,38 +59,37 @@ export function TripDetailPage() {
   }, [tripQuery.data, setSelectedTrip]);
 
   async function handleSeatToggle(seat: Seat) {
-    if (!user) {
-      navigate('/login', { state: { from: `/trips/${id}` } });
-      return;
-    }
     toggleSeat(seat);
   }
 
-  async function handleProceed() {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    if (selectedSeats.length === 0) return;
-
+  async function lockSeatsAndProceed() {
     setLockError('');
     setLocking(true);
 
     try {
       const responses = await Promise.all(
-        selectedSeats.map((seat) =>
-          api.post('/seats/lock', { seatId: seat.id })
-        )
-      );
+        selectedSeats.map((seat) => api.post('/seats/lock', { seatId: seat.id }))
+      )
       const lockedSeats = responses.map((res) => res.data.data);
       setSelectedSeats(lockedSeats);
-      
+
       navigate('/checkout');
     } catch (error) {
       setLockError(getApiError(error));
     } finally {
       setLocking(false);
     }
+  }
+
+  async function handleProceed() {
+    if (selectedSeats.length === 0) return;
+
+    if (!user) {
+      setIdentityModalOpen(true);
+      return;
+    }
+
+    await lockSeatsAndProceed();
   }
 
   if (tripQuery.isLoading || seatQuery.isLoading) {
@@ -250,20 +251,16 @@ export function TripDetailPage() {
             </div>
           </div>
         </div>
-
-        {!user && (
-          <Alert variant="info">
-            <Link to="/login" className="underline">
-              Sign in
-            </Link>{' '}
-            to select and book a seat. If you don't have an account,{' '}
-            <Link to="/register" className="underline">
-              create one
-            </Link>
-            .
-          </Alert>
-        )}
       </div>
+
+      <GuestOrLoginModal
+        open={identityModalOpen}
+        onClose={() => setIdentityModalOpen(false)}
+        onSuccess={() => {
+          setIdentityModalOpen(false);
+          lockSeatsAndProceed();
+        }}
+      />
     </div>
   );
 }
