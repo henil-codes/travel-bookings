@@ -46,7 +46,7 @@ export function AdminTripCreatePage() {
     const [apiError, setApiError] = useState('');
 
     const { data: vehicles, isLoading: vehiclesLoading } = useVehicles();
-    const { data: drivers, isLoading: driversLoading } = useDrivers();
+    const { data: drivers, isLoading: driversLoading } = useDrivers({accountStatus: 'active'});
 
     const {
         register,
