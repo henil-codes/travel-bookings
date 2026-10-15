@@ -5,4 +5,11 @@ export const vehicleFilterSchema = z.object({
     limit: z.coerce.number().int().positive().max(200).default(100),
 })
 
+export const createVehicleSchema = z.object({
+    vehicleType: z.string().min(1).max(100),
+    vehicleNumber: z.string().min(1).max(100),
+    capacity: z.number().int().positive(),
+})
+
 export type VehicleFilterInput = z.infer<typeof vehicleFilterSchema>;
+export type CreateVehicleInput = z.infer<typeof createVehicleSchema>;

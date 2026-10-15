@@ -54,9 +54,35 @@ function RefundIcon() {
   )
 }
 
+function VehicleIcon() {
+  return (
+    <svg {...iconProps}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 13l1.5-4.5A2 2 0 016.4 7h11.2a2 2 0 011.9 1.5L21 13m-18 0v5a1 1 0 001 1h1a1 1 0 001-1v-1h12v1a1 1 0 001 1h1a1 1 0 001-1v-5m-18 0h18"
+      />
+    </svg>
+  )
+}
+
+function DriverIcon() {
+  return (
+    <svg {...iconProps}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
+    </svg>
+  )
+}
+
 const NAV_ITEMS: NavItem[] = [
   { label: 'Bookings', path: '/admin', icon: <TicketIcon />, end: true },
   { label: 'Trips', path: '/admin/trips', icon: <RouteIcon /> },
+  { label: 'Vehicles', path: '/admin/vehicles', icon: <VehicleIcon /> },
+  { label: 'Drivers', path: '/admin/drivers', icon: <DriverIcon /> },
   { label: 'Failed Refunds', path: '/admin/refunds', icon: <RefundIcon /> },
 ]
 
@@ -124,7 +150,7 @@ export function AdminLayout() {
             ))}
           </nav>
         </aside>
-        
+
         <main className="flex-1">
           <Outlet />
         </main>
