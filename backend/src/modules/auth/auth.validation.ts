@@ -29,8 +29,8 @@ export const driverRegisterSchema = z.object({
     countryCode: z.string().min(1).max(5),
     localPhone: z.string().min(5).max(15),
     licenseNumber: z.string().min(5).max(50),
-    licenseIssueDate: z.date(),
-    licenseExpiryDate: z.date(),
+    licenseIssueDate: z.coerce.date(),
+    licenseExpiryDate: z.coerce.date(),
 })
 
 export const guestSchema = z.object({
