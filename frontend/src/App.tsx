@@ -27,6 +27,8 @@ import { AdminTripDetailPage } from './pages/admin/AdminTripDetailPage';
 import { AdminRefundOutboxPage } from './pages/admin/AdminRefundOutboxPage';
 import { AdminTripsPage } from './pages/admin/AdminTripsPage';
 import { AdminTripCreatePage } from './pages/admin/AdminTripCreatePage';
+import { AdminVehiclesPage } from './pages/admin/AdminVehiclesPage';
+import { AdminDriversPage } from './pages/admin/AdminDriversPage';
 
 // Error pages
 import { NotFoundPage } from './pages/errors/NotFoundPage';
@@ -100,7 +102,8 @@ const router = createBrowserRouter([
           { path: '/admin/trips/new', element: <AdminTripCreatePage /> },
           { path: '/admin/trips/:id', element: <AdminTripDetailPage /> },
           { path: '/admin/refunds', element: <AdminRefundOutboxPage /> },
-
+          { path: '/admin/vehicles', element: <AdminVehiclesPage /> },
+          { path: '/admin/drivers', element: <AdminDriversPage /> },
         ],
       },
     ],
