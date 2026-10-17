@@ -1,6 +1,6 @@
 export const AMENITY_VALUES = [
     'ac',
-    'chargin_point',
+    'charging_point',
     'wifi',
     'reclining_seats',
     'blanket',
