@@ -7,7 +7,7 @@ export const vehicleFilterSchema = z.object({
 
 export const VEHICLE_AMENITIES = [
     'ac',
-    'chargin_point',
+    'charging_point',
     'wifi',
     'reclining_seats',
     'blanket',
