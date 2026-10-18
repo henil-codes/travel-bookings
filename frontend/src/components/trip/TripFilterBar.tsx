@@ -7,12 +7,13 @@ import type { TripFilter } from '../../types/trip';
 
 interface Props {
   onFilter: (filters: TripFilter) => void;
+  initial?: { from?: string; to?: string; date?: string };
 }
 
-export function TripFilterBar({ onFilter }: Props) {
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [date, setDate] = useState('');
+export function TripFilterBar({ onFilter, initial }: Props) {
+  const [from, setFrom] = useState(initial?.from ?? '');
+  const [to, setTo] = useState(initial?.to ?? '');
+  const [date, setDate] = useState(initial?.date ?? '');
   const { data: locations } = useLocations();
 
   function handleSubmit(e: React.FormEvent) {
