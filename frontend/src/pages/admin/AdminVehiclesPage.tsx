@@ -1,20 +1,23 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
-import { z } from 'zod'
-import { useVehicles } from '../../hooks/useVehicles'
-import { Button } from '../../components/ui/Button'
-import { Input } from '../../components/ui/Input'
-import { Alert } from '../../components/ui/Alert'
-import { Spinner } from '../../components/ui/Spinner'
-import { Modal } from '../../components/ui/Modal'
-import { api, getApiError } from '../../core/api'
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
+import { useVehicles } from '../../hooks/useVehicles';
+import { AMENITY_OPTIONS } from '../../components/trip/amenities';
+import { AMENITY_VALUES } from '../../types/vehicle';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Alert } from '../../components/ui/Alert';
+import { Spinner } from '../../components/ui/Spinner';
+import { Modal } from '../../components/ui/Modal';
+import { api, getApiError } from '../../core/api';
 
 const schema = z.object({
     vehicleNumber: z.string().min(1, 'Vehicle number is required').max(100),
     vehicleType: z.string().min(1, 'Vehicle type is required').max(100),
     capacity: z.coerce.number().int().positive('Capacity must be at least 1'),
+    amenities: z.enum(AMENITY_VALUES).array().default([]),
 })
 type FormData = z.input<typeof schema>
 
@@ -29,7 +32,7 @@ export function AdminVehiclesPage() {
         handleSubmit,
         reset,
         formState: { errors, isSubmitting },
-    } = useForm<FormData>({ resolver: zodResolver(schema) });
+    } = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: { amenities: [] } });
 
     function closeModal() {
         setModalOpen(false);
@@ -77,6 +80,11 @@ export function AdminVehiclesPage() {
                             <div>
                                 <p className="font-semibold text-slate-900">{vehicle.vehicleNumber}</p>
                                 <p className="text-sm text-slate-500">{vehicle.vehicleType}</p>
+                                {vehicle.amenities.length > 0 && (
+                                    <p className="text-xs text-slate-400 mt-1">
+                                        {vehicle.amenities.map((amenity) => AMENITY_OPTIONS.find((opt) => opt.value === amenity)?.label).join(' · ')}
+                                    </p>
+                                )}
                             </div>
                             <div className="text-sm text-slate-600">{vehicle.capacity} seats</div>
 
@@ -88,21 +96,21 @@ export function AdminVehiclesPage() {
 
             <Modal open={modalOpen} onClose={closeModal} title="Add Vehicle">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <Input 
+                    <Input
                         id="vehicleNumber"
                         label="Vehicle Number"
                         placeholder="JK01AB1234"
                         error={errors.vehicleNumber?.message}
                         {...register('vehicleNumber')}
                     />
-                    <Input 
+                    <Input
                         id="vehicleType"
                         label="Vehicle Type"
                         placeholder="AC Sleeper"
                         error={errors.vehicleType?.message}
                         {...register('vehicleType')}
                     />
-                    <Input 
+                    <Input
                         id="capacity"
                         label="Capacity (seats)"
                         type="number"
@@ -110,6 +118,25 @@ export function AdminVehiclesPage() {
                         error={errors.capacity?.message}
                         {...register('capacity')}
                     />
+
+                    <div>
+                        <p className="block text-sm font-medium text-slate-700 mb-2">Amenities</p>
+                        <div className="grid grid-cols-2 gap-2">
+                            {AMENITY_OPTIONS.map((opt) => (
+                                <label
+                                    key={opt.value}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        value={opt.value}
+                                        {...register('amenities')}
+                                        className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500 focus:ring-brand-400"
+                                    />
+                                    {opt.icon} {opt.label}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
 
                     {apiError && <Alert variant="error">{apiError}</Alert>}
 
