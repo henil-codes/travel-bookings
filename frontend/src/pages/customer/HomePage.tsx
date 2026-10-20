@@ -1,75 +1,137 @@
-import { useState } from 'react';
-import { TripFilterBar } from '../../components/trip/TripFilterBar';
-import { TripCard } from '../../components/trip/TripCard';
-import { Spinner } from '../../components/ui/Spinner';
-import { Alert } from '../../components/ui/Alert';
-import { useTrips } from '../../hooks/useTrips';
-import type { TripFilter } from '../../types/trip';
+import { useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LocationAutoComplete } from '../../components/ui/LocationAutoComplete';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
+import { useLocations } from '../../hooks/useLocations';
+
+const SEARVICES = [
+  {
+    title: '24/7 Support',
+    description: 'Reach us anytime, day or night, for help with your booking.',
+  },
+  {
+    title: 'Eazy Cancellation',
+    description: 'Cancel up to 2 hours before departure and get refunded.',
+  },
+  {
+    title: 'Varified Drivers',
+    description: 'Every driver on our platform is background-checked and verified.',
+  },
+  {
+    title: 'Online Payment',
+    description: 'Pay securely online with UPI, cards, or net banking via Razorpay.',
+  }
+];
 
 export function HomePage() {
-  const [filters, setFilters] = useState<TripFilter>({ status: 'scheduled' });
-  const { data: trips, isLoading, isError } = useTrips(filters);
+  const navigate = useNavigate();
+  const { data: locations } = useLocations();
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [date, setDate] = useState('');
+
+  function handleSearch(e: FormEvent) {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (from) params.set('startLocation', from);
+    if (to) params.set('endLocation', to);
+    if (date) params.set('date', date);
+    navigate(`/trips/search?${params}`);
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Hero */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Find your bus</h1>
-        <p className="text-slate-500 mt-1">
-          Search and book seats on upcoming trips
-        </p>
-      </div>
+    <div>
+      {/* Hero + search */}
+      <section className="bg-brand-800 text-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+          <h1 className="text-3xl sm:text-4xl font-bold">Book your bus, hassle-free</h1>
+          <p className="text-brand-100 mt-3">
+            Search trips across our network and book in minutes.
+          </p>
 
-      <div className="mb-8">
-        <TripFilterBar onFilter={setFilters} />
-      </div>
+          <form
+            onSubmit={handleSearch}
+            className="mb-8 bg-white rounded-xl p-4 shadow-xl grid grid-cols-1 sm:grid-cols-3 gap-3 text-left"
+          >
+            <LocationAutoComplete
+              id="home-from"
+              label="From"
+              placeholder="Mumbai"
+              value={from}
+              onChange={setFrom}
+              locations={locations ?? []}
+            />
+            <LocationAutoComplete
+              id="home-to"
+              label="To"
+              placeholder="Pune"
+              value={to}
+              onChange={setTo}
+              locations={locations ?? []}
+            />
+            <Input
+              id="home-date"
+              type="date"
+              label="Date"
+              value={date}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={(e) => setDate(e.target.value)}
+            />
 
-      {isLoading && (
-        <div className="py-20">
-          <Spinner size="lg" />
-        </div>
-      )}
-
-      {isError && (
-        <Alert variant="error">Failed to load trips. Please try again.</Alert>
-      )}
-
-      {!isLoading && !isError && (
-        <>
-          {trips && trips.length > 0 ? (
-            <>
-              <p className="text-sm text-slate-500 mb-4">
-                {trips.length} trip{trips.length !== 1 ? 's' : ''} found
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {trips.map((trip) => (
-                  <TripCard key={trip.id} trip={trip} />
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-20 bg-white rounded-xl border border-slate-100">
-              <svg
-                className="mx-auto h-12 w-12 text-slate-300 mb-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                />
-              </svg>
-              <p className="text-slate-500 font-medium">No trips found</p>
-              <p className="text-sm text-slate-400 mt-1">
-                Try adjusting your search filters
-              </p>
+            <div className="sm:col-span-3">
+              <Button type="submit" size="lg" className="w-full">Search trips</Button>
             </div>
-          )}
-        </>
-      )}
+          </form>
+        </div>
+      </section>
+
+      {/* Services */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h2 className="text-2xl font-bold text-slate-900 text-center mb-10">
+          Why book with us
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {SEARVICES.map((service) => (
+            <div
+              key={service.title}
+              className="bg-white rounded-xl border border-slate-100 p-6 text-center"
+            >
+              <h3 className="font-semibold text-slate-900 mb-2">{service.title}</h3>
+              <p className="text-sm text-slate-500">{service.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* About */}
+      <section className="bg-slate-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">About us</h2>
+          <p className="text-slate-500 max-w-2xl mx-auto">
+            Mannat Travels is a leading bus operator across the country. Our mission is to make bus travel convenient, safe, and affordable for everyone. With a user-friendly interface, real-time seat availability, and secure payment options, we strive to provide the best booking experience for our customers.
+          </p>
+        </div>
+      </section>
+
+      {/* Contact */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h2 className="text-2xl font-bold text-slate-900 text-center mb-8">Contact us</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center text-sm text-slate-600">
+          <div>
+            <p className="font-semibold text-slate-900">Phone</p>
+            <p>[Phone number here]</p>
+          </div>
+          <div>
+            <p className="font-semibold text-slate-900">Email</p>
+            <p>[Email address here]</p>
+          </div>
+          <div>
+            <p className="font-semibold text-slate-900">Address</p>
+            <p>[Add office/address]</p>
+          </div>
+        </div>
+      </section>
     </div>
-  );
+  )
 }
