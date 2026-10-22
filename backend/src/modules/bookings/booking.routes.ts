@@ -1,11 +1,8 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { BookingService } from './booking.service';
-import { number, z } from 'zod';
-import { paymentStatusEnum } from '@/db/schema/bookings'
-import { BookingFilter, bookingFilterSchema, CreateBookingPayload, createBookingSchema, BookingParams, bookingParamsSchema, CancelBookingPayload, cancelBookingSchema } from './booking.validation';
-import { UnauthorizedError } from '@/core/errors';
-import { requireRole } from '@/core/guards';
+import { bookingFilterSchema, createBookingSchema, bookingParamsSchema, cancelBookingSchema } from './booking.validation';
+import { ConflictError, ForbiddenError } from '@/core/errors';
 
 export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const server = fastify.withTypeProvider<ZodTypeProvider>();
@@ -80,7 +77,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
         const booking = await BookingService.getBookingDetails(request.params.id);
 
         if (request.user.role !== 'admin' && request.user.role !== 'manager' && booking.bookedBy !== request.user.id) {
-            throw new UnauthorizedError('You do not have permission to this booking.')
+            throw new ForbiddenError('You do not have permission to this booking.')
         }
         
         return reply.status(200).send({
@@ -103,7 +100,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
 
         if (request.user.role !== 'admin' && request.user.role !== 'manager') {
             if (booking.bookedBy !== request.user.id) {
-                throw new UnauthorizedError('You do not have permission to cancel this booking.')
+                throw new ForbiddenError('You do not have permission to cancel this booking.')
             }
 
             const CANCELLATION_WINDOW_MINUTES = 2 * 60 * 60 * 1000;
@@ -111,7 +108,7 @@ export const bookingRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
             const timeUntilDeparture = new Date(trip.departureTime).getTime() - Date.now();
             
             if (timeUntilDeparture < CANCELLATION_WINDOW_MINUTES) {
-                throw new UnauthorizedError('Cancellation window has passed. Bookings can only be cancelled up to 2 hours before departure.')
+                throw new ConflictError('Cancellation window has passed. Bookings can only be cancelled up to 2 hours before departure.')
             }
         }
 
