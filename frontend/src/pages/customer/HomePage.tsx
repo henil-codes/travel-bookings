@@ -37,7 +37,7 @@ export function HomePage() {
     if (from) params.set('startLocation', from);
     if (to) params.set('endLocation', to);
     if (date) params.set('date', date);
-    navigate(`/trips/search?${params}`);
+    navigate(`/trips?${params}`);
   }
 
   return (
@@ -120,15 +120,16 @@ export function HomePage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center text-sm text-slate-600">
           <div>
             <p className="font-semibold text-slate-900">Phone</p>
-            <p>[Phone number here]</p>
+            <p>+91 9419230057</p>
+            <p>+91 8713905555</p>
           </div>
           <div>
             <p className="font-semibold text-slate-900">Email</p>
-            <p>[Email address here]</p>
+            <p>support@mannattravels.com</p>
           </div>
           <div>
             <p className="font-semibold text-slate-900">Address</p>
-            <p>[Add office/address]</p>
+            <p>Jammu, IN</p>
           </div>
         </div>
       </section>
