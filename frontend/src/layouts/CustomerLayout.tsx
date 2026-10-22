@@ -113,7 +113,7 @@ export function CustomerLayout() {
 
       <footer className="border-t border-slate-200 bg-white py-6 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-slate-400">
-          &copy; {new Date().getFullYear()} BusBook. All rights reserved.
+          &copy; {new Date().getFullYear()} Mannat Travels. All rights reserved.
         </div>
       </footer>
     </div>
