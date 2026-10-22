@@ -11,9 +11,17 @@ import { api, getApiError } from '../../core/api';
 import type { BookingWithDetails } from '../../types/booking';
 
 export function MyBookingsPage() {
+  const queryClient = useQueryClient();
   const [page] = useState(1);
   const { data: bookings, isLoading, isError } = useMyBookings(page);
-  const queryClient = useQueryClient();
+
+  const CANCELLATION_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+
+  function canCancelBooking(booking: BookingWithDetails) {
+    if (booking.status !== 'pending' && booking.status !== 'confirmed') return false;
+    const timeUntilDeparture = new Date(booking.trip.departureTime).getTime() - Date.now();
+    return timeUntilDeparture >= CANCELLATION_WINDOW_MS;
+  }
 
   const [cancelTarget, setCancelTarget] = useState<BookingWithDetails | null>(
     null
@@ -85,8 +93,8 @@ export function MyBookingsPage() {
                   hour12: true,
                 }
               );
-              const canCancel =
-                booking.status === 'pending' || booking.status === 'confirmed';
+              const statusAllowsCancel = booking.status === 'pending' || booking.status === 'confirmed';
+              const canCancel = canCancelBooking(booking);
 
               return (
                 <div
@@ -122,11 +130,12 @@ export function MyBookingsPage() {
                       </div>
                     ))}
                   </div>
-                  {canCancel && (
+                  {statusAllowsCancel && (
                     <div className="mt-4 pt-3 border-t border-slate-100">
                       <Button
                         variant="danger"
                         size="sm"
+                        disabled={!canCancel}
                         onClick={() => {
                           setCancelTarget(booking);
                           setCancelError('');
@@ -134,6 +143,11 @@ export function MyBookingsPage() {
                       >
                         Cancel booking
                       </Button>
+                      {!canCancel && (
+                        <p className="text-xs text-slate-400 mt-1">
+                          Cancellation window has passed (up to 2 hours before departure).
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
