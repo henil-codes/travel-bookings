@@ -28,9 +28,11 @@ api.interceptors.response.use(
       useAuthStore.getState().clearAuth();
 
       if (!isBootCheck && !onPublicPage) {
-        window.location.href = window.location.pathname.startsWith('/driver')
+        const target = window.location.pathname.startsWith('/driver')
           ? '/driver/login'
           : '/login';
+
+        window.location.href = `${target}?sessionExpired=1`;
       }
     }
     return Promise.reject(error);
