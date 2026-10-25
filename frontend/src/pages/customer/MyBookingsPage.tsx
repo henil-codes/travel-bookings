@@ -11,9 +11,12 @@ import { api, getApiError } from '../../core/api';
 import type { BookingWithDetails } from '../../types/booking';
 
 export function MyBookingsPage() {
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError } = useMyBookings(page);
+  const bookings = data?.bookings;
+  const pagination = data?.pagination;
+  const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.limit)) : 1;
   const queryClient = useQueryClient();
-  const [page] = useState(1);
-  const { data: bookings, isLoading, isError } = useMyBookings(page);
 
   const CANCELLATION_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
 
@@ -155,6 +158,20 @@ export function MyBookingsPage() {
             })}
           </div>
         ))}
+
+      {!isLoading && !isError && bookings && bookings.length > 0 && (
+        <div className="flex items-center justify-between mt-6">
+          <Button variant="secondary" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+            ← Previous
+          </Button>
+          <span className="text-sm text-slate-500">
+            Page {page} of {totalPages}
+          </span>
+          <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+            Next →
+          </Button>
+        </div>
+      )}
 
       {/* Cancel Confirmation modal */}
       <Modal
