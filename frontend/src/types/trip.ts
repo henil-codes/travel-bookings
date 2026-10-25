@@ -1,3 +1,5 @@
+import type { VehicleAmenity } from './vehicle';
+
 export type TripStatus = 'scheduled' | 'cancelled' | 'completed' | 'boarding' | 'departed';
 
 export interface Trip {
@@ -43,4 +45,9 @@ export interface AdminTripFilter extends TripFilter {
     date?: string;
     page?: number;
     limit?: number;
+}
+
+export interface TripListItem extends Trip {
+    fromPrice: number | null;
+    amenities: VehicleAmenity[];
 }

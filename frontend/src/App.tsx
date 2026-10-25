@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ActiveDriverRoute, ProtectedRoute } from './core/ProctectedRoute';
 import { CustomerLayout } from './layouts/CustomerLayout';
 import { DriverLayout } from './layouts/DriverLayout';
+import { TripSearchPage } from './pages/customer/TripSearchPage';
 
 // Customer pages
 import { LoginPage } from './pages/customer/LoginPage';
@@ -46,6 +47,7 @@ const router = createBrowserRouter([
     element: <CustomerLayout />,
     children: [
       { path: '/', element: <HomePage /> },
+      { path: '/trips', element: <TripSearchPage /> },
       { path: '/trips/:id', element: <TripDetailPage /> },
 
       // Protected pages

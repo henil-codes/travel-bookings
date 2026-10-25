@@ -12,7 +12,7 @@ import { trips } from '@/db/schema/trips';
 import { bookings } from '@/db/schema/bookings';
 import { payments } from '@/db/schema/payments';
 import { ConflictError, NotFoundError, UnauthorizedError } from '@/core/errors';
-import { eq, and, gte, lt, ilike, sql, inArray, desc } from 'drizzle-orm';
+import { eq, and, gte, lt, ilike, sql, inArray, desc, getTableColumns } from 'drizzle-orm';
 import { refundOutbox } from '@/db/schema/refundOutbox';
 
 export class TripService {
@@ -102,24 +102,37 @@ export class TripService {
     const offset = (filters.page - 1) * filters.limit;
 
     const results = await db
-      .select()
+      .select({
+        ...getTableColumns(trips),
+        fromPrice: sql<number | null>`min(${seats.price}) filter (where ${seats.status} = 'available')`.mapWith((v) => (v === null ? null : Number(v))),
+        amenities: vehicles.amenities,
+      })
       .from(trips)
+      .leftJoin(seats, eq(seats.tripId, trips.id))
+      .leftJoin(vehicles, eq(vehicles.id, trips.vehicleId))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .groupBy(trips.id, vehicles.id)
       .limit(filters.limit)
       .offset(offset)
       .orderBy(trips.departureTime);
 
-    return results;
+    return results.map((trip) => ({ ...trip, amenities: trip.amenities ?? [] }));
   }
 
   static async getTripById(tripId: string) {
-    const [trip] = await db.select().from(trips).where(eq(trips.id, tripId));
+    const [trip] = await db.select({
+      ...getTableColumns(trips),
+      amenities: vehicles.amenities,
+    })
+    .from(trips)
+    .leftJoin(vehicles, eq(vehicles.id, trips.vehicleId))
+    .where(eq(trips.id, tripId));
 
     if (!trip) {
       throw new NotFoundError('Trip');
     }
 
-    return trip;
+    return {...trip, amenities: trip.amenities ?? [] };
   }
 
   static async getSeatMap(tripId: string) {

@@ -6,6 +6,7 @@ import { Select } from '../../components/ui/Select';
 import { Input } from '../../components/ui/Input';
 import { Alert } from '../../components/ui/Alert';
 import { Spinner } from '../../components/ui/Spinner';
+import { Button } from '../../components/ui/Button';
 import type { AdminBookingFilter } from '../../types/booking';
 
 const STATUS_OPTIONS = [
@@ -19,13 +20,21 @@ const STATUS_OPTIONS = [
 
 export function AdminBookingsPage() {
   const [filters, setFilters] = useState<AdminBookingFilter>({});
-  const { data: bookings, isLoading, isError } = useAdminBookings(filters);
+  const { data, isLoading, isError } = useAdminBookings(filters);
+  const bookings = data?.bookings;
+  const pagination = data?.pagination;
+  const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.limit)) : 1;
+  const currentPage = filters.page ?? 1;
 
   function updateFilter<K extends keyof AdminBookingFilter>(
     key: K,
     value: AdminBookingFilter[K]
   ) {
-    setFilters((prev) => ({ ...prev, [key]: value || undefined }));
+    setFilters((prev) => ({ ...prev, [key]: value || undefined, page: 1 }));
+  }
+
+  function goToPage(page: number) {
+    setFilters((prev) => ({ ...prev, page }));
   }
 
   return (
@@ -138,6 +147,18 @@ export function AdminBookingsPage() {
             ))}
           </div>
         ))}
+
+      <div className="flex items-center justify-between mt-6">
+        <Button variant="secondary" size="sm" disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}>
+          ← Previous
+        </Button>
+        <span className="text-xm text-slate-500">
+          Page {currentPage} of {totalPages} · {pagination?.total} total
+        </span>
+        <Button variant="secondary" size="sm" disabled={currentPage >= totalPages} onClick={() => goToPage(currentPage + 1)}>
+          Next →
+        </Button>
+      </div>
     </div>
   );
 }
