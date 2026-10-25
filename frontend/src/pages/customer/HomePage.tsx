@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LocationAutoComplete } from '../../components/ui/LocationAutoComplete';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { Alert } from '../../components/ui/Alert';
 import { useLocations } from '../../hooks/useLocations';
 
 const SEARVICES = [
@@ -30,12 +31,20 @@ export function HomePage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [date, setDate] = useState('');
+  const [searchError, setSearchError] = useState('');
 
   function handleSearch(e: FormEvent) {
     e.preventDefault();
+
+    if (!from || !to) {
+      setSearchError('Please select both a departure and destination city.');
+      return;
+    }
+
+    setSearchError('');
     const params = new URLSearchParams();
-    if (from) params.set('startLocation', from);
-    if (to) params.set('endLocation', to);
+    params.set('startLocation', from);
+    params.set('endLocation', to);
     if (date) params.set('date', date);
     navigate(`/trips?${params}`);
   }
@@ -78,6 +87,12 @@ export function HomePage() {
               min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setDate(e.target.value)}
             />
+
+            {searchError && (
+              <div className="sm:col-span-3">
+                <Alert variant="error">{searchError}</Alert>
+              </div>
+            )}
 
             <div className="sm:col-span-3">
               <Button type="submit" size="lg" className="w-full">Search trips</Button>
