@@ -1,39 +1,42 @@
+import { Suspense, lazy } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ActiveDriverRoute, ProtectedRoute } from './core/ProctectedRoute';
 import { CustomerLayout } from './layouts/CustomerLayout';
-import { DriverLayout } from './layouts/DriverLayout';
-import { TripSearchPage } from './pages/customer/TripSearchPage';
-
-// Customer pages
-import { LoginPage } from './pages/customer/LoginPage';
-import { RegisterPage } from './pages/customer/Registerpage';
-import { ForgotPasswordPage } from './pages/customer/ForgotPasswordPage';
-import { ResetPasswordPage } from './pages/customer/ResetPasswordPage';
+import { Spinner } from './components/ui/Spinner';
 import { HomePage } from './pages/customer/HomePage';
-import { TripDetailPage } from './pages/customer/TripDetailPage';
-import { CheckoutPage } from './pages/customer/CheckoutPage';
-import { BookingConfirmPage } from './pages/customer/BookingConfirmPage';
-import { MyBookingsPage } from './pages/customer/MyBookingsPage';
 
-// Driver pages
-import { DriverLoginPage } from './pages/driver/DriverLoginPage';
-import { DriverRegisterPage } from './pages/driver/DriverRegisterPage';
-import { DriverPendingPage } from './pages/driver/DriverPendingPage';
-import { DriverDashboardPage } from './pages/driver/DriverDashboardPage';
+// Customer pages (lazy)
+const LoginPage = lazy(() => import('./pages/customer/LoginPage').then((module) => ({ default: module.LoginPage })));
+const RegisterPage = lazy(() => import('./pages/customer/Registerpage').then((module) => ({ default: module.RegisterPage })));
+const ForgotPasswordPage = lazy(() => import('./pages/customer/ForgotPasswordPage').then((module) => ({ default: module.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import('./pages/customer/ResetPasswordPage').then((module) => ({ default: module.ResetPasswordPage })));
+const TripSearchPage = lazy(() => import('./pages/customer/TripSearchPage').then((module) => ({ default: module.TripSearchPage })));
+const TripDetailPage = lazy(() => import('./pages/customer/TripDetailPage').then((module) => ({ default: module.TripDetailPage })));
+const CheckoutPage = lazy(() => import('./pages/customer/CheckoutPage').then((module) => ({ default: module.CheckoutPage })));
+const BookingConfirmPage = lazy(() => import('./pages/customer/BookingConfirmPage').then((module) => ({ default: module.BookingConfirmPage })));
+const MyBookingsPage = lazy(() => import('./pages/customer/MyBookingsPage').then((module) => ({ default: module.MyBookingsPage })));
 
-// Admin pages
-import { AdminLayout } from './layouts/AdminLayout';
-import { AdminBookingsPage } from './pages/admin/AdminBookingsPage';
-import { AdminTripDetailPage } from './pages/admin/AdminTripDetailPage';
-import { AdminRefundOutboxPage } from './pages/admin/AdminRefundOutboxPage';
-import { AdminTripsPage } from './pages/admin/AdminTripsPage';
-import { AdminTripCreatePage } from './pages/admin/AdminTripCreatePage';
-import { AdminVehiclesPage } from './pages/admin/AdminVehiclesPage';
-import { AdminDriversPage } from './pages/admin/AdminDriversPage';
+// Driver layout/pages (lazy)
+const DriverLayout = lazy(() => import('./layouts/DriverLayout').then((module) => ({ default: module.DriverLayout })));
+const DriverLoginPage = lazy(() => import('./pages/driver/DriverLoginPage').then((module) => ({ default: module.DriverLoginPage })));
+const DriverRegisterPage = lazy(() => import('./pages/driver/DriverRegisterPage').then((module) => ({ default: module.DriverRegisterPage })));
+const DriverPendingPage = lazy(() => import('./pages/driver/DriverPendingPage').then((module) => ({ default: module.DriverPendingPage })));
+const DriverDashboardPage = lazy(() => import('./pages/driver/DriverDashboardPage').then((module) => ({ default: module.DriverDashboardPage })));
 
-// Error pages
-import { NotFoundPage } from './pages/errors/NotFoundPage';
-import { ForbiddenPage } from './pages/errors/ForbiddenPage';
+// Admin layout/pages (lazy)
+const AdminLayout = lazy(() => import('./layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })));
+const AdminBookingsPage = lazy(() => import('./pages/admin/AdminBookingsPage').then((module) => ({ default: module.AdminBookingsPage })));
+const AdminTripDetailPage = lazy(() => import('./pages/admin/AdminTripDetailPage').then((module) => ({ default: module.AdminTripDetailPage })));
+const AdminRefundOutboxPage = lazy(() => import('./pages/admin/AdminRefundOutboxPage').then((module) => ({ default: module.AdminRefundOutboxPage })));
+const AdminTripsPage = lazy(() => import('./pages/admin/AdminTripsPage').then((module) => ({ default: module.AdminTripsPage })));
+const AdminTripCreatePage = lazy(() => import('./pages/admin/AdminTripCreatePage').then((module) => ({ default: module.AdminTripCreatePage })));
+const AdminVehiclesPage = lazy(() => import('./pages/admin/AdminVehiclesPage').then((module) => ({ default: module.AdminVehiclesPage })));
+const AdminDriversPage = lazy(() => import('./pages/admin/AdminDriversPage').then((module) => ({ default: module.AdminDriversPage })));
+
+// Error pages (lazy)
+const NotFoundPage = lazy(() => import('./pages/errors/NotFoundPage').then((module) => ({ default: module.NotFoundPage })));
+const ForbiddenPage = lazy(() => import('./pages/errors/ForbiddenPage').then((module) => ({ default: module.ForbiddenPage })));
+
 
 const router = createBrowserRouter([
   // Customer auth pages
@@ -75,9 +78,7 @@ const router = createBrowserRouter([
       <ProtectedRoute allowedRoles={['driver']} redirectTo="/driver/login" />
     ),
     children: [
-      // Driver pending page
       { path: '/driver/pending', element: <DriverPendingPage /> },
-      // Driver dashboard page
       {
         element: <ActiveDriverRoute />,
         children: [
@@ -116,6 +117,18 @@ const router = createBrowserRouter([
   { path: '*', element: <NotFoundPage /> },
 ]);
 
+function FullPageFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <Spinner size="lg" />
+    </div>
+  )
+}
+
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <Suspense fallback={<FullPageFallback />}>
+      <RouterProvider router={router} />
+    </Suspense>
+  );
 }

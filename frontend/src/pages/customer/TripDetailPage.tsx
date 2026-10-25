@@ -124,7 +124,7 @@ export function TripDetailPage() {
   const availableCount = seats.filter((s) => s.status === 'available').length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-24 lg:pb-10">
       <Link
         to="/"
         className="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1 mb-6"
@@ -267,6 +267,24 @@ export function TripDetailPage() {
           </div>
         </div>
       </div>
+
+      {selectedSeats.length > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-30 lg:hidden bg-white border-t border-slate-200 shadow-lg px-4 py-3">
+          <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto">
+            <div>
+              <p className="text-xs text-slate-400">
+                {selectedSeats.length} seat{selectedSeats.length > 1 ? 's' : ''} selected
+              </p>
+              <p className="text-lg font-bold text-slate-900">
+                ₹{(totalPrice / 100).toLocaleString('en-IN')}
+              </p>
+            </div>
+            <Button onClick={handleProceed} loading={locking} size="lg">
+              Proceed to Checkout →
+            </Button>
+          </div>
+        </div>
+      )}
 
       <GuestOrLoginModal
         open={identityModalOpen}

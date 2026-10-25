@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { Spinner } from '../components/ui/Spinner';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { Button } from '../components/ui/Button';
@@ -108,7 +110,15 @@ export function CustomerLayout() {
       </header>
 
       <main className="flex-1">
-        <Outlet />
+        <Suspense
+          fallback={
+            <div className="flex justify-center py-24">
+              <Spinner size="lg" />
+            </div>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </main>
 
       <footer className="border-t border-slate-200 bg-white py-6 mt-auto">
