@@ -256,6 +256,15 @@ export function CheckoutPage() {
             {selectedSeats.length} seat{selectedSeats.length > 1 ? 's' : ''} ·{' '}
             {selectedTrip.capacity} total capacity
           </p>
+
+          <div className="border-t border-slate-100 pt-3 text-xs text-slate-500 space-y-1">
+            <p className="font-medium text-slate-700">Cancellation Policy</p>
+            <p>Free cancellation up to 2 hours before departure.</p>
+            <p>
+              Refunds are initiated immediately to your original payment method - it may take a few business days to reflect, depending on your bank.
+            </p>
+          </div>
+
         </div>
       </div>
     </div>
