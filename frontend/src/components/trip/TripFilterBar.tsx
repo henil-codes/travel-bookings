@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { Alert } from '../ui/Alert';
 import { LocationAutoComplete } from '../ui/LocationAutoComplete';
 import { useLocations } from '../../hooks/useLocations';
 import type { TripFilter } from '../../types/trip';
@@ -14,10 +15,18 @@ export function TripFilterBar({ onFilter, initial }: Props) {
   const [from, setFrom] = useState(initial?.from ?? '');
   const [to, setTo] = useState(initial?.to ?? '');
   const [date, setDate] = useState(initial?.date ?? '');
+  const [searchError, setSearchError] = useState('');
   const { data: locations } = useLocations();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!from || !to) {
+      setSearchError('Please select both a departure and destination city.');
+      return;
+    }
+
+    setSearchError('');
     onFilter({
       startLocation: from || undefined,
       endLocation: to || undefined,
@@ -64,6 +73,11 @@ export function TripFilterBar({ onFilter, initial }: Props) {
           onChange={(e) => setDate(e.target.value)}
         />
       </div>
+      {searchError && (
+        <div className="mt-3">
+          <Alert variant="error">{searchError}</Alert>
+        </div>
+      )}
       <div className="flex gap-2 mt-4 justify-end">
         <Button
           type="button"
