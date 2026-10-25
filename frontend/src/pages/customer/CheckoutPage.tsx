@@ -142,7 +142,7 @@ export function CheckoutPage() {
             gatewayOrderId: response.error.metadata.order_id,
             gatewayResponse: JSON.stringify(response.error),
           });
-        } catch {}
+        } catch { }
         setApiError(`Payment failed: ${response.error.description}`);
         setPaying(false);
       });
@@ -155,7 +155,7 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-24 lg:pb-10">
       <h1 className="text-2xl font-bold text-slate-900 mb-6">
         Complete your booking
       </h1>
@@ -168,7 +168,7 @@ export function CheckoutPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Passenger form*/}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="order-2 lg:order-1 lg:col-span-2 space-y-6">
           {selectedSeats.map((seat, index) => (
             <div
               key={seat.id}
@@ -194,7 +194,7 @@ export function CheckoutPage() {
             </div>
           )}
 
-          <div className="mt-6 pt-4 border-t border-slate-100">
+          <div className="hidden lg:block mt-6 pt-4 border-t border-slate-100">
             <Button
               onClick={handlePay}
               disabled={!allPassengersValid}
@@ -211,7 +211,7 @@ export function CheckoutPage() {
         </div>
 
         {/* Summary */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 h-fit space-y-4">
+        <div className="order-1 lg:order-2 bg-white rounded-xl border border-slate-200 p-6 h-fit space-y-4">
           <h2 className="font-semibold text-slate-900">Booking Summary</h2>
 
           <div className="space-y-1 text-sm">
@@ -265,6 +265,25 @@ export function CheckoutPage() {
             </p>
           </div>
 
+        </div>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-30 lg:hidden bg-white border-t border-slate-200 shadow-lg px-4 py-3">
+        <div className="flex items-center justify-between gap-4 max-w-5xl mx-auto">
+          <div>
+            <p className="text-xs text-slate-400">Total</p>
+            <p className="text-lg font-bold text-slate-900">
+              ₹{(totalPaise / 100).toLocaleString('en-IN')}
+            </p>
+          </div>
+          <Button
+            onClick={handlePay}
+            disabled={!allPassengersValid}
+            loading={paying}
+            size="lg"
+          >
+            Pay →
+          </Button>
         </div>
       </div>
     </div>
