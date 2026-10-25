@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../core/api';
-import type { BookingWithDetails, AdminBookingFilter } from '../types/booking';
+import type { PaginatedBookings, AdminBookingFilter } from '../types/booking';
 import type { ApiResponse } from '../types/api';
 
 export function useAdminBookings(filters: AdminBookingFilter = {}) {
@@ -11,7 +11,7 @@ export function useAdminBookings(filters: AdminBookingFilter = {}) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== '') params.set(key, String(value));
       });
-      const res = await api.get<ApiResponse<BookingWithDetails[]>>(
+      const res = await api.get<ApiResponse<PaginatedBookings>>(
         `/bookings?${params}`
       );
       return res.data.data;

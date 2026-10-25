@@ -65,3 +65,8 @@ export interface AdminBookingFilter {
   page?: number;
   limit?: number;
 }
+
+export interface PaginatedBookings {
+  bookings: BookingWithDetails[];
+  pagination: { page: number; limit: number; total: number };
+}
