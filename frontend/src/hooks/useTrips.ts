@@ -3,7 +3,7 @@ import { api } from '../core/api';
 import type { TripListItem, TripFilter } from '../types/trip';
 import type { ApiResponse } from '../types/api';
 
-export function useTrips(filters: TripFilter = {}) {
+export function useTrips(filters: TripFilter = {}, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['trips', filters],
     queryFn: async () => {
@@ -16,5 +16,6 @@ export function useTrips(filters: TripFilter = {}) {
       const res = await api.get<ApiResponse<TripListItem[]>>(`/trips?${params}`);
       return res.data.data;
     },
+    enabled: options.enabled,
   });
 }

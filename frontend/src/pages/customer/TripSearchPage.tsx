@@ -15,7 +15,9 @@ export function TripSearchPage() {
         endLocation: searchParams.get('endLocation') ?? undefined,
         date: searchParams.get('date') ?? undefined,
     });
-    const { data: trips, isLoading, isError } = useTrips(filters);
+
+    const hasSearched = !!(filters.startLocation && filters.endLocation);
+    const { data: trips, isLoading, isError } = useTrips(filters, { enabled: hasSearched });
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -37,17 +39,26 @@ export function TripSearchPage() {
                 />
             </div>
 
-            {isLoading && (
+            {!hasSearched && (
+                <div className="text-center py-20 bg-white rounded-xl border border-slate-100">
+                    <p className="text-slate-500 font-medium">Search for a trip to see results</p>
+                    <p className="text-sm text-slate-400 mt-1">
+                        Enter a departure and destination city
+                    </p>
+                </div>
+            )}
+
+            {hasSearched && isLoading && (
                 <div className="py-20">
                     <Spinner size="lg" />
                 </div>
             )}
 
-            {isError && (
+            {hasSearched && isError && (
                 <Alert variant="error">Failed to load trips. Please try again.</Alert>
             )}
 
-            {!isLoading && !isError && (
+            {hasSearched && !isLoading && !isError && (
                 <>
                     {trips && trips.length > 0 ? (
                         <>
