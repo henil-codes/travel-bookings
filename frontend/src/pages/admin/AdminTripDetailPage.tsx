@@ -36,9 +36,10 @@ export function AdminTripDetailPage() {
     isError: tripError,
   } = useAdminTripDetail(tripId);
   const { data: stats } = useTripStats(tripId);
-  const { data: bookings, isLoading: bookingLoading } = useAdminBookings({
+  const { data, isLoading: bookingLoading } = useAdminBookings({
     tripId,
   });
+  const bookings = data?.bookings;
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);

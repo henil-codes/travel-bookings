@@ -7,7 +7,7 @@ import { users } from '@/db/schema/users';
 import { passengers } from '@/db/schema/passengers';
 import { genderEnum, idTypeEnum } from '@/db/schema/passengers';
 import { NotFoundError, ConflictError, UnauthorizedError } from '@/core/errors';
-import { eq, and, not, gte, lte, inArray, desc } from 'drizzle-orm';
+import { eq, and, not, gte, lte, inArray, desc, sql } from 'drizzle-orm';
 import {
   BookingFilter,
   CreateBookingPayload,
@@ -269,20 +269,31 @@ export class BookingService {
     }
 
     const offset = (input.page - 1) * input.limit;
+    const where = conditions.length ? and(...conditions) : undefined;
 
-    const rows = await db
-      .select(bookingDetailSelect)
-      .from(bookings)
-      .innerJoin(trips, eq(bookings.tripId, trips.id))
-      .innerJoin(seats, eq(bookings.seatId, seats.id))
-      .innerJoin(passengers, eq(bookings.passengerId, passengers.id))
-      .innerJoin(users, eq(bookings.bookedBy, users.id))
-      .where(conditions.length ? and(...conditions) : undefined)
-      .limit(input.limit)
-      .offset(offset)
-      .orderBy(desc(bookings.createdAt));
+    const [rows, [{ total }]] = await Promise.all([
+      db
+        .select(bookingDetailSelect)
+        .from(bookings)
+        .innerJoin(trips, eq(bookings.tripId, trips.id))
+        .innerJoin(seats, eq(bookings.seatId, seats.id))
+        .innerJoin(passengers, eq(bookings.passengerId, passengers.id))
+        .innerJoin(users, eq(bookings.bookedBy, users.id))
+        .where(where)
+        .limit(input.limit)
+        .offset(offset)
+        .orderBy(desc(bookings.createdAt)),
 
-    return rows.map(toBookingWithDetails);
+      db
+        .select({ total: sql<number>`count(*)`.mapWith(Number) })
+        .from(bookings)
+        .where(where),
+    ])
+
+    return {
+      bookings: rows.map(toBookingWithDetails),
+      pagination: { page: input.page, limit: input.limit, total },
+    };
   }
 
   static async cancelBooking(input: CancelBookingPayload, bookingId: string) {

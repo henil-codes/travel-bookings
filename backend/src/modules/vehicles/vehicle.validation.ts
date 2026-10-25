@@ -5,10 +5,21 @@ export const vehicleFilterSchema = z.object({
     limit: z.coerce.number().int().positive().max(200).default(100),
 })
 
+export const VEHICLE_AMENITIES = [
+    'ac',
+    'charging_point',
+    'wifi',
+    'reclining_seats',
+    'blanket',
+    'entertainment_system',
+    'washroom',
+] as const;
+
 export const createVehicleSchema = z.object({
     vehicleType: z.string().min(1).max(100),
     vehicleNumber: z.string().min(1).max(100),
     capacity: z.number().int().positive(),
+    amenities: z.enum(VEHICLE_AMENITIES).array().default([]),
 })
 
 export type VehicleFilterInput = z.infer<typeof vehicleFilterSchema>;

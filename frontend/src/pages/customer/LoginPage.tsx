@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { api, getApiError } from '../../core/api';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Input } from '../../components/ui/Input';
@@ -27,8 +27,10 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
-  const [apiError, setApiError] = useState('');
-
+  const [searchParams] = useSearchParams();
+  const [apiError, setApiError] = useState(
+    searchParams.get('sessionExpired') ? 'Your session has expired. Please sign in again.' : ''
+  );
   const {
     register,
     handleSubmit,

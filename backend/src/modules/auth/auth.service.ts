@@ -50,48 +50,48 @@ export class AuthService {
       .from(users)
       .where(eq(users.email, input.email));
 
-      if (existing) {
-        if (existing.authProvider === 'google') {
-          throw new ConflictError(
-            'This email is already registered via Google. Please sign in with Google.'
-          )
-        }
-        if (existing.passwordHash) {
-          throw new ConflictError(
-            'This email is already registered. Please sign in with your password.'
-          )
-        }
-        if (existing.accountStatus !== 'active') {
-          throw new ConflictError(
-            'Account is not active. Please contact support.'
-          )
-        }
-
-        // Returning guest
-        const [updated] = await db
-          .update(users)
-          .set({ name: input.name, updatedAt: new Date() })
-          .where(eq(users.id, existing.id))
-          .returning();
-
-          const { passwordHash: _, ...safeUser } = updated;
-          return safeUser;
+    if (existing) {
+      if (existing.authProvider === 'google') {
+        throw new ConflictError(
+          'This email is already registered via Google. Please sign in with Google.'
+        )
+      }
+      if (existing.passwordHash) {
+        throw new ConflictError(
+          'This email is already registered. Please sign in with your password.'
+        )
+      }
+      if (existing.accountStatus !== 'active') {
+        throw new ConflictError(
+          'Account is not active. Please contact support.'
+        )
       }
 
-      const [newGuest] = await db
-        .insert(users)
-        .values({
-          name: input.name,
-          email: input.email,
-          authProvider: 'local',
-          accountStatus: 'active',
-          role: 'guest',
-          passwordHash: null,
-        })
+      // Returning guest
+      const [updated] = await db
+        .update(users)
+        .set({ name: input.name, updatedAt: new Date() })
+        .where(eq(users.id, existing.id))
         .returning();
 
-        const { passwordHash: _, ...safeUser } = newGuest;
-        return safeUser;
+      const { passwordHash: _, ...safeUser } = updated;
+      return safeUser;
+    }
+
+    const [newGuest] = await db
+      .insert(users)
+      .values({
+        name: input.name,
+        email: input.email,
+        authProvider: 'local',
+        accountStatus: 'active',
+        role: 'customer',
+        passwordHash: null,
+      })
+      .returning();
+
+    const { passwordHash: _, ...safeUser } = newGuest;
+    return safeUser;
   }
 
   static async login(input: LoginInput) {
@@ -252,7 +252,7 @@ export class AuthService {
         accountStatus: 'deactivated',
         role: 'driver',
       }).returning();
- 
+
       const { passwordHash: _, ...safeDriver } = newDriver;
       return safeDriver;
     } catch (error: any) {
@@ -273,7 +273,7 @@ export class AuthService {
 
     // Always strip the password hash and sensitive data before sending to the client!
     const { passwordHash: _, ...safeUser } = user;
-    
+
     return safeUser;
   }
 }

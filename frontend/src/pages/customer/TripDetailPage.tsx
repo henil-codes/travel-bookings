@@ -14,6 +14,12 @@ import { useBookingStore } from '../../store/useBookingStore';
 import type { ApiResponse } from '../../types/api';
 import type { Seat } from '../../types/seat';
 import type { Trip } from '../../types/trip';
+import type { VehicleAmenity } from '../../types/vehicle';
+import { AMENITY_ICON, AMENITY_LABEL } from '../../components/trip/amenities';
+
+interface TripWithAmenities extends Trip {
+  amenities: VehicleAmenity[];
+}
 
 function formatDateTime(dateTime: string) {
   return new Date(dateTime).toLocaleString('en-IN', {
@@ -44,7 +50,7 @@ export function TripDetailPage() {
   const tripQuery = useQuery({
     queryKey: ['trip', id],
     queryFn: async () => {
-      const res = await api.get<ApiResponse<Trip>>(`/trips/${id}`);
+      const res = await api.get<ApiResponse<TripWithAmenities>>(`/trips/${id}`);
       return res.data.data;
     },
     enabled: !!id,
@@ -201,6 +207,15 @@ export function TripDetailPage() {
                       ✕
                     </button>
                   </div>
+                  {trip.amenities.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-3 border-t border-slate-100">
+                      {trip.amenities.map((amenity) => (
+                        <span key={amenity} className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                          {AMENITY_ICON[amenity]} {AMENITY_LABEL[amenity]}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -11,9 +11,20 @@ import { api, getApiError } from '../../core/api';
 import type { BookingWithDetails } from '../../types/booking';
 
 export function MyBookingsPage() {
-  const [page] = useState(1);
-  const { data: bookings, isLoading, isError } = useMyBookings(page);
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError } = useMyBookings(page);
+  const bookings = data?.bookings;
+  const pagination = data?.pagination;
+  const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.limit)) : 1;
   const queryClient = useQueryClient();
+
+  const CANCELLATION_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+
+  function canCancelBooking(booking: BookingWithDetails) {
+    if (booking.status !== 'pending' && booking.status !== 'confirmed') return false;
+    const timeUntilDeparture = new Date(booking.trip.departureTime).getTime() - Date.now();
+    return timeUntilDeparture >= CANCELLATION_WINDOW_MS;
+  }
 
   const [cancelTarget, setCancelTarget] = useState<BookingWithDetails | null>(
     null
@@ -85,8 +96,8 @@ export function MyBookingsPage() {
                   hour12: true,
                 }
               );
-              const canCancel =
-                booking.status === 'pending' || booking.status === 'confirmed';
+              const statusAllowsCancel = booking.status === 'pending' || booking.status === 'confirmed';
+              const canCancel = canCancelBooking(booking);
 
               return (
                 <div
@@ -122,11 +133,12 @@ export function MyBookingsPage() {
                       </div>
                     ))}
                   </div>
-                  {canCancel && (
+                  {statusAllowsCancel && (
                     <div className="mt-4 pt-3 border-t border-slate-100">
                       <Button
                         variant="danger"
                         size="sm"
+                        disabled={!canCancel}
                         onClick={() => {
                           setCancelTarget(booking);
                           setCancelError('');
@@ -134,6 +146,11 @@ export function MyBookingsPage() {
                       >
                         Cancel booking
                       </Button>
+                      {!canCancel && (
+                        <p className="text-xs text-slate-400 mt-1">
+                          Cancellation window has passed (up to 2 hours before departure).
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -141,6 +158,20 @@ export function MyBookingsPage() {
             })}
           </div>
         ))}
+
+      {!isLoading && !isError && bookings && bookings.length > 0 && (
+        <div className="flex items-center justify-between mt-6">
+          <Button variant="secondary" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+            ← Previous
+          </Button>
+          <span className="text-sm text-slate-500">
+            Page {page} of {totalPages}
+          </span>
+          <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+            Next →
+          </Button>
+        </div>
+      )}
 
       {/* Cancel Confirmation modal */}
       <Modal
