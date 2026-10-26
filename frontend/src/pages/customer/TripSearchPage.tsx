@@ -13,10 +13,11 @@ export function TripSearchPage() {
         status: 'scheduled',
         startLocation: searchParams.get('startLocation') ?? undefined,
         endLocation: searchParams.get('endLocation') ?? undefined,
+        location: searchParams.get('location') ?? undefined,
         date: searchParams.get('date') ?? undefined,
     });
 
-    const hasSearched = !!(filters.startLocation && filters.endLocation);
+    const hasSearched = !!(filters.startLocation && filters.endLocation || filters.location);
     const { data: trips, isLoading, isError } = useTrips(filters, { enabled: hasSearched });
 
     return (

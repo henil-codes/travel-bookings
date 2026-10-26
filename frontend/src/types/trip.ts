@@ -19,6 +19,7 @@ export interface Trip {
 export interface TripFilter {
     startLocation?: string;
     endLocation?: string;
+    location?: string;
     date?: string;
     status?: TripStatus;
     page?: number;
