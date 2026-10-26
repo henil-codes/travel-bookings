@@ -3,8 +3,8 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY!)
 
 export async function sendPasswordResetEmail(to: string, resetLink: string) {
-    await resend.emails.send({
-        from: 'noreply@yourdomain.com',
+    const { error } = await resend.emails.send({
+        from: 'noreply@mannattravel.com',
         to,
         subject: 'Reset Your Password',
         html: `
@@ -14,4 +14,8 @@ export async function sendPasswordResetEmail(to: string, resetLink: string) {
             <p>If you didn't request this, please ignore this email.</p>
             `
     })
+
+    if (error) {
+        console.error('Failed to send password reset email:', error);
+    }
 }
