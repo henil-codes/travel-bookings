@@ -349,7 +349,7 @@ export function HomePage() {
               {locations.map((city) => (
                 <Link
                   key={city}
-                  to={`/trips?endLocation=${encodeURIComponent(city)}`}
+                  to={`/trips?location=${encodeURIComponent(city)}`}
                   className="px-5 py-2.5 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:border-brand-300 hover:text-brand-600 hover:shadow-card transition-all"
                 >
                   {city}

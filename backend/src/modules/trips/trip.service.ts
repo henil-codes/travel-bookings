@@ -12,7 +12,7 @@ import { trips } from '@/db/schema/trips';
 import { bookings } from '@/db/schema/bookings';
 import { payments } from '@/db/schema/payments';
 import { ConflictError, NotFoundError, UnauthorizedError } from '@/core/errors';
-import { eq, and, gte, lt, ilike, sql, inArray, desc, getTableColumns } from 'drizzle-orm';
+import { eq, and, or, gte, lt, ilike, sql, inArray, desc, getTableColumns } from 'drizzle-orm';
 import { refundOutbox } from '@/db/schema/refundOutbox';
 
 export class TripService {
@@ -83,6 +83,15 @@ export class TripService {
 
     if (filters.endLocation) {
       conditions.push(ilike(trips.endLocation, `%${filters.endLocation}%`));
+    }
+
+    if (filters.location) {
+      conditions.push(
+        or(
+          ilike(trips.startLocation, `%${filters.location}%`),
+          ilike(trips.endLocation, `%${filters.location}%`)
+        )
+      )
     }
 
     if (filters.status) {
