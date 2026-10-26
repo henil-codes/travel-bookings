@@ -1,3 +1,4 @@
+import { StepIndicator } from '../../components/ui/StepIndicator';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -145,6 +146,10 @@ export function TripDetailPage() {
         </svg>
         All trips
       </Link>
+
+      <div className="mb-6 flex justify-center">
+        <StepIndicator steps={[{ label: 'Select Seats' }, { label: 'Checkout' }, { label: 'Confirmed' }]} current={0} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Seat map */}

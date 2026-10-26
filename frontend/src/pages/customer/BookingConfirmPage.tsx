@@ -124,6 +124,25 @@ export function BookingConfirmPage() {
         </div>
       </div>
 
+      <div className="mt-6 bg-slate-50 border border-slate-200 rounded-xl p-5">
+        <h2 className="text-sm font-semibold text-slate-900 mb-3">What happens next</h2>
+        <ul className="space-y-2 text-sm text-slate-600">
+          <li className="flex gap-2">
+            <span className="text-brand-500">•</span>
+            This confirmation is your ticket — find it anytime under {' '}
+            <Link to="/my-bookings" className="text-brand-600 underline">My Bookings</Link>
+          </li>
+          <li className="flex gap-2">
+            <span className="text-brand-500">•</span>
+            Carry the ID your provided for {data.passenger.name} — the driver may ask to verify it at boarding.
+          </li>
+          <li className="flex gap-2">
+            <span className="text-brand-500">•</span>
+            Plans changed? You can self-cancel from My bookings up to 2 hours before departure.
+          </li>
+        </ul>
+      </div>
+
       {isGuest && (
         <div className="mt-6 bg-brand-50 border border-brand-100 rounded-xl p-4 text-center">
           {claimSent ? (
