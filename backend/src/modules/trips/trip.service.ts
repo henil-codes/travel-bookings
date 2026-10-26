@@ -73,6 +73,8 @@ export class TripService {
   static async listTrips(filters: TripFilterInput) {
     const conditions = [];
 
+    conditions.push(gte(trips.departureTime, new Date()));
+
     if (filters.driverId) {
       conditions.push(eq(trips.driverId, filters.driverId));
     }
@@ -232,9 +234,11 @@ export class TripService {
 
   // Distinct set of cities used as a start or end location across all trips.
   static async listKnownLocations() {
+    const bookableConditions = and(eq(trips.status, 'scheduled'), gte(trips.departureTime, new Date()));
+
     const [startRows, endRows] = await Promise.all([
-      db.selectDistinct({ location: trips.startLocation }).from(trips),
-      db.selectDistinct({ location: trips.endLocation }).from(trips),
+      db.selectDistinct({ location: trips.startLocation }).from(trips).where(bookableConditions),
+      db.selectDistinct({ location: trips.endLocation }).from(trips).where(bookableConditions),
     ]);
 
     const locations = new Set<string>()

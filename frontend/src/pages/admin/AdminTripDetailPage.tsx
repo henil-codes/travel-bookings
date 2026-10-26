@@ -96,9 +96,9 @@ export function AdminTripDetailPage() {
   }
 
   const canCancel = VALID_TRANSITIONS[trip.status].includes('cancelled');
-
   const hasStarted = ['departed', 'completed'].includes(trip.status) || new Date(trip.departureTime) <= new Date();
   const canDelete = !hasStarted && stats?.totalBookings === 0;
+  const isOverdue = trip.status === 'scheduled' && new Date(trip.departureTime) < new Date();
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -108,6 +108,16 @@ export function AdminTripDetailPage() {
       >
         &larr; Back to trips
       </Link>
+
+      {
+        isOverdue && (
+          <div className="mt-3">
+            <Alert variant="warning">
+              This trip's departure time has passed but its status is still "scheduled" — update it (cancel, or progress it through boarding/departed/completed) to reflect what actually happened.
+            </Alert>
+          </div>
+        )
+      }
 
       <div className="bg-white rounded-xl border border-slate-200 p-6 mt-3 mb-6">
         <div className="flex items-start justify-between gap-4 flex-wrap">

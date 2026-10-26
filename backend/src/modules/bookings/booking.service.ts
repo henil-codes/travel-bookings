@@ -93,6 +93,16 @@ export class BookingService {
         );
       }
 
+      const [trip] = await tx.select().from(trips).where(eq(trips.id, seat.tripId));
+
+      if (!trip) {
+        throw new NotFoundError('Trip');
+      }
+
+      if ( new Date(trip.departureTime) <= new Date()) {
+        throw new ConflictError('This trip has already departed and cannot be booked.');
+      }
+
       const [existingBooking] = await tx
         .select()
         .from(bookings)
