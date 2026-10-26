@@ -1,3 +1,4 @@
+import { StepIndicator } from '../../components/ui/StepIndicator';
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -159,6 +160,10 @@ export function CheckoutPage() {
       <h1 className="text-2xl font-bold text-slate-900 mb-6">
         Complete your booking
       </h1>
+
+      <div className="mb-6 flex justify-center">
+        <StepIndicator steps={[{ label: 'Select Seats' }, { label: 'Checkout' }, { label: 'Confirmed' }]} current={1} />
+      </div>
 
       {earliestLock && (
         <div className="mb-6">
