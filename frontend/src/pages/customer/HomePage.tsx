@@ -7,7 +7,8 @@ import { Alert } from '../../components/ui/Alert';
 import { useLocations } from '../../hooks/useLocations';
 import bus1 from '../../assets/gallery/mannt-bus-1.png';
 import bus2 from '../../assets/gallery/mannt-bus-2.png';
-import video1 from '../../assets/gallery/mannt-video.mp4';
+import video1 from '../../assets/gallery/mannt-bus-video-1.mp4';
+import video2 from '../../assets/gallery/mannt-bus-video-2.mp4';
 
 const iconProps = {
   className: 'w-6 h-6',
@@ -168,8 +169,9 @@ const CONTACT_ITEMS = [
 
 const GALLERY_SLOTS: { type: 'photo' | 'video'; src: string; label: string }[] = [
   { type: 'photo', src: bus1, label: 'Our bus fleet' },
-  { type: 'photo', src: bus2, label: 'Comfortable interiors' },
   { type: 'video', src: video1, label: 'On the road' },
+  { type: 'video', src: video2, label: 'Smooth ride' },
+  { type: 'photo', src: bus2, label: 'Comfortable interiors' },
 ];
 
 const FAQS = [
@@ -326,7 +328,7 @@ export function HomePage() {
       <section className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <h2 className="text-2xl font-bold text-slate-900 text-center mb-10">See us on the road</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {GALLERY_SLOTS.map((slot) => (
               <div key={slot.label} className="relative w-full h-48 rounded-xl overflow-hidden bg-slate-100">
                 {slot.type === 'photo' ? (
