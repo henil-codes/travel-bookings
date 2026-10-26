@@ -46,6 +46,7 @@ export function TripDetailPage() {
   const [lockError, setLockError] = useState('');
   const [locking, setLocking] = useState(false);
   const [identityModalOpen, setIdentityModalOpen] = useState(false);
+  const LOW_SEATS_THRESHOLD = 5;
 
   const tripQuery = useQuery({
     queryKey: ['trip', id],
@@ -263,6 +264,11 @@ export function TripDetailPage() {
                 <span className="text-slate-500">Total capacity</span>
                 <span className="font-semibold">{trip.capacity} seats</span>
               </div>
+              {availableCount > 0 && availableCount <= LOW_SEATS_THRESHOLD && (
+                <p className="text-xs font-semibold text-amber-600 pt-1">
+                  Only {availableCount} seat{availableCount !== 1 ? 's' : ''} left - book soon!
+                </p>
+              )}
             </div>
           </div>
         </div>

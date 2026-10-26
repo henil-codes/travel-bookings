@@ -105,6 +105,7 @@ export class TripService {
       .select({
         ...getTableColumns(trips),
         fromPrice: sql<number | null>`min(${seats.price}) filter (where ${seats.status} = 'available')`.mapWith((v) => (v === null ? null : Number(v))),
+        availableSeats: sql<number>`count(${seats.id}) filter (where ${seats.status} = 'available')`.mapWith(Number),
         amenities: vehicles.amenities,
       })
       .from(trips)
@@ -124,15 +125,15 @@ export class TripService {
       ...getTableColumns(trips),
       amenities: vehicles.amenities,
     })
-    .from(trips)
-    .leftJoin(vehicles, eq(vehicles.id, trips.vehicleId))
-    .where(eq(trips.id, tripId));
+      .from(trips)
+      .leftJoin(vehicles, eq(vehicles.id, trips.vehicleId))
+      .where(eq(trips.id, tripId));
 
     if (!trip) {
       throw new NotFoundError('Trip');
     }
 
-    return {...trip, amenities: trip.amenities ?? [] };
+    return { ...trip, amenities: trip.amenities ?? [] };
   }
 
   static async getSeatMap(tripId: string) {
