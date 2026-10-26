@@ -49,5 +49,6 @@ export interface AdminTripFilter extends TripFilter {
 
 export interface TripListItem extends Trip {
     fromPrice: number | null;
+    availableSeats: number;
     amenities: VehicleAmenity[];
 }
