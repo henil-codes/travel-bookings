@@ -33,9 +33,11 @@ interface Props {
   trip: TripListItem;
 }
 
+
 export function TripCard({ trip }: Props) {
   const departure = formatDateTime(trip.departureTime);
   const arrival = formatDateTime(trip.arrivalTime);
+  const LOW_SEATS_THRESHOLD = 5;
 
   return (
     <Link
@@ -97,6 +99,12 @@ export function TripCard({ trip }: Props) {
             </span>
           )}
         </div>
+      )}
+
+      {trip.availableSeats > 0 && trip.availableSeats <= LOW_SEATS_THRESHOLD && (
+        <p className="text-xs font-semibold text-amber-600">
+          Only {trip.availableSeats} seat{trip.availableSeats !== 1 ? 's' : ''} left
+        </p>
       )}
 
       <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
