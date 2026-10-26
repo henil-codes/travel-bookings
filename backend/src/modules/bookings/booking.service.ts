@@ -248,6 +248,19 @@ export class BookingService {
     return toBookingWithDetails(row);
   }
 
+  static async getBookingsForEmail(bookingIds: string[]) {
+    const rows = await db
+      .select(bookingDetailSelect)
+      .from(bookings)
+      .innerJoin(trips, eq(bookings.tripId, trips.id))
+      .innerJoin(seats, eq(bookings.seatId, seats.id))
+      .innerJoin(passengers, eq(bookings.passengerId, passengers.id))
+      .innerJoin(users, eq(bookings.bookedBy, users.id))
+      .where(inArray(bookings.id, bookingIds));
+
+    return rows.map(toBookingWithDetails);
+  }
+
   static async listBookingWithDetails(input: BookingFilter) {
     const conditions = [];
     if (input.userId) {

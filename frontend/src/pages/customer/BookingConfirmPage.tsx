@@ -134,7 +134,7 @@ export function BookingConfirmPage() {
           </li>
           <li className="flex gap-2">
             <span className="text-brand-500">•</span>
-            Carry the ID your provided for {data.passenger.name} — the driver may ask to verify it at boarding.
+            Carry the ID you provided for {data.passenger.name} — the driver may ask to verify it at boarding.
           </li>
           <li className="flex gap-2">
             <span className="text-brand-500">•</span>
