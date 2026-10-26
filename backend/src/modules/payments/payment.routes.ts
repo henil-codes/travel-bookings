@@ -3,6 +3,7 @@ import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { PaymentService } from './payment.service';
 import { BookingService } from '../bookings/booking.service';
+import { sendBookingConfirmationEmail } from '@/core/email';
 import {
   verifyPaymentSchema,
   createOrderBodySchema,
@@ -73,6 +74,24 @@ export const paymentRoutes: FastifyPluginAsync = async (
         gatewayPaymentSignature: razorpaySignature,
         userId: request.user.id,
       });
+
+      BookingService.getBookingsForEmail(bookingIds)
+        .then((details) => {
+          if (details.length === 0) return;
+          return sendBookingConfirmationEmail({
+            to: details[0].bookedByUser.email,
+            userName: details[0].bookedByUser.name,
+            trip: details[0].trip,
+            seats: details.map((d) => ({
+              seatNumber: d.seat.seatNumber,
+              passengerName: d.passenger.name,
+              totalAmount: d.totalAmount,
+            }))
+          })
+        })
+        .catch((error) => {
+          request.log.error({ err: error }, 'Failed to send booking confirmation email')
+        })
 
       return reply.status(200).send({
         success: true,
