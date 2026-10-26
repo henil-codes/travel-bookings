@@ -42,11 +42,11 @@ export function TripCard({ trip }: Props) {
   return (
     <Link
       to={`/trips/${trip.id}`}
-      className="block w-full bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-lg transition-shadow duration-200 p-5 flex flex-col gap-4"
+      className="block w-full bg-white rounded-xl border border-slate-100 shadow-card hover:shadow-card-hover transition-shadow duration-200 p-5 flex flex-col gap-4"
     >
       <div className="flex items-start justify-between">
         <Badge label={trip.status} />
-        <span className="text-xs text-slate-400">{trip.name}</span>
+        <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">{trip.name}</span>
       </div>
 
       {/* Route */}

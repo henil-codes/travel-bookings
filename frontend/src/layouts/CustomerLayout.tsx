@@ -1,3 +1,4 @@
+import logo from '../assets/logo.png';
 import { Suspense } from 'react';
 import { Spinner } from '../components/ui/Spinner';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
@@ -20,21 +21,7 @@ export function CustomerLayout() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                  />
-                </svg>
-              </div>
+              <img src={logo} alt="Mannat Travels" className="h-14 w-14 rounded-full object-cover" />
               <span className="text-lg font-bold text-slate-900">Mannat Travels</span>
             </Link>
 

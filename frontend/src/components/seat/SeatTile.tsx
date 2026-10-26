@@ -27,7 +27,7 @@ interface Props {
 export function SeatTile({ seat, seatNumber, isSelected, currentUserId, onToggle }: Props) {
     if (!seat) {
         return ( 
-            <div className={`w-11 h-11 rounded-md text-xs font-semibold flex items-center justify-center ${statusClasses.placeholder}`}>
+            <div className={`w-11 h-11 rounded-t-xl rounded-b-md text-xs font-semibold flex items-center justify-center ${statusClasses.placeholder}`}>
                 {seatNumber}
             </div>
         )
@@ -46,7 +46,7 @@ export function SeatTile({ seat, seatNumber, isSelected, currentUserId, onToggle
             disabled={!isClickable}
             onClick={() => isClickable && onToggle(seat)}
             title={`Seat ${seat.seatNumber} — ${seat.seatType} —  ₹${(seat.price / 100).toLocaleString('en-IN')}`}
-            className={`w-11 h-11 rounded-md text-xs font-semibold flex items-center justify-center transition-all duration-150 select-none relative ${classes}`}
+            className={`w-11 h-11 rounded-t-xl rounded-b-md text-xs font-semibold flex items-center justify-center transition-all duration-150 select-none relative ${classes}`}
         >
             {seat.seatNumber}
             {seatTypeIcon[seat.seatType] && (
