@@ -88,43 +88,51 @@ export function AdminTripsPage() {
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {trips.map((trip) => (
-                        <div className="bg-white rounded-xl border border-slate-200 p-5" key={trip.id}>
-                            <div className="flex items-start justify-between gap-4 flex-wrap">
-                                <div>
-                                    <Link
-                                        to={`/admin/trips/${trip.id}`}
-                                        className="font-semibold text-slate-900 hover:text-brand-600"
-                                    >
-                                        {trip.startLocation} → {trip.endLocation}
-                                    </Link>
-                                    <p className="text-sm text-slate-500 mt-0.5">
-                                        {trip.name} ·{' '}
-                                        {new Date(trip.departureTime).toLocaleDateString('en-IN')}
-                                    </p>
-                                </div>
-                                <Badge label={trip.status} />
-                            </div>
-
-                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
-                                {[
-                                    {
-                                        label: 'Active bookings',
-                                        value: `${trip.stats.activeBookings} / ${trip.capacity}`,
-                                    },
-                                    { label: 'Capacity', value: String(trip.capacity) },
-                                    { label: 'Gross revenue', value: inr(trip.stats.grossRevenue), },
-                                    { label: 'Refunds raised', value: inr(trip.stats.refundInitiated), },
-                                    { label: 'Refunds settled', value: inr(trip.stats.refundSettled), },
-                                ].map(({ label, value }) => (
-                                    <div key={label}>
-                                        <p className="text-slate-400 text-xs">{label}</p>
-                                        <p className="font-medium text-slate-900">{value}</p>
+                    {trips.map((trip) => {
+                        const isOverdue = trip.status === 'scheduled' && new Date(trip.departureTime) < new Date();
+                        return (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5" key={trip.id}>
+                                <div className="flex items-start justify-between gap-4 flex-wrap">
+                                    <div>
+                                        <Link
+                                            to={`/admin/trips/${trip.id}`}
+                                            className="font-semibold text-slate-900 hover:text-brand-600"
+                                        >
+                                            {trip.startLocation} → {trip.endLocation}
+                                        </Link>
+                                        <p className="text-sm text-slate-500 mt-0.5">
+                                            {trip.name} ·{' '}
+                                            {new Date(trip.departureTime).toLocaleDateString('en-IN')}
+                                        </p>
                                     </div>
-                                ))}
+                                    <div className="flex items-center gap-2">
+                                        {isOverdue && (
+                                            <Badge label="Needs update" colorClass="bg-amber-100 text-amber-700" />
+                                        )}
+                                    </div>
+                                    <Badge label={trip.status} />
+                                </div>
+
+                                <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
+                                    {[
+                                        {
+                                            label: 'Active bookings',
+                                            value: `${trip.stats.activeBookings} / ${trip.capacity}`,
+                                        },
+                                        { label: 'Capacity', value: String(trip.capacity) },
+                                        { label: 'Gross revenue', value: inr(trip.stats.grossRevenue), },
+                                        { label: 'Refunds raised', value: inr(trip.stats.refundInitiated), },
+                                        { label: 'Refunds settled', value: inr(trip.stats.refundSettled), },
+                                    ].map(({ label, value }) => (
+                                        <div key={label}>
+                                            <p className="text-slate-400 text-xs">{label}</p>
+                                            <p className="font-medium text-slate-900">{value}</p>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             ))}
         </div>

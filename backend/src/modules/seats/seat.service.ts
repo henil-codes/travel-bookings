@@ -1,5 +1,6 @@
 import { db } from "../../db";
-import { users } from '@/db/schema/users'
+import { users } from '@/db/schema/users';
+import { trips } from '@/db/schema/trips';
 import { NotFoundError, ConflictError } from "../../core/errors";
 import { seats } from "../../db/schema/seats";
 import { and, eq, sql } from "drizzle-orm";
@@ -24,7 +25,18 @@ export class SeatService {
                 throw new NotFoundError('Seat');
             }
 
+            const [trip] = await tx.select().from(trips).where(eq(trips.id, seat.tripId));
+
+            if (!trip) {
+                throw new NotFoundError('Trip');
+            }
+
             const now = new Date();
+
+            if (new Date(trip.departureTime) <= now) {
+                throw new ConflictError('This trip has already departed and cannot be booked.');
+            }
+            
             const isLockExpired = seat.lockedUntil && new Date(seat.lockedUntil) < now;
 
             if (seat.status !== 'available' && !isLockExpired) {
