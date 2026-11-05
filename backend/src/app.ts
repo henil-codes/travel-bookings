@@ -18,6 +18,7 @@ import { vehicleRoutes } from './modules/vehicles/vehicle.routes';
 import { userRoutes } from './modules/users/user.routes';
 import { seatLockSweeperPlugin } from './core/SeatLockSweeper';
 import { refundProcessorPlugin } from './core/refundProcessor';
+import rateLimit from '@fastify/rate-limit';
 
 export const buildApp = (): FastifyInstance => {
   const envToLogger = {
@@ -50,7 +51,10 @@ export const buildApp = (): FastifyInstance => {
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true,
   });
-
+  app.register(rateLimit, {
+    max: 100,
+    timeWindow: '1 minute',
+  });
   app.register(socketPlugin);
   app.register(seatLockSweeperPlugin);
   app.register(authPlugin);

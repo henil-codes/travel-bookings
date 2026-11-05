@@ -33,6 +33,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
   server.post(
     '/register',
     {
+      config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
       schema: {
         body: registerSchema,
       },
@@ -56,25 +57,28 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
   server.post(
     '/guest',
     {
+      config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
       schema: {
         body: guestSchema,
-      }
-    }, async (request, reply) => {
+      },
+    },
+    async (request, reply) => {
       const user = await AuthService.createGuest(request.body);
 
       const token = fastify.jwt.sign({
         id: user.id,
         role: user.role,
-      })
+      });
       setAuthCookie(reply, token);
 
       return reply.code(200).send({ success: true, data: { user, token } });
     }
-  )
+  );
 
   server.post(
     '/login',
     {
+      config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
       schema: {
         body: loginSchema,
       },
@@ -96,10 +100,10 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     reply.clearCookie('token', {
       domain: process.env.COOKIE_DOMAIN ?? undefined,
       path: '/',
-    })
-    
+    });
+
     return reply.send({ success: true, message: 'Logged out successfully' });
-  })
+  });
 
   server.get('/google/callback', async (request, reply) => {
     try {
@@ -144,6 +148,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
   server.post(
     '/forgot-password',
     {
+      config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
       schema: {
         body: forgotPasswordSchema,
       },
