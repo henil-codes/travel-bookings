@@ -5,5 +5,5 @@ output "public_ip" {
 
 output "ssh_command" {
     description = "Run this to connect to the server"
-    value = "ssh -i /home/henil/Documents/clients/private-keys ubuntu@${aws_eip.app.public_ip}"
+    value = "ssh -i <path-to-your-private-key> ubuntu@${aws_eip.app.public_ip}"
 }
