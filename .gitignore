@@ -5,3 +5,6 @@ node_modules
 
 infra/terraform/terraform.tfvars*
 infra/terraform/.terraform/
+infra/terraform/terraform.tfstate
+infra/terraform/terraform.tfstate.backup
+infra/terraform/*.tfstate.*
