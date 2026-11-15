@@ -52,7 +52,7 @@ export async function sendBookingConfirmationEmail(input: BookingConfirmationInp
     <!-- Body Content -->
     <div style="padding: 30px;">
         <p>Hi <strong>${input.userName}</strong>,</p>
-        <p>Thank you for choosing Mannat Travels. Your booking is confirmed and your trip details are below:</p>
+        <p>Thank you for choosing Travel Bookings. Your booking is confirmed and your trip details are below:</p>
 
         <!-- Trip Summary Card -->
         <div style="background-color: #f9f9f9; padding: 15px; border-radius: 6px; margin: 20px 0;">
@@ -86,7 +86,7 @@ export async function sendBookingConfirmationEmail(input: BookingConfirmationInp
 
         <p>We look forward to having you on board. Wishing you a safe and pleasant journey!</p>
         
-        <p>Best regards,<br><strong>Mannat Travels Team</strong></p>
+        <p>Best regards,<br><strong>Travel Bookings Team</strong></p>
     </div>
     
     <!-- Footer -->

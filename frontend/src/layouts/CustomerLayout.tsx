@@ -1,4 +1,4 @@
-import logo from '../assets/logo.png';
+import logo from '../assets/vecteezy_bus-travel-logo-bus-design_69825892.jpg';
 import { Suspense } from 'react';
 import { Spinner } from '../components/ui/Spinner';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
@@ -21,8 +21,8 @@ export function CustomerLayout() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <img src={logo} alt="Mannat Travels" className="h-14 w-14 rounded-full object-cover" />
-              <span className="text-lg font-bold text-slate-900">Mannat Travels</span>
+              <img src={logo} alt="Vecteezy.com logo" className="h-16 w-16 rounded-full object-cover" />
+              <span className="text-lg font-bold text-slate-900">Travel Bookings</span>
             </Link>
 
             {/* Navigation Links */}
@@ -110,7 +110,7 @@ export function CustomerLayout() {
 
       <footer className="border-t border-slate-200 bg-white py-6 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-slate-400">
-          &copy; {new Date().getFullYear()} Mannat Travels. All rights reserved.
+          &copy; {new Date().getFullYear()} Travel Bookings. All rights reserved.
         </div>
       </footer>
     </div>

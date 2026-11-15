@@ -19,7 +19,7 @@ export class PaymentService {
   // --- Create a payment order ---
   static async createPaymentOrder(bookingIds: string[], userId: string) {
     const { bookingRows, existingOrder } = await db.transaction(async (tx) => {
-      const bookingRows = await db
+      const bookingRows = await tx
         .select()
         .from(bookings)
         .where(inArray(bookings.id, bookingIds))

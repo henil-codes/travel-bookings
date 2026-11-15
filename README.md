@@ -5,7 +5,7 @@ A full-stack, real-time bus ticket booking system built for **Mannat Transportat
 > Built as a freelance contract (Mar 2026 – Oct 2026). Backend runs on AWS EC2 (provisioned with Terraform); frontend is deployed on Vercel.
 
 **Live demo:** 
-[mannat travel](https://mannattravel.com/)
+[Travel Bookings](https://mannattravel.com/)
 
 ---
 
