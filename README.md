@@ -2,10 +2,10 @@
 
 A full-stack, real-time bus ticket booking system built for **Mannat Transportation**, a single-operator bus company. Customers search trips, pick seats on a live seat map, and pay with Razorpay; drivers see their assigned trips; admins manage trips, vehicles, drivers, bookings and refunds.
 
-> Built as a freelance contract (Mar 2026 – Sep 2026). Backend runs on AWS EC2 (provisioned with Terraform); frontend is deployed on Vercel.
+> Built as a freelance contract (Mar 2026 – Oct 2026). Backend runs on AWS EC2 (provisioned with Terraform); frontend is deployed on Vercel.
 
 **Live demo:** 
-[_add link_](https://mannattravel.com/)
+[mannat travel](https://mannattravel.com/)
 
 ---
 
