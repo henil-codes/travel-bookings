@@ -230,4 +230,12 @@ Tests are **integration tests against a real PostgreSQL database** (not mocks), 
 
 ---
 
+## Credits
+
+- **Favicon:** [Bus icon](https://icons8.com/icons/set/bus) by [Icons8](https://icons8.com)
+- **Logo:** [Bus, travel logo bus design Free Vector](https://www.vecteezy.com/vector-art/69825892-bus-travel-logo-bus-design) by [Vecteezy](https://www.vecteezy.com)
+
+---
+
 Built by **Henilkumar Patel** · [LinkedIn](https://www.linkedin.com/in/henilkumar-patel/) · [GitHub](https://github.com/henil-codes)
+
