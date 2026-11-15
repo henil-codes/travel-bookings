@@ -1,11 +1,10 @@
-# Mannat Transportation — Bus Booking Platform
+# Travel Bookings
 
-A full-stack, real-time bus ticket booking system built for **Mannat Transportation**, a single-operator bus company. Customers search trips, pick seats on a live seat map, and pay with Razorpay; drivers see their assigned trips; admins manage trips, vehicles, drivers, bookings and refunds.
+A full-stack, real-time bus ticket booking system for a single-operator bus company. Customers search trips, pick seats on a live seat map, and pay with Razorpay; drivers see their assigned trips; admins manage trips, vehicles, drivers, bookings and refunds.
 
-> Built as a freelance contract (Mar 2026 – Oct 2026). Backend runs on AWS EC2 (provisioned with Terraform); frontend is deployed on Vercel.
+> Built for a local bus operator (Mar – Oct 2026) to their requirements and feedback. The client didn't move forward at handover, so I've made it open source. The backend is deployed on AWS EC2 (provisioned with Terraform) and the frontend on Vercel.
 
-**Live demo:** 
-[Travel Bookings](https://mannattravel.com/)
+**Live demo:** [Travel Bookings](https://mannattravel.com/)· **Screenshots:** [below](#screenshots)
 
 ---
 
@@ -227,7 +226,6 @@ Tests are **integration tests against a real PostgreSQL database** (not mocks), 
 <img width="1845" height="1048" alt="Screenshot From 2026-11-15 03-07-26" src="https://github.com/user-attachments/assets/3817741f-bba9-4018-926e-37bf2d8e1ab0" />
 <img width="1845" height="1048" alt="Screenshot From 2026-11-15 03-07-35" src="https://github.com/user-attachments/assets/60a74d3c-78bd-42a2-81dc-453eb64601fd" />
 
-
 ---
 
 ## Credits
@@ -238,4 +236,3 @@ Tests are **integration tests against a real PostgreSQL database** (not mocks), 
 ---
 
 Built by **Henilkumar Patel** · [LinkedIn](https://www.linkedin.com/in/henilkumar-patel/) · [GitHub](https://github.com/henil-codes)
-
