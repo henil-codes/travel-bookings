@@ -4,7 +4,7 @@ const resend = new Resend(process.env.RESEND_API_KEY!)
 
 export async function sendPasswordResetEmail(to: string, resetLink: string) {
     const { error } = await resend.emails.send({
-        from: 'noreply@travelbookings.com',
+        from: 'noreply@bus.henilkumar.com',
         to,
         subject: 'Reset Your Password',
         html: `
@@ -39,7 +39,7 @@ export async function sendBookingConfirmationEmail(input: BookingConfirmationInp
     });
 
     const { error } = await resend.emails.send({
-        from: 'noreply@travelbookings.com',
+        from: 'noreply@bus.henilkumar.com',
         to: input.to,
         subject: `Booking confirmed: ${input.trip.startLocation} → ${input.trip.endLocation}`,
         html: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
