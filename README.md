@@ -2,20 +2,20 @@
 
 A full-stack, real-time bus ticket booking system for a single-operator bus company. Customers search trips, pick seats on a live seat map, and pay with Razorpay; drivers see their assigned trips; admins manage trips, vehicles, drivers, bookings and refunds.
 
-> Built for a local bus operator (Mar – Oct 2026) to their requirements and feedback. The client didn't move forward at handover, so I've made it open source. The backend is deployed on AWS EC2 (provisioned with Terraform) and the frontend on Vercel.
+> Built for a local bus operator (Mar – Oct 2026) to their requirements and feedback. The client didn't move forward at handover, so I've made it open source. Live demo: API on Render, database on Neon, frontend on Vercel. The original AWS deployment is kept as Terraform in `infra/terraform/`.
 
-**Live demo:** [Travel Bookings](https://mannattravel.com/)· **Screenshots:** [below](#screenshots)
+**Live demo:** [travel-bookings](https://bus.henilkumar.com/) (free hosting, so the first load can take about a minute while the API wakes up) · **Screenshots:** [below](#screenshots)
 
 ---
 
 ## Highlights
 
 - **No double-booking under concurrency.** Seat locks use `SELECT … FOR UPDATE` plus an optimistic `version` column, so two users racing for the same seat can never both get it.
-- **Real-time seat map.** Seat state changes are broadcast over Socket.IO to everyone viewing the trip, scaled across instances with the Redis adapter.
+- **Real-time seat map.** Seat state changes are broadcast over Socket.IO to everyone viewing the trip, using the Redis adapter so updates reach clients on any API instance.
 - **Self-healing locks.** Locks expire after 10 minutes; a background sweeper releases abandoned seats every 30 seconds and notifies connected clients.
 - **Reliable refunds via a transactional outbox.** Cancelling a trip writes refund jobs in the *same* database transaction as the cancellation. A worker claims jobs with `FOR UPDATE SKIP LOCKED`, retries with exponential backoff, and reclaims jobs from crashed workers using a lease timeout.
 - **Safe payments.** Server-side pricing, HMAC-SHA256 verification of Razorpay signatures and webhooks, re-use of an existing order on retry, and an append-only payment event log.
-- **Infrastructure as code.** EC2, security group, Elastic IP and key pair defined in Terraform; pushes to `main` deploy automatically through GitHub Actions.
+- **Infrastructure as code.** The original AWS setup (EC2, security group, Elastic IP, key pair) is defined in Terraform, with a GitHub Actions pipeline that deployed on every push to `main`.
 
 ---
 
@@ -24,14 +24,14 @@ A full-stack, real-time bus ticket booking system for a single-operator bus comp
 | Layer | Technologies |
 |---|---|
 | **Backend** | Node.js, Fastify 5, TypeScript, Zod (`fastify-type-provider-zod`) |
-| **Database** | PostgreSQL 17, Drizzle ORM (SQL migrations), Redis |
+| **Database** | PostgreSQL 17 (Neon), Drizzle ORM (SQL migrations), Redis (Socket.IO pub/sub) |
 | **Real-time** | Socket.IO with `@socket.io/redis-adapter` |
 | **Payments** | Razorpay (orders, checkout verification, webhooks, refunds) |
 | **Auth** | JWT in httpOnly cookies, bcrypt, Google OAuth 2.0, role-based guards |
 | **Email** | Resend (booking confirmations, password reset) |
 | **Frontend** | React 19, Vite, Tailwind CSS 4, TanStack Query, Zustand, React Hook Form |
 | **Testing** | Vitest integration tests against a real PostgreSQL test database |
-| **Infra / DevOps** | AWS EC2, Terraform, Docker Compose, GitHub Actions, Vercel |
+| **Infra / DevOps** | Docker, Render, Neon, Vercel · AWS EC2 + Terraform + GitHub Actions (original deployment) |
 
 ---
 
@@ -40,13 +40,13 @@ A full-stack, real-time bus ticket booking system for a single-operator bus comp
 ```mermaid
 flowchart LR
     U[Customer / Driver / Admin<br/>React + Vite on Vercel]
-    subgraph EC2[AWS EC2 · Docker Compose]
-        API[Fastify API<br/>REST + Socket.IO]
+    subgraph RENDER[Render]
+        API[Fastify API · Docker<br/>REST + Socket.IO]
         W1[Seat-lock sweeper]
         W2[Refund outbox worker]
-        PG[(PostgreSQL)]
-        R[(Redis)]
+        R[(Redis<br/>Socket.IO pub/sub)]
     end
+    PG[(PostgreSQL<br/>Neon)]
     RZ[Razorpay]
     RS[Resend]
 
@@ -193,10 +193,17 @@ Tests are **integration tests against a real PostgreSQL database** (not mocks), 
 
 ## Deployment
 
-- **Infrastructure:** `infra/terraform/` provisions the EC2 instance, security group, Elastic IP and SSH key. A `user_data` script installs Docker on first boot.
-- **CI/CD:** on every push to `main`, GitHub Actions syncs the backend to the server over SSH and runs `deploy/deploy.sh`, which rebuilds the API image, applies database migrations, then restarts the Docker Compose stack (API, Postgres, Redis).
-- **Frontend:** deployed on Vercel.
-- Postgres and Redis are bound to `127.0.0.1` on the host, so they're not reachable from the internet.
+**Current (live demo, free tier):**
+- **API:** Render web service built from `backend/Dockerfile.prod` (multi-stage build), redeployed on every push to `main`
+- **Database:** Neon serverless PostgreSQL; migrations applied with `drizzle-kit migrate`
+- **Redis:** Render Key Value, used as the Socket.IO pub/sub adapter
+- **Frontend:** Vercel
+
+**Original (AWS):** the app first ran on a single EC2 instance, and that setup is kept in the repo:
+- `infra/terraform/` provisions the EC2 instance, security group (SSH restricted to one IP), Elastic IP and key pair; a `user_data` script installs Docker on first boot.
+- `deploy/` holds the production Docker Compose stack (API, Postgres, Redis, with the databases bound to `127.0.0.1`) and a deploy script that rebuilds the image, applies migrations and restarts the stack. GitHub Actions ran it over SSH on every push.
+
+I moved the demo to Render and Neon to keep hosting costs at zero while the project isn't serving real customers.
 
 ---
 
@@ -230,8 +237,8 @@ Tests are **integration tests against a real PostgreSQL database** (not mocks), 
 
 ## Credits
 
-- **Favicon:** [Bus icon](https://icons8.com/icons/set/bus) by [Icons8](https://icons8.com)
-- **Logo:** [Bus, travel logo bus design Free Vector](https://www.vecteezy.com/vector-art/69825892-bus-travel-logo-bus-design) by [Vecteezy](https://www.vecteezy.com)
+- **Favicon:** [Bus icon](ICON_PAGE_URL) by [Icons8](https://icons8.com)
+- **Logo:** [Bus logo vector](ASSET_PAGE_URL) by [Vecteezy](https://www.vecteezy.com)
 
 ---
 
