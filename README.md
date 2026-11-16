@@ -224,14 +224,16 @@ I moved the demo to Render and Neon to keep hosting costs at zero while the proj
 
 ## Screenshots
 
-<img width="1845" height="1048" alt="Screenshot From 2026-11-14 21-36-17" src="https://github.com/user-attachments/assets/ab90c6af-bd80-49f1-9127-c748d5eadf97" />
-<img width="1845" height="1048" alt="Screenshot From 2026-11-14 21-37-16" src="https://github.com/user-attachments/assets/5951d070-b46f-4422-b5e4-bc0dface58a3" />
-<img width="1845" height="1048" alt="Screenshot From 2026-11-14 21-40-07" src="https://github.com/user-attachments/assets/e20d9b95-90a9-46f3-ad56-ff1a5fe21b84" />
-<img width="1845" height="1048" alt="Screenshot From 2026-11-14 21-41-31" src="https://github.com/user-attachments/assets/52b36eba-e323-4722-b90a-be53d27ad863" />
-<img width="1845" height="1048" alt="Screenshot From 2026-11-14 21-57-31" src="https://github.com/user-attachments/assets/ada60b85-b892-482f-acdc-5c5a8c5b319e" />
-<img width="1845" height="1048" alt="Screenshot From 2026-11-15 03-06-55" src="https://github.com/user-attachments/assets/69708916-d7b9-4cd8-b938-4a4a560f19c0" />
-<img width="1845" height="1048" alt="Screenshot From 2026-11-15 03-07-26" src="https://github.com/user-attachments/assets/3817741f-bba9-4018-926e-37bf2d8e1ab0" />
-<img width="1845" height="1048" alt="Screenshot From 2026-11-15 03-07-35" src="https://github.com/user-attachments/assets/60a74d3c-78bd-42a2-81dc-453eb64601fd" />
+<img width="1845" height="1048" alt="Screenshot From 2026-11-16 01-31-21" src="https://github.com/user-attachments/assets/d19e1e2d-a83e-44b9-b5dd-16d5b5be1a3e" />
+<img width="1845" height="1048" alt="Screenshot From 2026-11-16 01-31-11" src="https://github.com/user-attachments/assets/dece07cb-5fa2-4c18-abbe-5a70ff261a7f" />
+<img width="1845" height="1048" alt="Screenshot From 2026-11-16 01-31-04" src="https://github.com/user-attachments/assets/61a20a4a-b1c4-44ba-9994-52c5ce4a5fa5" />
+<img width="1845" height="1048" alt="Screenshot From 2026-11-16 01-30-11" src="https://github.com/user-attachments/assets/52f6edd8-fc61-46cd-95fa-d4694e88203e" />
+<img width="1845" height="1048" alt="Screenshot From 2026-11-16 01-29-31" src="https://github.com/user-attachments/assets/c784c4cf-6e35-4cd9-ae91-2f4ac782a3b7" />
+<img width="1845" height="1048" alt="Screenshot From 2026-11-16 01-29-18" src="https://github.com/user-attachments/assets/924e4fea-3570-4ead-8d23-69046fc4008b" />
+<img width="1845" height="1048" alt="Screenshot From 2026-11-16 01-29-11" src="https://github.com/user-attachments/assets/1a9e2342-a551-42f7-9bee-f15823ff6867" />
+<img width="1845" height="1048" alt="Screenshot From 2026-11-16 01-15-31" src="https://github.com/user-attachments/assets/3da003e4-0daa-4a7f-bbb2-2e792b3b2c3b" />
+<img width="1845" height="1048" alt="Screenshot From 2026-11-16 01-15-12" src="https://github.com/user-attachments/assets/14e6c7c9-042c-4d70-b80c-b118d7c4b898" />
+
 
 ---
 
