@@ -4,7 +4,7 @@ const resend = new Resend(process.env.RESEND_API_KEY!)
 
 export async function sendPasswordResetEmail(to: string, resetLink: string) {
     const { error } = await resend.emails.send({
-        from: 'noreply@mannattravel.com',
+        from: 'noreply@travelbookings.com',
         to,
         subject: 'Reset Your Password',
         html: `
@@ -39,7 +39,7 @@ export async function sendBookingConfirmationEmail(input: BookingConfirmationInp
     });
 
     const { error } = await resend.emails.send({
-        from: 'noreply@mannattravel.com',
+        from: 'noreply@travelbookings.com',
         to: input.to,
         subject: `Booking confirmed: ${input.trip.startLocation} → ${input.trip.endLocation}`,
         html: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
@@ -91,8 +91,8 @@ export async function sendBookingConfirmationEmail(input: BookingConfirmationInp
     
     <!-- Footer -->
     <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px; color: #777;">
-        <p style="margin: 0 0 10px 0;">Need help? Contact us at <a href="mailto:support@mannattravel.com" style="color: #0056b3;">support@mannattravel.com</a></p>
-        <p style="margin: 0;"><a href="https://mannattravel.com" style="color: #0056b3; text-decoration: none;">Visit our website</a></p>
+        <p style="margin: 0 0 10px 0;">Need help? Contact us at <a href="mailto:code80147@gmail.com" style="color: #0056b3;">code80147@gmail.com</a></p>
+        <p style="margin: 0;"><a href="https://bus.henilkumar.com" style="color: #0056b3; text-decoration: none;">Visit our website</a></p>
     </div>
     
 </div>`
