@@ -73,7 +73,7 @@ export const buildApp = (): FastifyInstance => {
 
     cookie: {
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
     },
   });
