@@ -7,7 +7,7 @@ function setAuthCookie(reply: FastifyReply, token: string) {
   reply.cookie('token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     domain: process.env.COOKIE_DOMAIN ?? undefined,
     path: '/',
     maxAge: 60 * 60 * 24 * 7, // 7 days
