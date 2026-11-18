@@ -96,6 +96,9 @@ export const buildApp = (): FastifyInstance => {
   app.register(paymentRoutes, { prefix: '/api/v1/payments' });
   app.register(vehicleRoutes, { prefix: '/api/v1/vehicles' });
   app.register(userRoutes, { prefix: '/api/v1/users' });
+  app.get('/health', async (request, response) => {
+    return { ok: true };
+  });
 
   return app;
 };
